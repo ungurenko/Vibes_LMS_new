@@ -5,6 +5,7 @@ import { GlossaryCategory, GlossaryTerm, TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { GlossaryTermSkeleton } from '../components/SkeletonLoader';
 
 const CATEGORIES: GlossaryCategory[] = ['Все', 'Базовые', 'Код', 'Инструменты', 'API', 'Ошибки', 'Вайб-кодинг'];
 
@@ -257,6 +258,13 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                      );
                   })}
                </AnimatePresence>
+            </div>
+         ) : isLoading ? (
+            /* Loading State */
+            <div className="columns-1 md:columns-2 xl:columns-3 gap-6 space-y-6">
+               {Array.from({ length: 12 }).map((_, idx) => (
+                  <GlossaryTermSkeleton key={idx} />
+               ))}
             </div>
          ) : (
             /* Empty State */

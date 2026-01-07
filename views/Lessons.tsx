@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CourseModule } from '../types';
+import { LessonItemSkeleton } from '../components/SkeletonLoader';
 
 const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
@@ -383,7 +384,30 @@ const Lessons: React.FC = () => {
                         </div>
 
                         <div className="space-y-8">
-                            {modules.map((module, mIdx) => (
+                            {isLoading ? (
+                                <div className="space-y-6">
+                                    {/* Модуль 1 */}
+                                    <div className="relative">
+                                        <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded mb-4" />
+                                        <div className="space-y-1">
+                                            {Array.from({ length: 3 }).map((_, idx) => (
+                                                <LessonItemSkeleton key={idx} />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Модуль 2 */}
+                                    <div className="relative">
+                                        <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded mb-4" />
+                                        <div className="space-y-1">
+                                            {Array.from({ length: 4 }).map((_, idx) => (
+                                                <LessonItemSkeleton key={idx} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                modules.map((module, mIdx) => (
                                 <div key={module.id} className="relative">
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-4 px-2">
                                         {module.title}
@@ -440,7 +464,8 @@ const Lessons: React.FC = () => {
                                         })}
                                     </div>
                                 </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
