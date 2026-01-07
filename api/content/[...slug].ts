@@ -20,6 +20,11 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json(errorResponse('Method not allowed'));
   }

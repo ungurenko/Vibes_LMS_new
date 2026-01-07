@@ -64,6 +64,11 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const { slug } = req.query;
   const endpoint = Array.isArray(slug) ? slug[0] : slug;
 
