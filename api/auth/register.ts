@@ -5,13 +5,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query, getClient } from '../_lib/db';
+import { query, getClient } from '../_lib/db.js';
 import {
   createToken,
   hashPassword,
   successResponse,
   errorResponse,
-} from '../_lib/auth';
+} from '../_lib/auth.js';
 
 interface RegisterRequest {
   email: string;

@@ -6,13 +6,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../_lib/db';
+import { query } from '../_lib/db.js';
 import {
   createToken,
   comparePassword,
   successResponse,
   errorResponse,
-} from '../_lib/auth';
+} from '../_lib/auth.js';
 
 interface LoginRequest {
   email: string;
