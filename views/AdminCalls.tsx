@@ -68,7 +68,7 @@ const AdminCalls: React.FC = () => {
         try {
             setIsLoading(true);
             const token = localStorage.getItem('vibes_token');
-            const response = await fetch('/api/admin/calls', {
+            const response = await fetch('/api/admin?resource=calls', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -103,7 +103,7 @@ const AdminCalls: React.FC = () => {
 
         try {
             const token = localStorage.getItem('vibes_token');
-            const response = await fetch(`/api/admin/calls?id=${callToDelete}`, {
+            const response = await fetch(`/api/admin?resource=calls&id=${callToDelete}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -151,7 +151,7 @@ const AdminCalls: React.FC = () => {
             const token = localStorage.getItem('vibes_token');
             const isUpdate = !!editingCall.id;
 
-            const response = await fetch('/api/admin/calls', {
+            const response = await fetch('/api/admin?resource=calls', {
                 method: isUpdate ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',

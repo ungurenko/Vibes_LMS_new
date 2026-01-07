@@ -816,13 +816,15 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         duration,
         videoUrl,
         status,
-        sortOrder
+        sortOrder,
+        materials
     } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID урока обязателен'));
     }
 
+    // 1. Обновляем урок
     const { rows, rowCount } = await query(
         `UPDATE lessons SET
       title = COALESCE($1, title),
@@ -841,6 +843,44 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json(errorResponse('Урок не найден'));
     }
 
+    // 2. Если переданы материалы - обновляем их
+    let updatedMaterials = [];
+    if (materials && Array.isArray(materials)) {
+        // Удаляем старые материалы
+        await query(
+            `DELETE FROM lesson_materials WHERE lesson_id = $1`,
+            [id]
+        );
+
+        // Добавляем новые материалы
+        for (const material of materials) {
+            const { rows: matRows } = await query(
+                `INSERT INTO lesson_materials (lesson_id, title, type, url, sort_order)
+                 VALUES ($1, $2, $3, $4, $5)
+                 RETURNING *`,
+                [id, material.title, material.type, material.url, material.sortOrder || 0]
+            );
+            updatedMaterials.push({
+                id: matRows[0].id,
+                title: matRows[0].title,
+                type: matRows[0].type,
+                url: matRows[0].url,
+            });
+        }
+    } else {
+        // 3. Если материалы не переданы, получаем существующие
+        const { rows: existingMaterials } = await query(
+            `SELECT id, title, type, url FROM lesson_materials WHERE lesson_id = $1`,
+            [id]
+        );
+        updatedMaterials = existingMaterials.map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            type: m.type,
+            url: m.url,
+        }));
+    }
+
     const lesson = {
         id: rows[0].id,
         moduleId: rows[0].module_id,
@@ -850,6 +890,7 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         videoUrl: rows[0].video_url,
         status: rows[0].status,
         sortOrder: rows[0].sort_order,
+        materials: updatedMaterials,
     };
 
     return res.status(200).json(successResponse(lesson));

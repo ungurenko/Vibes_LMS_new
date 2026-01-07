@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Palette, 
   Terminal, 
@@ -78,22 +78,121 @@ interface AdminContentProps {
     onUpdateModules?: (modules: CourseModule[]) => void;
 }
 
-const AdminContent: React.FC<AdminContentProps> = ({ modules = COURSE_MODULES, onUpdateModules }) => {
+const AdminContent: React.FC<AdminContentProps> = () => {
   const [activeTab, setActiveTab] = useState<ContentTab>('lessons');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
-  
+
   // Delete State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: ContentTab | 'modules' } | null>(null);
 
   // Data State
-  // Note: lessons/modules state is now managed via props (lifted up), but other tabs are still local for this mock
-  const [styles, setStyles] = useState<AdminStyle[]>(INITIAL_STYLES);
-  const [prompts, setPrompts] = useState<AdminPrompt[]>(INITIAL_PROMPTS);
-  const [glossary, setGlossary] = useState<GlossaryTerm[]>(GLOSSARY_DATA);
-  const [roadmaps, setRoadmaps] = useState<AdminRoadmap[]>(INITIAL_ROADMAPS);
-  
+  const [modules, setModules] = useState<CourseModule[]>([]);
+  const [styles, setStyles] = useState<AdminStyle[]>([]);
+  const [prompts, setPrompts] = useState<AdminPrompt[]>([]);
+  const [glossary, setGlossary] = useState<GlossaryTerm[]>([]);
+  const [roadmaps, setRoadmaps] = useState<AdminRoadmap[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- API Functions ---
+
+  const loadLessons = async () => {
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/admin?resource=lessons', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setModules(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading lessons:', error);
+    }
+  };
+
+  const loadStyles = async () => {
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/admin-content?type=styles', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setStyles(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading styles:', error);
+      // Fallback to mock data if API fails
+      setStyles(INITIAL_STYLES);
+    }
+  };
+
+  const loadPrompts = async () => {
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/admin-content?type=prompts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setPrompts(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading prompts:', error);
+      setPrompts(INITIAL_PROMPTS);
+    }
+  };
+
+  const loadGlossary = async () => {
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/admin-content?type=glossary', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setGlossary(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading glossary:', error);
+      setGlossary(GLOSSARY_DATA);
+    }
+  };
+
+  const loadRoadmaps = async () => {
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/admin-content?type=roadmaps', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setRoadmaps(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading roadmaps:', error);
+      setRoadmaps(INITIAL_ROADMAPS);
+    }
+  };
+
+  // Load data on mount
+  useEffect(() => {
+    const loadAllData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        loadLessons(),
+        loadStyles(),
+        loadPrompts(),
+        loadGlossary(),
+        loadRoadmaps()
+      ]);
+      setIsLoading(false);
+    };
+    loadAllData();
+  }, []);
+
   // --- Helpers ---
 
   const confirmDelete = (id: string, type: ContentTab | 'modules') => {
@@ -101,28 +200,62 @@ const AdminContent: React.FC<AdminContentProps> = ({ modules = COURSE_MODULES, o
       setIsDeleteModalOpen(true);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!itemToDelete) return;
     const { id, type } = itemToDelete;
 
-    if (type === 'modules' && onUpdateModules) {
-        onUpdateModules(modules.filter(m => m.id !== id));
-    }
-    if (type === 'lessons' && onUpdateModules) {
-        // Find module containing the lesson and remove it
-        const newModules = modules.map(m => ({
-            ...m,
-            lessons: m.lessons.filter(l => l.id !== id)
-        }));
-        onUpdateModules(newModules);
-    }
-    if (type === 'styles') setStyles(prev => prev.filter(i => i.id !== id));
-    if (type === 'prompts') setPrompts(prev => prev.filter(i => i.id !== id));
-    if (type === 'glossary') setGlossary(prev => prev.filter(i => i.id !== id));
-    if (type === 'roadmaps') setRoadmaps(prev => prev.filter(i => i.id !== id));
+    try {
+      const token = localStorage.getItem('vibes_token');
 
-    setIsDeleteModalOpen(false);
-    setItemToDelete(null);
+      if (type === 'modules') {
+        await fetch(`/api/admin?resource=lessons&module=modules&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await loadLessons();
+      }
+      else if (type === 'lessons') {
+        await fetch(`/api/admin?resource=lessons&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await loadLessons();
+      }
+      else if (type === 'styles') {
+        await fetch(`/api/admin-content?type=styles&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setStyles(prev => prev.filter(i => i.id !== id));
+      }
+      else if (type === 'prompts') {
+        await fetch(`/api/admin-content?type=prompts&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setPrompts(prev => prev.filter(i => i.id !== id));
+      }
+      else if (type === 'glossary') {
+        await fetch(`/api/admin-content?type=glossary&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setGlossary(prev => prev.filter(i => i.id !== id));
+      }
+      else if (type === 'roadmaps') {
+        await fetch(`/api/admin-content?type=roadmaps&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setRoadmaps(prev => prev.filter(i => i.id !== id));
+      }
+
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Ошибка при удалении');
+    }
   };
 
   const openEditor = (item: any | null = null) => {
@@ -158,75 +291,86 @@ const AdminContent: React.FC<AdminContentProps> = ({ modules = COURSE_MODULES, o
     setEditingItem((prev: any) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
 
-    if (activeTab === 'lessons' && onUpdateModules) {
-        const newItem = { ...editingItem };
-        
-        // Logic to update the nested structure
-        const newModules = modules.map(mod => {
-            // Case 1: Editing existing lesson in this module
-            const existingLessonIndex = mod.lessons.findIndex(l => l.id === newItem.id);
-            if (existingLessonIndex >= 0) {
-                // Check if moved to another module
-                if (newItem.moduleId && newItem.moduleId !== mod.id) {
-                    // Remove from here
-                    return { ...mod, lessons: mod.lessons.filter(l => l.id !== newItem.id) };
-                } else {
-                    // Update here
-                    const updatedLessons = [...mod.lessons];
-                    updatedLessons[existingLessonIndex] = { ...updatedLessons[existingLessonIndex], ...newItem };
-                    return { ...mod, lessons: updatedLessons };
-                }
-            }
-            
-            // Case 2: Adding new lesson to this module or moving lesson TO this module
-            if (mod.id === newItem.moduleId) {
-                // If it wasn't here before (handled above), add it
-                // We generate ID if missing
-                const lessonToAdd = {
-                    ...newItem,
-                    id: newItem.id || Date.now().toString(),
-                    status: newItem.status || 'draft',
-                    materials: newItem.materials || [],
-                    tasks: newItem.tasks || []
-                };
-                return { ...mod, lessons: [...mod.lessons, lessonToAdd] };
-            }
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const isUpdate = !!editingItem.id;
 
-            return mod;
+      if (activeTab === 'lessons') {
+        const response = await fetch('/api/admin?resource=lessons', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
         });
-        
-        onUpdateModules(newModules);
-    } else {
-        // Local state handlers for other tabs
-        const saveItem = (prevItems: any[]) => {
-            const index = prevItems.findIndex(i => i.id === editingItem.id);
-            if (index >= 0) {
-                const newItems = [...prevItems];
-                newItems[index] = { ...newItems[index], ...editingItem };
-                return newItems;
-            } else {
-                const newItem = { 
-                    ...editingItem, 
-                    id: editingItem.id || Date.now().toString(),
-                    status: editingItem.status || 'draft',
-                    views: 0, completions: 0, usageCount: 0, copyCount: 0,
-                    activeUsers: 0
-                };
-                return [...prevItems, newItem];
-            }
-        };
 
-        if (activeTab === 'styles') setStyles(prev => saveItem(prev));
-        if (activeTab === 'prompts') setPrompts(prev => saveItem(prev));
-        if (activeTab === 'glossary') setGlossary(prev => saveItem(prev));
-        if (activeTab === 'roadmaps') setRoadmaps(prev => saveItem(prev));
+        if (!response.ok) throw new Error('Failed to save lesson');
+
+        await loadLessons();
+      }
+      else if (activeTab === 'styles') {
+        const response = await fetch('/api/admin-content?type=styles', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save style');
+        await loadStyles();
+      }
+      else if (activeTab === 'prompts') {
+        const response = await fetch('/api/admin-content?type=prompts', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save prompt');
+        await loadPrompts();
+      }
+      else if (activeTab === 'glossary') {
+        const response = await fetch('/api/admin-content?type=glossary', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save glossary term');
+        await loadGlossary();
+      }
+      else if (activeTab === 'roadmaps') {
+        const response = await fetch('/api/admin-content?type=roadmaps', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save roadmap');
+        await loadRoadmaps();
+      }
+
+      setIsEditorOpen(false);
+    } catch (error) {
+      console.error('Error saving item:', error);
+      alert('Ошибка при сохранении');
     }
-
-    setIsEditorOpen(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,18 +388,19 @@ const AdminContent: React.FC<AdminContentProps> = ({ modules = COURSE_MODULES, o
 
   const renderLessonsView = () => {
     // When reordering modules
-    const handleReorderModules = (newOrder: CourseModule[]) => {
-        if (onUpdateModules) onUpdateModules(newOrder);
+    const handleReorderModules = async (newOrder: CourseModule[]) => {
+        setModules(newOrder);
+        // TODO: Optionally, call API to save new order
+        // For now, just update local state
     };
 
     // When reordering lessons inside a module
-    const handleReorderLessons = (moduleId: string, newModuleLessons: Lesson[]) => {
-        if (onUpdateModules) {
-            const newModules = modules.map(m => 
-                m.id === moduleId ? { ...m, lessons: newModuleLessons } : m
-            );
-            onUpdateModules(newModules);
-        }
+    const handleReorderLessons = async (moduleId: string, newModuleLessons: Lesson[]) => {
+        const newModules = modules.map(m =>
+            m.id === moduleId ? { ...m, lessons: newModuleLessons } : m
+        );
+        setModules(newModules);
+        // TODO: Optionally, call API to save new order
     };
 
     return (

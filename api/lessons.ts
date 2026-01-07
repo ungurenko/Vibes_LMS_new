@@ -57,7 +57,7 @@ export default async function handler(
 
         // Получаем прогресс пользователя
         const { rows: progress } = await query(
-            `SELECT lesson_id, completed_at, last_watched_position
+            `SELECT lesson_id, completed_at
        FROM user_lesson_progress
        WHERE user_id = $1`,
             [userId]
@@ -68,7 +68,6 @@ export default async function handler(
         for (const p of progress) {
             progressMap.set(p.lesson_id, {
                 completed: !!p.completed_at,
-                lastWatchedPosition: p.last_watched_position,
             });
         }
 
@@ -105,7 +104,6 @@ export default async function handler(
                 status: lesson.status,
                 materials: materialsByLesson.get(lesson.id) || [],
                 completed: userProgress.completed,
-                lastWatchedPosition: userProgress.lastWatchedPosition,
             });
         }
 
