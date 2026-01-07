@@ -1,5 +1,5 @@
 /**
- * Catch-all route for /api/content/*
+ * Content API endpoint
  *
  * Handles:
  * - GET /api/content/styles
@@ -9,12 +9,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../_lib/db.js';
+import { query } from './_lib/db.js';
 import {
   getUserFromRequest,
   successResponse,
   errorResponse,
-} from '../_lib/auth.js';
+} from './_lib/auth.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -35,8 +35,10 @@ export default async function handler(
     return res.status(401).json(errorResponse('Не авторизован'));
   }
 
-  const { slug } = req.query;
-  const contentType = Array.isArray(slug) ? slug[0] : slug;
+  // Извлекаем content type из URL: /api/content/styles → 'styles'
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const contentType = pathParts[pathParts.length - 1]; // последний сегмент
 
   switch (contentType) {
     case 'styles':
@@ -47,6 +49,8 @@ export default async function handler(
       return getGlossary(req, res);
     case 'roadmaps':
       return getRoadmaps(req, res, tokenData);
+    case 'content':
+      return res.status(400).json(errorResponse('Content type required'));
     default:
       return res.status(404).json(errorResponse('Content type not found'));
   }

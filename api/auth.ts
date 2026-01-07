@@ -1,5 +1,5 @@
 /**
- * Catch-all route for /api/auth/*
+ * Auth API endpoint
  *
  * Handles:
  * - POST /api/auth/login
@@ -8,7 +8,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query, getClient } from '../_lib/db.js';
+import { query, getClient } from './_lib/db.js';
 import {
   createToken,
   comparePassword,
@@ -16,7 +16,7 @@ import {
   getUserFromRequest,
   successResponse,
   errorResponse,
-} from '../_lib/auth.js';
+} from './_lib/auth.js';
 
 // Interfaces
 interface LoginRequest {
@@ -69,8 +69,10 @@ export default async function handler(
     return res.status(200).end();
   }
 
-  const { slug } = req.query;
-  const endpoint = Array.isArray(slug) ? slug[0] : slug;
+  // Извлекаем endpoint из URL: /api/auth/login → 'login'
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const endpoint = pathParts[pathParts.length - 1]; // последний сегмент
 
   switch (endpoint) {
     case 'login':
@@ -79,6 +81,8 @@ export default async function handler(
       return handleRegister(req, res);
     case 'me':
       return handleMe(req, res);
+    case 'auth':
+      return res.status(400).json(errorResponse('Endpoint required'));
     default:
       return res.status(404).json(errorResponse('Auth endpoint not found'));
   }
