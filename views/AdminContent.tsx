@@ -124,8 +124,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
       }
     } catch (error) {
       console.error('Error loading styles:', error);
-      // Fallback to mock data if API fails
-      setStyles(INITIAL_STYLES);
+      setStyles([]);
     }
   };
 
@@ -141,7 +140,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
       }
     } catch (error) {
       console.error('Error loading prompts:', error);
-      setPrompts(INITIAL_PROMPTS);
+      setPrompts([]);
     }
   };
 
@@ -735,6 +734,15 @@ const AdminContent: React.FC<AdminContentProps> = () => {
          {activeTab === 'styles' && (
              <>
                 <div>
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Краткое описание</label>
+                   <textarea
+                        rows={2}
+                        value={editingItem?.description || ''}
+                        onChange={(e) => updateField('description', e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10"
+                    />
+                </div>
+                <div>
                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Изображение</label>
                    <div className="flex gap-4 items-start">
                       <div className="w-24 h-24 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-zinc-400 shrink-0 overflow-hidden relative group">
@@ -745,7 +753,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                          )}
                       </div>
                       <div className="flex-1 space-y-3">
-                         <Input 
+                         <Input
                             value={editingItem?.image || ''}
                             onChange={(e) => updateField('image', e.target.value)}
                             placeholder="https://..."
@@ -762,19 +770,86 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                    </div>
                 </div>
                 <div>
-                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Промпт</label>
-                   <textarea 
-                        rows={6} 
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Промпт для AI *</label>
+                   <textarea
+                        rows={6}
                         value={editingItem?.prompt || ''}
                         onChange={(e) => updateField('prompt', e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 font-mono text-sm" 
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 font-mono text-sm"
+                        required
                     />
                 </div>
-                <Select 
+                <div>
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Подробное описание</label>
+                   <textarea
+                        rows={4}
+                        value={editingItem?.longDescription || ''}
+                        onChange={(e) => updateField('longDescription', e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10"
+                    />
+                </div>
+                <Input
+                    label="Градиент (Tailwind классы)"
+                    value={editingItem?.gradient || ''}
+                    onChange={(e) => updateField('gradient', e.target.value)}
+                    placeholder="from-amber-50 to-rose-50"
+                />
+                <Input
+                    label="Теги (через запятую)"
+                    value={editingItem?.tags?.join(', ') || ''}
+                    onChange={(e) => updateField('tags', e.target.value.split(',').map((t: string) => t.trim()).filter(Boolean))}
+                    placeholder="minimalism, clean, modern"
+                />
+                <Select
                     label="Категория"
                     value={editingItem?.category || 'Минимализм'}
                     onChange={(e) => updateField('category', e.target.value)}
                     options={['Светлые', 'Тёмные', 'Яркие', 'Минимализм'].map(c => ({ value: c, label: c }))}
+                />
+             </>
+         )}
+
+         {activeTab === 'prompts' && (
+             <>
+                <div>
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Краткое описание</label>
+                   <textarea
+                        rows={2}
+                        value={editingItem?.description || ''}
+                        onChange={(e) => updateField('description', e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10"
+                    />
+                </div>
+                <div>
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Текст промпта *</label>
+                   <textarea
+                        rows={8}
+                        value={editingItem?.content || ''}
+                        onChange={(e) => updateField('content', e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 font-mono text-sm"
+                        required
+                    />
+                </div>
+                <div>
+                   <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Инструкция по использованию</label>
+                   <textarea
+                        rows={3}
+                        value={editingItem?.usage || ''}
+                        onChange={(e) => updateField('usage', e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10"
+                    />
+                </div>
+                <Select
+                    label="Категория"
+                    value={editingItem?.category || 'Лендинг'}
+                    onChange={(e) => updateField('category', e.target.value)}
+                    options={['Лендинг', 'Веб-сервис', 'Дизайн', 'Фиксы', 'Функции', 'API', 'Оптимизация'].map(c => ({ value: c, label: c }))}
+                />
+                <Input
+                    label="Теги (через запятую)"
+                    value={editingItem?.tags?.join(', ') || ''}
+                    onChange={(e) => updateField('tags', e.target.value.split(',').map((t: string) => t.trim()).filter(Boolean))}
+                    placeholder="landing, hero, cta"
                 />
              </>
          )}

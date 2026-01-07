@@ -4,6 +4,7 @@ import { Copy, Check, Eye, X, Palette, Sparkles, MoveRight } from 'lucide-react'
 import { StyleCategory, StyleCard } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
@@ -20,16 +21,11 @@ const StyleLibrary: React.FC = () => {
     const fetchStyles = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/content/styles');
-
-        if (!response.ok) return;
-
-        const result = await response.json();
-        if (result.success && result.data) {
-          setStyles(result.data);
-        }
+        const data = await fetchWithAuthGet<StyleCard[]>('/api/content/styles');
+        setStyles(data);
       } catch (error) {
         console.error('Error fetching styles:', error);
+        setStyles([]);
       } finally {
         setIsLoading(false);
       }

@@ -76,19 +76,24 @@ async function handleStyles(req: VercelRequest, res: VercelResponse) {
 
 async function getStyles(req: VercelRequest, res: VercelResponse) {
     const { rows } = await query(
-        `SELECT id, title, description, category, css_code, preview_html, status
+        `SELECT id, name, description, long_description, gradient, image_url,
+                prompt, tags, category, usage_count, status, sort_order
      FROM style_cards
      WHERE deleted_at IS NULL
-     ORDER BY category, title`
+     ORDER BY category, sort_order, name`
     );
 
     const styles = rows.map((row: any) => ({
         id: row.id,
-        title: row.title,
+        name: row.name,
         description: row.description,
+        longDescription: row.long_description,
+        gradient: row.gradient,
+        image: row.image_url,
+        prompt: row.prompt,
+        tags: row.tags || [],
         category: row.category,
-        cssCode: row.css_code,
-        previewHtml: row.preview_html,
+        usageCount: row.usage_count,
         status: row.status,
     }));
 
@@ -96,33 +101,37 @@ async function getStyles(req: VercelRequest, res: VercelResponse) {
 }
 
 async function createStyle(req: VercelRequest, res: VercelResponse) {
-    const { title, description, category, cssCode, previewHtml } = req.body;
+    const { name, description, longDescription, gradient, image, prompt, category, tags } = req.body;
 
-    if (!title) {
-        return res.status(400).json(errorResponse('title обязателен'));
+    if (!name || !prompt) {
+        return res.status(400).json(errorResponse('name и prompt обязательны'));
     }
 
     const { rows } = await query(
-        `INSERT INTO style_cards (title, description, category, css_code, preview_html)
-     VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO style_cards (name, description, long_description, gradient, image_url, prompt, category, tags, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'published')
      RETURNING *`,
-        [title, description, category, cssCode, previewHtml]
+        [name, description, longDescription, gradient, image, prompt, category, tags || []]
     );
 
     const style = {
         id: rows[0].id,
-        title: rows[0].title,
+        name: rows[0].name,
         description: rows[0].description,
+        longDescription: rows[0].long_description,
+        gradient: rows[0].gradient,
+        image: rows[0].image_url,
+        prompt: rows[0].prompt,
+        tags: rows[0].tags || [],
         category: rows[0].category,
-        cssCode: rows[0].css_code,
-        previewHtml: rows[0].preview_html,
+        status: rows[0].status,
     };
 
     return res.status(201).json(successResponse(style));
 }
 
 async function updateStyle(req: VercelRequest, res: VercelResponse) {
-    const { id, title, description, category, cssCode, previewHtml, status } = req.body;
+    const { id, name, description, longDescription, gradient, image, prompt, category, tags, status } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID стиля обязателен'));
@@ -130,16 +139,19 @@ async function updateStyle(req: VercelRequest, res: VercelResponse) {
 
     const { rows, rowCount } = await query(
         `UPDATE style_cards SET
-      title = COALESCE($1, title),
+      name = COALESCE($1, name),
       description = COALESCE($2, description),
-      category = COALESCE($3, category),
-      css_code = COALESCE($4, css_code),
-      preview_html = COALESCE($5, preview_html),
-      status = COALESCE($6, status),
+      long_description = COALESCE($3, long_description),
+      gradient = COALESCE($4, gradient),
+      image_url = COALESCE($5, image_url),
+      prompt = COALESCE($6, prompt),
+      category = COALESCE($7, category),
+      tags = COALESCE($8, tags),
+      status = COALESCE($9, status),
       updated_at = NOW()
-    WHERE id = $7 AND deleted_at IS NULL
+    WHERE id = $10 AND deleted_at IS NULL
     RETURNING *`,
-        [title, description, category, cssCode, previewHtml, status, id]
+        [name, description, longDescription, gradient, image, prompt, category, tags, status, id]
     );
 
     if (rowCount === 0) {
@@ -148,11 +160,14 @@ async function updateStyle(req: VercelRequest, res: VercelResponse) {
 
     const style = {
         id: rows[0].id,
-        title: rows[0].title,
+        name: rows[0].name,
         description: rows[0].description,
+        longDescription: rows[0].long_description,
+        gradient: rows[0].gradient,
+        image: rows[0].image_url,
+        prompt: rows[0].prompt,
+        tags: rows[0].tags || [],
         category: rows[0].category,
-        cssCode: rows[0].css_code,
-        previewHtml: rows[0].preview_html,
         status: rows[0].status,
     };
 
@@ -311,50 +326,58 @@ async function handlePrompts(req: VercelRequest, res: VercelResponse) {
 
 async function getPrompts(req: VercelRequest, res: VercelResponse) {
     const { rows } = await query(
-        `SELECT id, title, description, category, prompt_text
+        `SELECT id, title, description, content, usage_instruction,
+                category, tags, copy_count, status, sort_order
      FROM prompts
      WHERE deleted_at IS NULL
-     ORDER BY category, title`
+     ORDER BY category, sort_order, title`
     );
 
     const prompts = rows.map((row: any) => ({
         id: row.id,
         title: row.title,
         description: row.description,
+        content: row.content,
+        usage: row.usage_instruction,
         category: row.category,
-        promptText: row.prompt_text,
+        tags: row.tags || [],
+        copyCount: row.copy_count,
+        status: row.status,
     }));
 
     return res.status(200).json(successResponse(prompts));
 }
 
 async function createPrompt(req: VercelRequest, res: VercelResponse) {
-    const { title, description, category, promptText } = req.body;
+    const { title, description, content, usage, category, tags } = req.body;
 
-    if (!title || !promptText) {
-        return res.status(400).json(errorResponse('title и promptText обязательны'));
+    if (!title || !content) {
+        return res.status(400).json(errorResponse('title и content обязательны'));
     }
 
     const { rows } = await query(
-        `INSERT INTO prompts (title, description, category, prompt_text)
-     VALUES ($1, $2, $3, $4)
+        `INSERT INTO prompts (title, description, content, usage_instruction, category, tags, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'published')
      RETURNING *`,
-        [title, description, category, promptText]
+        [title, description, content, usage, category, tags || []]
     );
 
     const prompt = {
         id: rows[0].id,
         title: rows[0].title,
         description: rows[0].description,
+        content: rows[0].content,
+        usage: rows[0].usage_instruction,
         category: rows[0].category,
-        promptText: rows[0].prompt_text,
+        tags: rows[0].tags || [],
+        status: rows[0].status,
     };
 
     return res.status(201).json(successResponse(prompt));
 }
 
 async function updatePrompt(req: VercelRequest, res: VercelResponse) {
-    const { id, title, description, category, promptText } = req.body;
+    const { id, title, description, content, usage, category, tags, status } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID промпта обязателен'));
@@ -364,12 +387,15 @@ async function updatePrompt(req: VercelRequest, res: VercelResponse) {
         `UPDATE prompts SET
       title = COALESCE($1, title),
       description = COALESCE($2, description),
-      category = COALESCE($3, category),
-      prompt_text = COALESCE($4, prompt_text),
+      content = COALESCE($3, content),
+      usage_instruction = COALESCE($4, usage_instruction),
+      category = COALESCE($5, category),
+      tags = COALESCE($6, tags),
+      status = COALESCE($7, status),
       updated_at = NOW()
-    WHERE id = $5 AND deleted_at IS NULL
+    WHERE id = $8 AND deleted_at IS NULL
     RETURNING *`,
-        [title, description, category, promptText, id]
+        [title, description, content, usage, category, tags, status, id]
     );
 
     if (rowCount === 0) {
@@ -380,8 +406,11 @@ async function updatePrompt(req: VercelRequest, res: VercelResponse) {
         id: rows[0].id,
         title: rows[0].title,
         description: rows[0].description,
+        content: rows[0].content,
+        usage: rows[0].usage_instruction,
         category: rows[0].category,
-        promptText: rows[0].prompt_text,
+        tags: rows[0].tags || [],
+        status: rows[0].status,
     };
 
     return res.status(200).json(successResponse(prompt));

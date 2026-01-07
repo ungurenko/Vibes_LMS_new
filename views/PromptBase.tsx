@@ -12,6 +12,7 @@ import {
 import { PromptCategory, PromptItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 // --- Constants & Types ---
 
@@ -43,16 +44,11 @@ const PromptBase: React.FC = () => {
         const fetchPrompts = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch('/api/content/prompts');
-
-                if (!response.ok) return;
-
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setPrompts(result.data);
-                }
+                const data = await fetchWithAuthGet<PromptItem[]>('/api/content/prompts');
+                setPrompts(data);
             } catch (error) {
                 console.error('Error fetching prompts:', error);
+                setPrompts([]);
             } finally {
                 setIsLoading(false);
             }

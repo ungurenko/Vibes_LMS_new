@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Roadmap, RoadmapCategory } from '../types';
 import { useSound } from '../SoundContext';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 // Types for local storage
 type ProgressMap = Record<string, string[]>; // roadmapId -> array of completed step IDs
@@ -34,16 +35,11 @@ const Roadmaps: React.FC = () => {
         const fetchRoadmaps = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch('/api/content/roadmaps');
-
-                if (!response.ok) return;
-
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setRoadmaps(result.data);
-                }
+                const data = await fetchWithAuthGet<Roadmap[]>('/api/content/roadmaps');
+                setRoadmaps(data);
             } catch (error) {
                 console.error('Error fetching roadmaps:', error);
+                setRoadmaps([]);
             } finally {
                 setIsLoading(false);
             }

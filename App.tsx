@@ -116,6 +116,23 @@ const AppContent: React.FC = () => {
         } else {
             setView('login');
         }
+
+        // Обработчик события истёкшего токена
+        const handleAuthExpired = () => {
+            console.log('Auth token expired - logging out');
+            localStorage.removeItem('vibes_token');
+            setCurrentUser(null);
+            setMode('student');
+            setActiveTab('dashboard');
+            setView('login');
+        };
+
+        window.addEventListener('auth:expired', handleAuthExpired);
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('auth:expired', handleAuthExpired);
+        };
     }, []);
 
     // 2. Persist Theme

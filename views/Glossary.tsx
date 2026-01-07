@@ -4,6 +4,7 @@ import { Search, Hash, BookOpen, ArrowUp, Sparkles, Copy, MessageSquare, Share2,
 import { GlossaryCategory, GlossaryTerm, TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 const CATEGORIES: GlossaryCategory[] = ['Все', 'Базовые', 'Код', 'Инструменты', 'API', 'Ошибки', 'Вайб-кодинг'];
 
@@ -36,21 +37,17 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
       const fetchGlossary = async () => {
          try {
             setIsLoading(true);
-            const response = await fetch('/api/content/glossary');
+            const data = await fetchWithAuthGet<GlossaryTerm[]>('/api/content/glossary');
+            setGlossaryData(data);
 
-            if (!response.ok) return;
-
-            const result = await response.json();
-            if (result.success && result.data) {
-               setGlossaryData(result.data);
-               // Set random term after data loaded
-               if (result.data.length > 0) {
-                  const randomIndex = Math.floor(Math.random() * result.data.length);
-                  setRandomTerm(result.data[randomIndex]);
-               }
+            // Set random term after data loaded
+            if (data.length > 0) {
+               const randomIndex = Math.floor(Math.random() * data.length);
+               setRandomTerm(data[randomIndex]);
             }
          } catch (error) {
             console.error('Error fetching glossary:', error);
+            setGlossaryData([]);
          } finally {
             setIsLoading(false);
          }
