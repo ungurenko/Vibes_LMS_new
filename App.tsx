@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Home from './views/Home';
@@ -40,7 +40,7 @@ const initializeStudents = (): Student[] => {
 
 const AppContent: React.FC = () => {
     // --- Auth & Routing State ---
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<Student | null>(null);
     const [inviteCodeFromUrl, setInviteCodeFromUrl] = useState<string | null>(null);
     const [view, setView] = useState<'login' | 'register' | 'app' | 'reset-password' | 'onboarding'>('login');
 
@@ -57,15 +57,6 @@ const AppContent: React.FC = () => {
     const [mode, setMode] = useState<'student' | 'admin'>('student');
 
     const [assistantInitialMessage, setAssistantInitialMessage] = useState<string | null>(null);
-
-    // --- Derived State ---
-    const currentUser = useMemo(() => {
-        if (!currentUserId) return null;
-        if (currentUserId === 'admin') {
-            return { name: 'Admin', email: 'ungurenkos@icloud.com', avatar: 'https://i.pravatar.cc/150?u=admin', id: 'admin', status: 'active', progress: 0, currentModule: '', lastActive: '', joinedDate: '', projects: {} } as Student;
-        }
-        return students.find(s => s.id === currentUserId) || null;
-    }, [students, currentUserId]);
 
     // Убрали сохранение modules в localStorage
 
@@ -92,7 +83,19 @@ const AppContent: React.FC = () => {
                 .then(result => {
                     if (result.success) {
                         const user = result.data;
-                        setCurrentUserId(user.id);
+                        // Маппим поля из API в формат Student
+                        setCurrentUser({
+                            id: user.id,
+                            name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email,
+                            email: user.email,
+                            avatar: user.avatarUrl || `https://ui-avatars.com/api/?name=${user.firstName || 'U'}&background=8b5cf6&color=fff`,
+                            status: 'active',
+                            progress: 0,
+                            currentModule: '',
+                            lastActive: 'Сейчас',
+                            joinedDate: user.createdAt || new Date().toISOString(),
+                            projects: {},
+                        });
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
@@ -161,7 +164,19 @@ const AppContent: React.FC = () => {
                 localStorage.setItem('vibes_token', result.data.token);
 
                 const user = result.data.user;
-                setCurrentUserId(user.id);
+                // Маппим поля из API в формат Student
+                setCurrentUser({
+                    id: user.id,
+                    name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email,
+                    email: user.email,
+                    avatar: user.avatarUrl || `https://ui-avatars.com/api/?name=${user.firstName || 'U'}&background=8b5cf6&color=fff`,
+                    status: 'active',
+                    progress: 0,
+                    currentModule: '',
+                    lastActive: 'Сейчас',
+                    joinedDate: user.createdAt || new Date().toISOString(),
+                    projects: {},
+                });
 
                 if (user.role === 'admin') {
                     setMode('admin');
@@ -211,7 +226,7 @@ const AppContent: React.FC = () => {
         };
 
         setStudents(prev => [...prev, newUser]);
-        setCurrentUserId(newId);
+        setCurrentUser(newUser);
         setMode('student');
         localStorage.setItem('vibes_user_id', newId);
         window.history.replaceState({}, '', window.location.pathname);
@@ -219,8 +234,8 @@ const AppContent: React.FC = () => {
     };
 
     const completeOnboarding = () => {
-        if (currentUserId) {
-            localStorage.setItem(`vibes_onboarded_${currentUserId}`, 'true');
+        if (currentUser?.id) {
+            localStorage.setItem(`vibes_onboarded_${currentUser.id}`, 'true');
             setView('app');
         }
     };
@@ -235,7 +250,7 @@ const AppContent: React.FC = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('vibes_token');
-        setCurrentUserId(null);
+        setCurrentUser(null);
         setMode('student');
         setActiveTab('dashboard');
         setView('login');
