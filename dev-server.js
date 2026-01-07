@@ -35,13 +35,54 @@ if (fs.existsSync(envPath)) {
   console.log('[DEV SERVER] Environment variables loaded from .env.local');
 }
 
-// Динамически загружаем и запускаем API routes
+// Динамически загружаем и запускаем API routes (с поддержкой Vercel dynamic routes)
 async function loadApiRoute(path, req, res) {
   try {
-    const routePath = join(__dirname, 'api', `${path}.ts`);
+    let routePath = join(__dirname, 'api', `${path}.ts`);
+    let dynamicParams = {};
+
+    // Если прямой файл не существует, ищем динамический роут [param].ts
+    if (!fs.existsSync(routePath)) {
+      const parts = path.split('/');
+
+      // Проверяем динамические роуты на каждом уровне
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const staticParts = parts.slice(0, i);
+        const dynamicPart = parts[i];
+
+        // Ищем файлы с паттерном [param]
+        const dirPath = join(__dirname, 'api', ...staticParts);
+
+        if (fs.existsSync(dirPath)) {
+          const files = fs.readdirSync(dirPath);
+          const dynamicFile = files.find(f => f.startsWith('[') && f.endsWith('].ts'));
+
+          if (dynamicFile) {
+            // Извлекаем имя параметра из [param].ts
+            const paramName = dynamicFile.slice(1, -4); // убираем [ и ].ts
+            dynamicParams[paramName] = dynamicPart;
+
+            routePath = join(dirPath, dynamicFile);
+            break;
+          }
+        }
+      }
+    }
 
     if (!fs.existsSync(routePath)) {
       return res.status(404).json({ error: 'API route not found' });
+    }
+
+    // Добавляем динамические параметры в req.query
+    // Object.assign не работает с Express req.query, используем defineProperty
+    if (Object.keys(dynamicParams).length > 0) {
+      const newQuery = { ...req.query, ...dynamicParams };
+      Object.defineProperty(req, 'query', {
+        value: newQuery,
+        writable: true,
+        configurable: true
+      });
+      console.log(`[DEV SERVER] Dynamic params:`, dynamicParams);
     }
 
     // Используем dynamic import для TypeScript файлов

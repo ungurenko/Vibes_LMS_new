@@ -1,7 +1,9 @@
 /**
- * GET /api/stages
+ * API для работы со стадиями дашборда
  *
- * Получить стадии дашборда с задачами и прогрессом пользователя
+ * GET    /api/stages                      - Получить стадии с задачами и прогрессом
+ * POST   /api/stages?action=complete-task - Отметить задачу как выполненную
+ * DELETE /api/stages?action=complete-task - Убрать отметку выполнения задачи
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -16,15 +18,23 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  if (req.method !== 'GET') {
-    return res.status(405).json(errorResponse('Method not allowed'));
-  }
-
   try {
     // Проверяем авторизацию
     const tokenData = getUserFromRequest(req);
     if (!tokenData) {
       return res.status(401).json(errorResponse('Не авторизован'));
+    }
+
+    // Роутинг по действиям
+    const { action } = req.query;
+
+    if (action === 'complete-task') {
+      return await handleTaskCompletion(req, res, tokenData.userId);
+    }
+
+    // GET - получить стадии
+    if (req.method !== 'GET') {
+      return res.status(405).json(errorResponse('Method not allowed'));
     }
 
     // Получаем стадии
@@ -98,4 +108,64 @@ export default async function handler(
     console.error('Get stages error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
+}
+
+// ==================== TASK COMPLETION ====================
+
+async function handleTaskCompletion(
+  req: VercelRequest,
+  res: VercelResponse,
+  userId: string
+) {
+  const { taskId } = req.body;
+
+  if (!taskId) {
+    return res.status(400).json(errorResponse('taskId обязателен'));
+  }
+
+  try {
+    switch (req.method) {
+      case 'POST':
+        return await completeTask(res, userId, taskId);
+      case 'DELETE':
+        return await uncompleteTask(res, userId, taskId);
+      default:
+        return res.status(405).json(errorResponse('Method not allowed'));
+    }
+  } catch (error) {
+    console.error('Task completion error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// POST - Отметить задачу как выполненную
+async function completeTask(
+  res: VercelResponse,
+  userId: string,
+  taskId: string
+) {
+  // Используем INSERT ... ON CONFLICT для идемпотентности
+  await query(
+    `INSERT INTO user_stage_task_progress (user_id, task_id, completed_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (user_id, task_id) DO NOTHING`,
+    [userId, taskId]
+  );
+
+  return res.status(200).json(successResponse({ completed: true }));
+}
+
+// DELETE - Убрать отметку выполнения
+async function uncompleteTask(
+  res: VercelResponse,
+  userId: string,
+  taskId: string
+) {
+  await query(
+    `DELETE FROM user_stage_task_progress
+     WHERE user_id = $1 AND task_id = $2`,
+    [userId, taskId]
+  );
+
+  return res.status(200).json(successResponse({ completed: false }));
 }
