@@ -6,7 +6,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { OpenRouter } from '@openrouter/sdk';
-import { getUserFromRequest, errorResponse } from './_lib/auth.js';
+import { getUserFromRequest, errorResponse } from '../_lib/auth.js';
 
 export default async function handler(
   req: VercelRequest,
