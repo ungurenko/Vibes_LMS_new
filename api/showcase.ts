@@ -5,12 +5,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../_lib/db.js';
+import { query } from './_lib/db.js';
 import {
   getUserFromRequest,
   successResponse,
   errorResponse,
-} from '../_lib/auth.js';
+} from './_lib/auth.js';
 
 export default async function handler(
   req: VercelRequest,
