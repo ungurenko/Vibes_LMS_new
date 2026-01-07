@@ -78,19 +78,38 @@ const AppContent: React.FC = () => {
 
         const params = new URLSearchParams(window.location.search);
         const inviteParam = params.get('invite');
-        const savedUserId = localStorage.getItem('vibes_user_id');
+        const savedToken = localStorage.getItem('vibes_token');
 
         if (inviteParam) {
             setInviteCodeFromUrl(inviteParam);
             setView('register');
-        } else if (savedUserId) {
-            setCurrentUserId(savedUserId);
-            if (savedUserId === 'admin') {
-                setMode('admin');
-            } else {
-                setMode('student');
-            }
-            setView('app');
+        } else if (savedToken) {
+            // Проверяем токен через API
+            fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${savedToken}` }
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        const user = result.data;
+                        setCurrentUserId(user.id);
+                        if (user.role === 'admin') {
+                            setMode('admin');
+                            setActiveTab('admin-students');
+                        } else {
+                            setMode('student');
+                            setActiveTab('dashboard');
+                        }
+                        setView('app');
+                    } else {
+                        // Токен невалидный - удаляем и показываем логин
+                        localStorage.removeItem('vibes_token');
+                        setView('login');
+                    }
+                })
+                .catch(() => {
+                    setView('login');
+                });
         } else {
             setView('login');
         }
@@ -127,30 +146,43 @@ const AppContent: React.FC = () => {
         setStudents(prev => prev.filter(s => s.id !== id));
     };
 
-    const handleLogin = (email: string, password: string) => {
-        if (email === 'ungurenkos@icloud.com' && password === 'neodark') {
-            setCurrentUserId('admin');
-            setMode('admin');
-            setActiveTab('admin-students');
-            localStorage.setItem('vibes_user_id', 'admin');
-            setView('app');
-        } else {
-            const foundStudent = students.find(s => s.email === email);
-            if (foundStudent) {
-                setCurrentUserId(foundStudent.id);
-                setMode('student');
-                setActiveTab('dashboard');
-                localStorage.setItem('vibes_user_id', foundStudent.id);
+    const handleLogin = async (email: string, password: string) => {
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-                const hasOnboarded = localStorage.getItem(`vibes_onboarded_${foundStudent.id}`);
-                if (!hasOnboarded) {
-                    setView('onboarding');
+            const result = await response.json();
+
+            if (result.success) {
+                // Сохраняем токен
+                localStorage.setItem('vibes_token', result.data.token);
+
+                const user = result.data.user;
+                setCurrentUserId(user.id);
+
+                if (user.role === 'admin') {
+                    setMode('admin');
+                    setActiveTab('admin-students');
                 } else {
-                    setView('app');
+                    setMode('student');
+                    setActiveTab('dashboard');
+
+                    const hasOnboarded = localStorage.getItem(`vibes_onboarded_${user.id}`);
+                    if (!hasOnboarded) {
+                        setView('onboarding');
+                        return;
+                    }
                 }
+                setView('app');
             } else {
-                alert('Пользователь не найден (для демо используйте alex@example.com)');
+                alert(result.error || 'Ошибка входа');
             }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Ошибка подключения к серверу');
         }
     };
 
@@ -202,7 +234,7 @@ const AppContent: React.FC = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('vibes_user_id');
+        localStorage.removeItem('vibes_token');
         setCurrentUserId(null);
         setMode('student');
         setActiveTab('dashboard');
