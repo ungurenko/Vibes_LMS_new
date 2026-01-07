@@ -105,11 +105,13 @@ export default async function handler(
     console.error('[CHAT API] Error occurred:', error);
     console.error('[CHAT API] Error message:', error?.message);
     console.error('[CHAT API] Error stack:', error?.stack);
+    console.error('[CHAT API] Error response:', error?.response?.data || error?.response);
 
     // Если стрим уже начался, не можем отправить JSON
     if (!res.headersSent) {
       console.log('[CHAT API] Sending error response as JSON');
-      return res.status(500).json(errorResponse('Ошибка сервера: ' + (error?.message || 'Unknown error')));
+      const errorMessage = error?.response?.data?.error?.message || error?.message || 'Unknown error';
+      return res.status(500).json(errorResponse('Ошибка сервера: ' + errorMessage));
     }
 
     // Если стрим уже идёт, отправляем ошибку через SSE
