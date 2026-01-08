@@ -37,71 +37,67 @@ export default async function handler(
       return res.status(405).json(errorResponse('Method not allowed'));
     }
 
-    // Получаем стадии
-    const { rows: stages } = await query(
-      `SELECT id, title, subtitle, sort_order
-       FROM dashboard_stages
-       ORDER BY sort_order`
-    );
-
-    // Получаем задачи для всех стадий
-    const { rows: tasks } = await query(
-      `SELECT id, stage_id, title, sort_order
-       FROM stage_tasks
-       ORDER BY stage_id, sort_order`
-    );
-
-    // Получаем прогресс пользователя по стадиям
-    const { rows: stageProgress } = await query(
-      `SELECT stage_id, status
-       FROM user_stage_progress
-       WHERE user_id = $1`,
+    // Оптимизированный единый запрос с JOIN (вместо 4 отдельных)
+    const { rows } = await query(
+      `SELECT
+          ds.id AS stage_id, ds.title AS stage_title,
+          ds.subtitle, ds.sort_order AS stage_sort_order,
+          st.id AS task_id, st.title AS task_title,
+          st.sort_order AS task_sort_order,
+          usp.status AS stage_status,
+          CASE WHEN ustp.task_id IS NOT NULL THEN true ELSE false END AS task_completed
+      FROM dashboard_stages ds
+      LEFT JOIN stage_tasks st ON st.stage_id = ds.id
+      LEFT JOIN user_stage_progress usp ON usp.stage_id = ds.id AND usp.user_id = $1
+      LEFT JOIN user_stage_task_progress ustp ON ustp.task_id = st.id AND ustp.user_id = $1
+      ORDER BY ds.sort_order, st.sort_order`,
       [tokenData.userId]
     );
-    const stageStatusMap = new Map(
-      stageProgress.map((p: any) => [p.stage_id, p.status])
-    );
 
-    // Получаем выполненные задачи пользователя
-    const { rows: completedTasks } = await query(
-      `SELECT task_id
-       FROM user_stage_task_progress
-       WHERE user_id = $1`,
-      [tokenData.userId]
-    );
-    const completedTaskIds = new Set(completedTasks.map((t: any) => t.task_id));
+    // HTTP кэширование для данных с прогрессом
+    res.setHeader('Cache-Control', 'private, max-age=30');
 
-    // Группируем задачи по стадиям
-    const tasksByStage = new Map<string, any[]>();
-    for (const task of tasks) {
-      if (!tasksByStage.has(task.stage_id)) {
-        tasksByStage.set(task.stage_id, []);
+    // Группируем результат в иерархическую структуру
+    const stagesMap = new Map<string, any>();
+    let stageIndex = 0;
+
+    for (const row of rows) {
+      // Добавляем стадию если ещё нет
+      if (!stagesMap.has(row.stage_id)) {
+        const status = row.stage_status || (stageIndex === 0 ? 'current' : 'locked');
+        stagesMap.set(row.stage_id, {
+          id: row.stage_id,
+          title: row.stage_title,
+          subtitle: row.subtitle,
+          sortOrder: row.stage_sort_order,
+          status,
+          tasks: [],
+          taskIds: new Set(), // Для дедупликации задач
+        });
+        stageIndex++;
       }
-      tasksByStage.get(task.stage_id)!.push({
-        id: task.id,
-        title: task.title,
-        completed: completedTaskIds.has(task.id),
-      });
+
+      // Добавляем задачу если есть и ещё не добавлена
+      if (row.task_id && !stagesMap.get(row.stage_id)!.taskIds.has(row.task_id)) {
+        stagesMap.get(row.stage_id)!.taskIds.add(row.task_id);
+        stagesMap.get(row.stage_id)!.tasks.push({
+          id: row.task_id,
+          title: row.task_title,
+          completed: row.task_completed,
+        });
+      }
     }
 
     // Формируем результат
-    const result = stages.map((stage: any, index: number) => {
-      // Определяем статус стадии
-      let status = stageStatusMap.get(stage.id);
-
-      // Если нет сохранённого статуса, определяем по порядку
-      if (!status) {
-        status = index === 0 ? 'current' : 'locked';
-      }
-
-      return {
-        id: stage.id,
-        title: stage.title,
-        subtitle: stage.subtitle,
+    const result = Array.from(stagesMap.values())
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(({ id, title, subtitle, status, tasks }) => ({
+        id,
+        title,
+        subtitle,
         status,
-        tasks: tasksByStage.get(stage.id) || [],
-      };
-    });
+        tasks,
+      }));
 
     return res.status(200).json(successResponse(result));
   } catch (error) {

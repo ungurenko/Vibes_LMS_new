@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GridSkeleton, PromptCardSkeleton } from '../components/SkeletonLoader';
+import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
 // --- Constants & Types ---
 
@@ -40,13 +41,23 @@ const PromptBase: React.FC = () => {
     const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Загрузка промптов из API
+    // Загрузка промптов из API с кэшированием
     useEffect(() => {
         const fetchPrompts = async () => {
             try {
+                // Проверяем кэш
+                const cached = getCached<PromptItem[]>(CACHE_KEYS.PROMPTS, CACHE_TTL.PROMPTS);
+                if (cached) {
+                    setPrompts(cached);
+                    setIsLoading(false);
+                    return;
+                }
+
                 setIsLoading(true);
                 const data = await fetchWithAuthGet<PromptItem[]>('/api/content/prompts');
                 setPrompts(data);
+                // Сохраняем в кэш
+                setCache(CACHE_KEYS.PROMPTS, data);
             } catch (error) {
                 console.error('Error fetching prompts:', error);
                 setPrompts([]);

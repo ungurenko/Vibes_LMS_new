@@ -9,8 +9,8 @@ VIBES is a full-stack educational platform for teaching "vibe coding" (AI-assist
 ## Commands
 
 ```bash
-# Development
-npm run dev          # Start dev server on port 3000
+# Development (runs two servers in parallel)
+npm run dev          # Vite on :5173 + API server on :3001
 
 # Production
 npm run build        # Build to dist/
@@ -25,6 +25,7 @@ psql -h HOST -p PORT -U USER -d DATABASE -f database/seed.sql
 
 Required in `.env.local`:
 - `GEMINI_API_KEY` - Google Gemini API key
+- `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI assistant)
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - JWT signing secret (min 32 chars)
 
@@ -51,22 +52,34 @@ Required in `.env.local`:
 - `types.ts` - TypeScript interfaces
 - `data.ts` - Hardcoded content library
 - `SoundContext.tsx` - Audio effects provider
-- `api/_lib/db.ts` - PostgreSQL connection pool (max 10 connections)
+- `components/SkeletonLoader.tsx` - Reusable skeleton loaders for all views
+- `api/_lib/db.ts` - PostgreSQL connection pool (max 3, serverless optimized)
 - `api/_lib/auth.ts` - JWT + bcrypt helpers
 
 ### API Endpoints Structure
-- `/api/auth/*` - login, register, me
-- `/api/admin/*` - students, stats, invites, ai-instruction
-- `/api/lessons/*` - course lessons
-- `/api/glossary.ts`, `/api/styles.ts`, `/api/prompts.ts` - content endpoints
+
+Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issues):
+- `/api/auth` - handles `/api/auth/login`, `/api/auth/register`, `/api/auth/me` via URL parsing
+- `/api/content` - handles `/api/content/glossary`, `/api/content/styles`, `/api/content/prompts`
+- `/api/admin.ts` - students, stats, invites, ai-instruction
+- `/api/lessons.ts` - course lessons with stages
+- `/api/showcase.ts` - community projects
+- `/api/chat.ts` - AI assistant
 
 ### Database Schema Domains
 - **Users:** `users`, `invite_links`
 - **Content:** `course_modules`, `lessons`, `lesson_materials`, `lesson_tasks`
-- **Progress:** `user_lesson_progress`, `user_stage_progress`
+- **Progress:** `user_lesson_progress`, `user_stage_progress`, `user_roadmap_progress`
 - **Libraries:** `style_cards`, `glossary_terms`, `prompts`, `roadmaps`
 - **Community:** `showcase_projects`, `project_likes`
 - **AI/Admin:** `chat_messages`, `ai_system_instructions`, `activity_log`
+
+### Database Patterns
+- **Soft delete:** Tables use `deleted_at` column (filter with `WHERE deleted_at IS NULL`)
+- **ENUM types:** `user_role`, `lesson_status`, `style_category`, `prompt_category`, etc.
+- **Triggers:** Auto-update `updated_at`, auto-count `likes_count`
+- **Views:** `admin_dashboard_stats`, `recent_student_activity`
+- **Transactions:** Use `getClient()` from db.ts for multi-query transactions
 
 ### Navigation (TabId types)
 Student views: `dashboard`, `lessons`, `roadmaps`, `styles`, `prompts`, `glossary`, `assistant`, `community`, `profile`

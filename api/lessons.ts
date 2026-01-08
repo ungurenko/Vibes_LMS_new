@@ -30,98 +30,94 @@ export default async function handler(
 
         const userId = tokenData.userId;
 
-        // Получаем модули
-        const { rows: modules } = await query(
-            `SELECT id, title, description, status, sort_order
-       FROM course_modules
-       WHERE deleted_at IS NULL
-       ORDER BY sort_order`
-        );
-
-        // Получаем уроки
-        const { rows: lessons } = await query(
-            `SELECT 
-        id, module_id, title, description, duration, 
-        video_url, status, sort_order
-       FROM lessons
-       WHERE deleted_at IS NULL
-       ORDER BY module_id, sort_order`
-        );
-
-        // Получаем материалы
-        const { rows: materials } = await query(
-            `SELECT id, lesson_id, title, type, url
-       FROM lesson_materials
-       ORDER BY lesson_id`
-        );
-
-        // Получаем прогресс пользователя
-        const { rows: progress } = await query(
-            `SELECT lesson_id, completed_at
-       FROM user_lesson_progress
-       WHERE user_id = $1`,
+        // Оптимизированный единый запрос с JOIN (вместо 4 отдельных)
+        const { rows } = await query(
+            `SELECT
+                cm.id AS module_id, cm.title AS module_title,
+                cm.description AS module_description, cm.status AS module_status,
+                cm.sort_order AS module_sort_order,
+                l.id AS lesson_id, l.title AS lesson_title,
+                l.description AS lesson_description, l.duration,
+                l.video_url, l.status AS lesson_status,
+                l.sort_order AS lesson_sort_order,
+                lm.id AS material_id, lm.title AS material_title,
+                lm.type AS material_type, lm.url AS material_url,
+                CASE WHEN ulp.completed_at IS NOT NULL THEN true ELSE false END AS completed
+            FROM course_modules cm
+            LEFT JOIN lessons l ON l.module_id = cm.id AND l.deleted_at IS NULL
+            LEFT JOIN lesson_materials lm ON lm.lesson_id = l.id
+            LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = $1
+            WHERE cm.deleted_at IS NULL
+            ORDER BY cm.sort_order, l.sort_order, lm.id`,
             [userId]
         );
 
-        // Создаём Map для быстрого доступа к прогрессу
-        const progressMap = new Map();
-        for (const p of progress) {
-            progressMap.set(p.lesson_id, {
-                completed: !!p.completed_at,
-            });
-        }
+        // HTTP кэширование для данных с прогрессом
+        res.setHeader('Cache-Control', 'private, max-age=60');
 
-        // Группируем материалы по урокам
-        const materialsByLesson = new Map<string, any[]>();
-        for (const material of materials) {
-            if (!materialsByLesson.has(material.lesson_id)) {
-                materialsByLesson.set(material.lesson_id, []);
-            }
-            materialsByLesson.get(material.lesson_id)!.push({
-                id: material.id,
-                title: material.title,
-                type: material.type,
-                url: material.url,
-            });
-        }
+        // Группируем результат в иерархическую структуру
+        const modulesMap = new Map<string, any>();
+        const lessonsMap = new Map<string, any>();
 
-        // Группируем уроки по модулям и добавляем прогресс
-        const lessonsByModule = new Map<string, any[]>();
-        for (const lesson of lessons) {
-            if (!lessonsByModule.has(lesson.module_id)) {
-                lessonsByModule.set(lesson.module_id, []);
+        for (const row of rows) {
+            // Добавляем модуль если ещё нет
+            if (!modulesMap.has(row.module_id)) {
+                modulesMap.set(row.module_id, {
+                    id: row.module_id,
+                    title: row.module_title,
+                    description: row.module_description,
+                    status: row.module_status,
+                    sortOrder: row.module_sort_order,
+                    lessons: [],
+                });
             }
 
-            const userProgress = progressMap.get(lesson.id) || { completed: false };
+            // Пропускаем если нет урока (модуль без уроков)
+            if (!row.lesson_id) continue;
 
-            lessonsByModule.get(lesson.module_id)!.push({
-                id: lesson.id,
-                moduleId: lesson.module_id,
-                title: lesson.title,
-                description: lesson.description,
-                duration: lesson.duration,
-                videoUrl: lesson.video_url,
-                status: lesson.status,
-                materials: materialsByLesson.get(lesson.id) || [],
-                completed: userProgress.completed,
-            });
+            // Добавляем урок если ещё нет
+            if (!lessonsMap.has(row.lesson_id)) {
+                const lesson = {
+                    id: row.lesson_id,
+                    moduleId: row.module_id,
+                    title: row.lesson_title,
+                    description: row.lesson_description,
+                    duration: row.duration,
+                    videoUrl: row.video_url,
+                    status: row.lesson_status,
+                    materials: [],
+                    completed: row.completed,
+                };
+                lessonsMap.set(row.lesson_id, lesson);
+                modulesMap.get(row.module_id)!.lessons.push(lesson);
+            }
+
+            // Добавляем материал если есть
+            if (row.material_id) {
+                lessonsMap.get(row.lesson_id)!.materials.push({
+                    id: row.material_id,
+                    title: row.material_title,
+                    type: row.material_type,
+                    url: row.material_url,
+                });
+            }
         }
 
-        // Формируем результат
-        const result = modules.map((module: any) => {
-            const moduleLessons = lessonsByModule.get(module.id) || [];
-            const completedCount = moduleLessons.filter((l: any) => l.completed).length;
-            const totalCount = moduleLessons.length;
-
-            return {
-                id: module.id,
-                title: module.title,
-                description: module.description,
-                status: module.status,
-                lessons: moduleLessons,
-                progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
-            };
-        });
+        // Формируем результат с прогрессом
+        const result = Array.from(modulesMap.values())
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((module) => {
+                const completedCount = module.lessons.filter((l: any) => l.completed).length;
+                const totalCount = module.lessons.length;
+                return {
+                    id: module.id,
+                    title: module.title,
+                    description: module.description,
+                    status: module.status,
+                    lessons: module.lessons,
+                    progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+                };
+            });
 
         return res.status(200).json(successResponse(result));
     } catch (error) {
