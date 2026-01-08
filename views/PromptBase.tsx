@@ -13,6 +13,7 @@ import { PromptCategory, PromptItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { GridSkeleton, PromptCardSkeleton } from '../components/SkeletonLoader';
 
 // --- Constants & Types ---
 
@@ -124,8 +125,15 @@ const PromptBase: React.FC = () => {
                 </div>
 
                 {/* Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPrompts.map((prompt) => {
+                {isLoading ? (
+                    <GridSkeleton
+                        count={9}
+                        columns={3}
+                        SkeletonComponent={PromptCardSkeleton}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredPrompts.map((prompt) => {
                         const colorClass = CATEGORY_COLORS[prompt.category] || 'text-zinc-500 bg-zinc-50 border-zinc-200';
                         const isStack = !!prompt.steps;
 
@@ -182,10 +190,11 @@ const PromptBase: React.FC = () => {
                                 </div>
                             </div>
                         );
-                    })}
-                </div>
+                        })}
+                    </div>
+                )}
 
-                {filteredPrompts.length === 0 && (
+                {filteredPrompts.length === 0 && !isLoading && (
                     <div className="py-20 text-center">
                         <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-300 dark:text-zinc-600">
                             <Search size={32} />

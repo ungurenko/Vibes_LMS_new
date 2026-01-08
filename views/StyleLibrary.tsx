@@ -5,6 +5,7 @@ import { StyleCategory, StyleCard } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { GridSkeleton, StyleCardSkeleton } from '../components/SkeletonLoader';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
@@ -102,12 +103,19 @@ const StyleLibrary: React.FC = () => {
       </div>
 
       {/* 3.2 Сетка карточек */}
-      <motion.div
-        layout
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8"
-      >
-        <AnimatePresence mode="popLayout">
-          {filteredStyles.map((style) => (
+      {isLoading ? (
+        <GridSkeleton
+          count={8}
+          columns={4}
+          SkeletonComponent={StyleCardSkeleton}
+        />
+      ) : (
+        <motion.div
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredStyles.map((style) => (
             <motion.div
               layout
               initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
@@ -177,9 +185,10 @@ const StyleLibrary: React.FC = () => {
                 </div>
               </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* Modal / Lightbox */}
       <AnimatePresence>
