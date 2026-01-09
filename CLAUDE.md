@@ -28,6 +28,9 @@ Required in `.env.local`:
 - `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI assistant)
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - JWT signing secret (min 32 chars)
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob Storage token (получить: Vercel Dashboard → Storage → Blob → Settings)
+
+**ВАЖНО:** Для production все переменные также должны быть добавлены в Vercel Dashboard → Settings → Environment Variables
 
 ## Architecture
 
@@ -98,3 +101,90 @@ Deployed via Vercel (configured in `vercel.json`):
 - Serverless functions for API routes
 - Static hosting for React frontend
 - CORS headers pre-configured
+
+## Правило: Интеграция с внешними сервисами (Vercel Blob, Storage и др.)
+
+При добавлении интеграций с внешними сервисами (Vercel Blob, S3, Cloudinary и т.д.) **ОБЯЗАТЕЛЬНО** выполнить следующие шаги:
+
+### 1. Проверка типов библиотеки
+
+**ПЕРЕД написанием кода:**
+- Установи пакет: `npm install @vercel/blob`
+- Проверь актуальную документацию: используй WebSearch для поиска официальной документации текущего года
+- Проверь типы TypeScript: посмотри какие поля возвращает API (например, `PutBlobResult` может не иметь `size`)
+
+**Пример ошибки:**
+```typescript
+// ❌ НЕПРАВИЛЬНО - не проверил типы
+const blob = await put(filename, buffer);
+return { url: blob.url, size: blob.size }; // blob.size не существует!
+
+// ✅ ПРАВИЛЬНО - проверил документацию
+const blob = await put(filename, buffer);
+return { url: blob.url, size: buffer.length }; // используем размер из buffer
+```
+
+### 2. Environment Variables ДО деплоя
+
+**ДО создания pull request или git push:**
+
+1. **Добавь в `.env.local` (для локальной разработки):**
+   ```bash
+   BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
+   ```
+
+2. **Добавь в Vercel Dashboard (для production):**
+   - Settings → Environment Variables
+   - Добавь все требуемые токены для Production и Preview
+   - **ОБЯЗАТЕЛЬНО** сделай это ДО деплоя, а не после
+
+3. **Обнови документацию:**
+   - Добавь новую переменную в раздел "Environment Variables" этого файла
+   - Укажи где её получить и как настроить
+
+**Текущие env variables для внешних сервисов:**
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob Storage (получить: Vercel Dashboard → Storage → Blob → Settings)
+
+### 3. Обработка ошибок с деталями
+
+При интеграции с внешними API всегда добавляй подробное логирование:
+
+```typescript
+try {
+  const blob = await put(filename, buffer, { access: 'public' });
+  return res.json(successResponse({ url: blob.url }));
+} catch (error) {
+  // ✅ ПРАВИЛЬНО - логируем полную ошибку
+  console.error('Vercel Blob upload error:', {
+    filename,
+    size: buffer.length,
+    error: error instanceof Error ? error.message : error
+  });
+  return res.status(500).json(errorResponse(
+    `Ошибка загрузки в Blob: ${error instanceof Error ? error.message : 'Unknown error'}`
+  ));
+}
+```
+
+### 4. Чеклист перед деплоем
+
+- [ ] Проверил типы библиотеки в документации
+- [ ] Добавил env variables в `.env.local`
+- [ ] Добавил env variables в Vercel Dashboard
+- [ ] Обновил CLAUDE.md с новыми переменными
+- [ ] Добавил обработку ошибок с подробным логированием
+- [ ] Протестировал локально (если возможно)
+- [ ] Сделал коммит с описанием требуемой настройки
+
+### Почему это важно
+
+**Без проверки типов:**
+- TypeScript ошибки на Vercel при деплое
+- Код не компилируется → deployment fails
+
+**Без env variables:**
+- API возвращает 500 ошибки
+- Пользователи видят "Ошибка загрузки"
+- Нужен дополнительный redeploy после добавления токена
+
+**Правило 80/20:** 80% проблем с внешними сервисами — это отсутствие токенов или неправильные типы. Проверяй это ПЕРЕД деплоем, а не ПОСЛЕ.
