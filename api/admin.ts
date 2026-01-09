@@ -31,14 +31,22 @@ export default async function handler(
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    // Проверяем роль админа
-    if (tokenData.role !== 'admin') {
-      return res.status(403).json(errorResponse('Доступ запрещён'));
-    }
-
     // Роутинг по resource
     const { resource } = req.query;
     const resourceType = Array.isArray(resource) ? resource[0] : resource;
+
+    // Специальная обработка для navigation: GET доступен всем, POST только админам
+    if (resourceType === 'navigation') {
+      if (req.method === 'POST' && tokenData.role !== 'admin') {
+        return res.status(403).json(errorResponse('Только администраторы могут изменять настройки'));
+      }
+      return await handleNavigation(req, res, tokenData);
+    }
+
+    // Для остальных ресурсов требуется роль админа
+    if (tokenData.role !== 'admin') {
+      return res.status(403).json(errorResponse('Доступ запрещён'));
+    }
 
     switch (resourceType) {
       case 'students':
@@ -55,8 +63,6 @@ export default async function handler(
         return await handleLessons(req, res, tokenData);
       case 'stages':
         return await handleStages(req, res, tokenData);
-      case 'navigation':
-        return await handleNavigation(req, res, tokenData);
       default:
         return res.status(400).json(errorResponse('Неверный resource'));
     }

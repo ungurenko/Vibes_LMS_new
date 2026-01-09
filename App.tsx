@@ -155,21 +155,40 @@ const AppContent: React.FC = () => {
         localStorage.setItem('vibes_students_db', JSON.stringify(students));
     }, [students]);
 
-    // 4. Load Navigation Config
+    // 4. Load Navigation Config (только после авторизации)
     useEffect(() => {
-        fetch('/api/admin?resource=navigation')
+        // Ждём пока пользователь авторизуется
+        if (!currentUser) {
+            setNavConfig(null); // Показываем все вкладки до авторизации
+            return;
+        }
+
+        const token = localStorage.getItem('vibes_token');
+        if (!token) {
+            setNavConfig(null);
+            return;
+        }
+
+        fetch('/api/admin?resource=navigation', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(result => {
                 if (result.success) {
                     setNavConfig(result.data);
+                } else {
+                    console.log('Failed to load navigation config:', result.error);
+                    setNavConfig(null);
                 }
             })
             .catch(err => {
-                console.log('Failed to load navigation config, using default (all visible)');
+                console.log('Failed to load navigation config:', err);
                 // Fallback: null означает показывать все вкладки
                 setNavConfig(null);
             });
-    }, []);
+    }, [currentUser]); // Зависимость от currentUser - перезагружаем при смене пользователя
 
     // --- Actions ---
 
