@@ -305,6 +305,8 @@ CREATE TABLE user_stage_progress (
     UNIQUE(user_id, stage_id)
 );
 
+CREATE INDEX idx_user_stage_progress_user ON user_stage_progress(user_id);
+
 COMMENT ON TABLE user_stage_progress IS 'Прогресс студента по стадиям';
 
 -- Прогресс по задачам стадий

@@ -80,6 +80,9 @@ async function getStyles(req: VercelRequest, res: VercelResponse) {
 
     const { rows } = await query(sql, params);
 
+    // HTTP кэширование для статичных данных
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+
     const styles = rows.map((row: any) => ({
       id: row.id,
       name: row.name,
@@ -150,6 +153,9 @@ async function getPrompts(req: VercelRequest, res: VercelResponse, tokenData: an
       });
     }
 
+    // HTTP кэширование для статичных данных
+    res.setHeader('Cache-Control', 'public, max-age=1800, stale-while-revalidate=3600');
+
     // Форматируем ответ
     const result = prompts.map((p: any) => {
       const promptSteps = stepsByPrompt.get(p.id);
@@ -194,6 +200,9 @@ async function getGlossary(req: VercelRequest, res: VercelResponse) {
 
     const { rows } = await query(sql, params);
 
+    // HTTP кэширование для статичных данных
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+
     const terms = rows.map((row: any) => ({
       id: row.id,
       term: row.term,
@@ -214,75 +223,84 @@ async function getRoadmaps(req: VercelRequest, res: VercelResponse, tokenData: a
   try {
     const { category } = req.query;
 
+    // Оптимизированный единый запрос с JOIN (вместо 3 отдельных)
     let sql = `
       SELECT
-        id, title, description, category, icon,
-        estimated_time, difficulty, sort_order
-      FROM roadmaps
-      WHERE deleted_at IS NULL
+        r.id AS roadmap_id, r.title AS roadmap_title,
+        r.description AS roadmap_description, r.category,
+        r.icon, r.estimated_time, r.difficulty,
+        r.sort_order AS roadmap_sort_order,
+        rs.id AS step_id, rs.title AS step_title,
+        rs.description AS step_description,
+        rs.link_url, rs.link_text,
+        rs.sort_order AS step_sort_order,
+        CASE WHEN ursp.step_id IS NOT NULL THEN true ELSE false END AS step_completed
+      FROM roadmaps r
+      LEFT JOIN roadmap_steps rs ON rs.roadmap_id = r.id
+      LEFT JOIN user_roadmap_step_progress ursp ON ursp.step_id = rs.id AND ursp.user_id = $1
+      WHERE r.deleted_at IS NULL
     `;
-    const params: any[] = [];
+    const params: any[] = [tokenData.userId];
 
     if (category && category !== 'Все') {
-      sql += ` AND category = $1`;
+      sql += ` AND r.category = $2`;
       params.push(category);
     }
 
-    sql += ` ORDER BY sort_order`;
+    sql += ` ORDER BY r.sort_order, rs.sort_order`;
 
-    const { rows: roadmaps } = await query(sql, params);
+    const { rows } = await query(sql, params);
 
-    // Получаем шаги для всех roadmaps
-    const roadmapIds = roadmaps.map((r: any) => r.id);
+    // HTTP кэширование для данных с прогрессом
+    res.setHeader('Cache-Control', 'private, max-age=60');
 
-    let steps: any[] = [];
-    if (roadmapIds.length > 0) {
-      const stepsResult = await query(
-        `SELECT id, roadmap_id, title, description, link_url, link_text, sort_order
-         FROM roadmap_steps
-         WHERE roadmap_id = ANY($1)
-         ORDER BY roadmap_id, sort_order`,
-        [roadmapIds]
-      );
-      steps = stepsResult.rows;
-    }
+    // Группируем результат в иерархическую структуру
+    const roadmapsMap = new Map<string, any>();
 
-    // Получаем прогресс пользователя по шагам
-    const userProgressResult = await query(
-      `SELECT step_id, completed_at
-       FROM user_roadmap_step_progress
-       WHERE user_id = $1`,
-      [tokenData.userId]
-    );
-    const completedStepIds = new Set(userProgressResult.rows.map((p: any) => p.step_id));
-
-    // Группируем шаги по roadmaps
-    const stepsByRoadmap = new Map<string, any[]>();
-    for (const step of steps) {
-      if (!stepsByRoadmap.has(step.roadmap_id)) {
-        stepsByRoadmap.set(step.roadmap_id, []);
+    for (const row of rows) {
+      // Добавляем roadmap если ещё нет
+      if (!roadmapsMap.has(row.roadmap_id)) {
+        roadmapsMap.set(row.roadmap_id, {
+          id: row.roadmap_id,
+          title: row.roadmap_title,
+          description: row.roadmap_description,
+          category: row.category,
+          icon: row.icon,
+          estimatedTime: row.estimated_time,
+          difficulty: row.difficulty,
+          sortOrder: row.roadmap_sort_order,
+          steps: [],
+          stepIds: new Set(), // Для дедупликации
+        });
       }
-      stepsByRoadmap.get(step.roadmap_id)!.push({
-        id: step.id,
-        title: step.title,
-        description: step.description,
-        linkUrl: step.link_url,
-        linkText: step.link_text,
-        completed: completedStepIds.has(step.id),
-      });
+
+      // Добавляем шаг если есть и ещё не добавлен
+      if (row.step_id && !roadmapsMap.get(row.roadmap_id)!.stepIds.has(row.step_id)) {
+        roadmapsMap.get(row.roadmap_id)!.stepIds.add(row.step_id);
+        roadmapsMap.get(row.roadmap_id)!.steps.push({
+          id: row.step_id,
+          title: row.step_title,
+          description: row.step_description,
+          linkUrl: row.link_url,
+          linkText: row.link_text,
+          completed: row.step_completed,
+        });
+      }
     }
 
     // Форматируем ответ
-    const result = roadmaps.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      category: r.category,
-      icon: r.icon,
-      estimatedTime: r.estimated_time,
-      difficulty: r.difficulty,
-      steps: stepsByRoadmap.get(r.id) || [],
-    }));
+    const result = Array.from(roadmapsMap.values())
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(({ id, title, description, category, icon, estimatedTime, difficulty, steps }) => ({
+        id,
+        title,
+        description,
+        category,
+        icon,
+        estimatedTime,
+        difficulty,
+        steps,
+      }));
 
     return res.status(200).json(successResponse(result));
   } catch (error) {

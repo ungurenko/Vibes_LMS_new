@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GridSkeleton, StyleCardSkeleton } from '../components/SkeletonLoader';
+import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
@@ -17,13 +18,23 @@ const StyleLibrary: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<StyleCategory>('Все');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Загрузка стилей из API
+  // Загрузка стилей из API с кэшированием
   useEffect(() => {
     const fetchStyles = async () => {
       try {
+        // Проверяем кэш
+        const cached = getCached<StyleCard[]>(CACHE_KEYS.STYLES, CACHE_TTL.STYLES);
+        if (cached) {
+          setStyles(cached);
+          setIsLoading(false);
+          return;
+        }
+
         setIsLoading(true);
         const data = await fetchWithAuthGet<StyleCard[]>('/api/content/styles');
         setStyles(data);
+        // Сохраняем в кэш
+        setCache(CACHE_KEYS.STYLES, data);
       } catch (error) {
         console.error('Error fetching styles:', error);
         setStyles([]);

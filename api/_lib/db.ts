@@ -14,9 +14,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production'
     ? { rejectUnauthorized: false } // Для Timeweb Cloud и других облачных БД
     : false,
-  max: 1, // Максимум соединений в пуле
-  idleTimeoutMillis: 30000, // Закрывать неактивные соединения через 30 сек
-  connectionTimeoutMillis: 10000, // Таймаут подключения 10 сек
+  max: 3, // Позволяет параллельные запросы в рамках одного вызова
+  min: 0, // Не держать idle соединения в serverless
+  idleTimeoutMillis: 10000, // Быстрее освобождать соединения
+  connectionTimeoutMillis: 5000, // Быстрее фейлить при проблемах
+  allowExitOnIdle: true, // Важно для serverless - позволяет процессу завершиться
 });
 
 // Тестируем подключение при старте

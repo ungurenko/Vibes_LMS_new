@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GlossaryTermSkeleton } from '../components/SkeletonLoader';
+import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
 const CATEGORIES: GlossaryCategory[] = ['Все', 'Базовые', 'Код', 'Инструменты', 'API', 'Ошибки', 'Вайб-кодинг'];
 
@@ -33,13 +34,27 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
    const [copiedId, setCopiedId] = useState<string | null>(null);
    const [isLoading, setIsLoading] = useState(true);
 
-   // Загрузка глоссария из API
+   // Загрузка глоссария из API с кэшированием
    useEffect(() => {
       const fetchGlossary = async () => {
          try {
+            // Проверяем кэш
+            const cached = getCached<GlossaryTerm[]>(CACHE_KEYS.GLOSSARY, CACHE_TTL.GLOSSARY);
+            if (cached) {
+               setGlossaryData(cached);
+               if (cached.length > 0) {
+                  const randomIndex = Math.floor(Math.random() * cached.length);
+                  setRandomTerm(cached[randomIndex]);
+               }
+               setIsLoading(false);
+               return;
+            }
+
             setIsLoading(true);
             const data = await fetchWithAuthGet<GlossaryTerm[]>('/api/content/glossary');
             setGlossaryData(data);
+            // Сохраняем в кэш
+            setCache(CACHE_KEYS.GLOSSARY, data);
 
             // Set random term after data loaded
             if (data.length > 0) {
