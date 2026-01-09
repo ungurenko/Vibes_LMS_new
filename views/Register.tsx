@@ -6,39 +6,25 @@ import { InviteLink } from '../types';
 
 interface RegisterProps {
   inviteCode: string;
-  onRegister: (data: { name: string; email: string; avatar?: string }) => void;
+  onRegister: (data: { token: string; user: any }) => void;
   onNavigateLogin: () => void;
-  validateInvite: (code: string) => InviteLink | null;
 }
 
-const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateLogin, validateInvite }) => {
+const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  const [inviteStatus, setInviteStatus] = useState<'validating' | 'valid' | 'invalid'>('validating');
+
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Validate Invite on Mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-        const invite = validateInvite(inviteCode);
-        if (invite && invite.status === 'active') {
-            setInviteStatus('valid');
-        } else {
-            setInviteStatus('invalid');
-        }
-    }, 800); // Fake network delay for smooth UX
-    return () => clearTimeout(timer);
-  }, [inviteCode, validateInvite]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
         alert("Пароли не совпадают");
@@ -47,10 +33,35 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
     if (!agreed) return;
 
     setIsLoading(true);
-    setTimeout(() => {
+    setApiError(null);
+
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email.toLowerCase(),
+                password,
+                firstName: name.split(' ')[0],
+                lastName: name.split(' ').slice(1).join(' ') || null,
+                inviteCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            setApiError(data.error || 'Ошибка регистрации');
+            setIsLoading(false);
+            return;
+        }
+
+        // Успех - передать токен и пользователя в App.tsx
+        onRegister(data.data);
+    } catch (err) {
+        setApiError('Ошибка сети. Попробуйте позже.');
         setIsLoading(false);
-        onRegister({ name, email, avatar: avatar || undefined });
-    }, 1500);
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,50 +81,6 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
   };
 
   const isFormValid = name && email && password.length >= 8 && password === confirmPassword && agreed;
-
-  if (inviteStatus === 'validating') {
-      return (
-        <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center">
-                <Loader2 size={40} className="text-violet-600 animate-spin mb-4" />
-                <p className="text-zinc-500 font-medium">Проверяем инвайт...</p>
-             </motion.div>
-        </div>
-      );
-  }
-
-  if (inviteStatus === 'invalid') {
-      return (
-        <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
-             <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5 text-center shadow-xl"
-            >
-                <div className="w-16 h-16 bg-red-100 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
-                    <AlertTriangle size={32} />
-                </div>
-                <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Ссылка недействительна</h2>
-                <p className="text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed">
-                    Упс, эта ссылка уже использована или не существует. <br/>
-                    Возможно, вы уже зарегистрировались?
-                </p>
-                
-                <div className="space-y-3">
-                    <button 
-                        onClick={onNavigateLogin}
-                        className="w-full py-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black font-bold hover:opacity-90 transition-opacity"
-                    >
-                        Войти в аккаунт
-                    </button>
-                    <button className="w-full py-3 rounded-xl border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
-                        Написать в поддержку
-                    </button>
-                </div>
-             </motion.div>
-        </div>
-      );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
@@ -253,17 +220,41 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                 </div>
 
                 <div className="flex items-start gap-3 mt-4">
-                    <input 
-                        type="checkbox" 
-                        id="agree" 
+                    <input
+                        type="checkbox"
+                        id="agree"
                         checked={agreed}
                         onChange={(e) => setAgreed(e.target.checked)}
-                        className="mt-1 rounded border-zinc-300 text-violet-600 focus:ring-violet-500" 
+                        className="mt-1 rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
                     />
                     <label htmlFor="agree" className="text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer">
                         Я согласен с <a href="#" className="underline hover:text-violet-600">условиями использования</a>.
                     </label>
                 </div>
+
+                {apiError && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 mt-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <p className="text-red-600 dark:text-red-400 text-sm font-medium">{apiError}</p>
+                                {apiError.toLowerCase().includes('инвайт') && (
+                                    <button
+                                        type="button"
+                                        onClick={() => window.open('mailto:support@vibes.com', '_blank')}
+                                        className="text-red-600 dark:text-red-400 underline text-sm mt-2 hover:text-red-700 dark:hover:text-red-300"
+                                    >
+                                        Написать в поддержку
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
 
                 <button 
                     type="submit"

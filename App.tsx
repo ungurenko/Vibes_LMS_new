@@ -99,6 +99,8 @@ const AppContent: React.FC = () => {
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
+                            // Загрузить инвайты для админ-панели
+                            loadInvites();
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
@@ -218,35 +220,27 @@ const AppContent: React.FC = () => {
         }
     };
 
-    const handleRegister = (data: { name: string; email: string; avatar?: string }) => {
-        if (inviteCodeFromUrl) {
-            setInvites(prev => prev.map(inv => {
-                if (inv.token === inviteCodeFromUrl) {
-                    return { ...inv, status: 'used', usedByEmail: data.email, usedByName: data.name, usedAt: new Date().toISOString() };
-                }
-                return inv;
-            }));
-        }
+    const handleRegister = (data: { token: string; user: any }) => {
+        // Сохранить JWT token
+        localStorage.setItem('vibes_token', data.token);
 
-        const newId = Date.now().toString();
-        const newUser: Student = {
-            id: newId,
-            name: data.name,
-            email: data.email,
-            avatar: data.avatar || `https://ui-avatars.com/api/?name=${data.name}&background=8b5cf6&color=fff`,
-            status: 'active',
-            progress: 0,
-            currentModule: 'Модуль 1',
-            lastActive: 'Только что',
-            joinedDate: new Date().toISOString(),
-            projects: {},
+        // Создать объект пользователя из данных API
+        const newUser: User = {
+            id: data.user.id,
+            name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+            email: data.user.email,
+            role: data.user.role || 'student',
+            avatar: `https://ui-avatars.com/api/?name=${data.user.first_name}&background=8b5cf6&color=fff`,
+            progressPercent: data.user.progress_percent || 0
         };
 
-        setStudents(prev => [...prev, newUser]);
         setCurrentUser(newUser);
-        setMode('student');
-        localStorage.setItem('vibes_user_id', newId);
+        setMode(newUser.role === 'admin' ? 'admin' : 'student');
+
+        // Очистить invite code из URL
         window.history.replaceState({}, '', window.location.pathname);
+
+        // Перейти к онбордингу
         setView('onboarding');
     };
 
@@ -255,14 +249,6 @@ const AppContent: React.FC = () => {
             localStorage.setItem(`vibes_onboarded_${currentUser.id}`, 'true');
             setView('app');
         }
-    };
-
-    const validateInvite = (code: string): InviteLink | null => {
-        const invite = invites.find(i => i.token === code);
-        if (!invite) return null;
-        if (invite.status === 'deactivated') return null;
-        if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) return null;
-        return invite;
     };
 
     const handleLogout = () => {
@@ -278,29 +264,120 @@ const AppContent: React.FC = () => {
         setActiveTab('assistant');
     };
 
-    const generateInvites = (count: number, daysValid: number | null) => {
+    const loadInvites = async () => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/admin?resource=invites', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const apiInvites = result.data.map((invite: any) => ({
+                    id: invite.id,
+                    token: invite.token,
+                    status: invite.status,
+                    created: invite.createdAt,
+                    expiresAt: invite.expiresAt,
+                    usedByEmail: invite.usedByEmail,
+                    usedByName: invite.usedByName,
+                    usedAt: invite.usedAt
+                }));
+                setInvites(apiInvites);
+            }
+        } catch (error) {
+            console.error('Error loading invites:', error);
+        }
+    };
+
+    const generateInvites = async (count: number, daysValid: number | null) => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) {
+            console.error('No auth token found');
+            return;
+        }
+
         const newInvites: InviteLink[] = [];
-        const expiresAt = daysValid ? new Date(Date.now() + daysValid * 24 * 60 * 60 * 1000).toISOString() : null;
 
         for (let i = 0; i < count; i++) {
-            const randomToken = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
-            newInvites.push({
-                id: Date.now().toString() + i,
-                token: randomToken,
-                status: 'active',
-                created: new Date().toISOString(),
-                expiresAt: expiresAt
-            });
+            try {
+                const response = await fetch('/api/admin?resource=invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        expiresInDays: daysValid
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const invite = result.data;
+                    newInvites.push({
+                        id: invite.id,
+                        token: invite.token,
+                        status: invite.status,
+                        created: invite.createdAt,
+                        expiresAt: invite.expiresAt
+                    });
+                }
+            } catch (error) {
+                console.error('Error creating invite:', error);
+            }
         }
+
+        // Обновить локальный state для UI
         setInvites(prev => [...newInvites, ...prev]);
     };
 
-    const deleteInvite = (id: string) => {
-        setInvites(prev => prev.filter(i => i.id !== id));
+    const deleteInvite = async (id: string) => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/admin?resource=invites&id=${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                // Удалить из локального state
+                setInvites(prev => prev.filter(i => i.id !== id));
+            }
+        } catch (error) {
+            console.error('Error deleting invite:', error);
+        }
     };
 
-    const deactivateInvite = (id: string) => {
-        setInvites(prev => prev.map(i => i.id === id ? { ...i, status: 'deactivated' } : i));
+    const deactivateInvite = async (id: string) => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/admin?resource=invites&id=${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                // Обновить локальный state - пометить как деактивированный
+                setInvites(prev => prev.map(i => i.id === id ? { ...i, status: 'deactivated' } : i));
+            }
+        } catch (error) {
+            console.error('Error deactivating invite:', error);
+        }
     };
 
     const toggleTheme = () => {
@@ -311,7 +388,7 @@ const AppContent: React.FC = () => {
 
     if (view === 'login') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} onSimulateResetLink={() => setView('reset-password')} />;
     if (view === 'reset-password') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} initialView="reset" onSimulateResetLink={() => { }} onResetComplete={() => setView('login')} />;
-    if (view === 'register' && inviteCodeFromUrl) return <Register inviteCode={inviteCodeFromUrl} validateInvite={validateInvite} onRegister={handleRegister} onNavigateLogin={() => { window.history.replaceState({}, '', window.location.pathname); setView('login'); }} />;
+    if (view === 'register' && inviteCodeFromUrl) return <Register inviteCode={inviteCodeFromUrl} onRegister={handleRegister} onNavigateLogin={() => { window.history.replaceState({}, '', window.location.pathname); setView('login'); }} />;
     if (view === 'onboarding' && currentUser) return <Onboarding userName={currentUser.name} onComplete={completeOnboarding} />;
 
     const renderContent = () => {
