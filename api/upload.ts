@@ -86,7 +86,7 @@ export default async function handler(
 
     return res.status(200).json(successResponse({
       url: blob.url,
-      size: blob.size,
+      size: buffer.length,
     }));
 
   } catch (error) {
