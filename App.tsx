@@ -18,7 +18,7 @@ import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
 import Onboarding from './views/Onboarding';
-import { TabId, InviteLink, Student, CourseModule } from './types';
+import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
 import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
@@ -57,6 +57,7 @@ const AppContent: React.FC = () => {
     const [mode, setMode] = useState<'student' | 'admin'>('student');
 
     const [assistantInitialMessage, setAssistantInitialMessage] = useState<string | null>(null);
+    const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
 
     // Убрали сохранение modules в localStorage
 
@@ -153,6 +154,22 @@ const AppContent: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('vibes_students_db', JSON.stringify(students));
     }, [students]);
+
+    // 4. Load Navigation Config
+    useEffect(() => {
+        fetch('/api/admin?resource=navigation')
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    setNavConfig(result.data);
+                }
+            })
+            .catch(err => {
+                console.log('Failed to load navigation config, using default (all visible)');
+                // Fallback: null означает показывать все вкладки
+                setNavConfig(null);
+            });
+    }, []);
 
     // --- Actions ---
 
@@ -431,7 +448,7 @@ const AppContent: React.FC = () => {
                 )}
             </div>
 
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} theme={theme} toggleTheme={toggleTheme} mode={mode} setMode={setMode} />
+            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} theme={theme} toggleTheme={toggleTheme} mode={mode} setMode={setMode} navConfig={navConfig} />
 
             <main className="md:pl-72 min-h-[100dvh] flex flex-col relative z-10">
                 <header className="md:hidden h-auto py-4 flex items-center justify-between px-6 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-zinc-200 dark:border-white/5 transition-colors duration-300">

@@ -714,7 +714,30 @@ CREATE INDEX idx_activity_user_recent ON activity_log(user_id, created_at DESC);
 COMMENT ON TABLE activity_log IS 'Лог активности пользователей';
 
 -- ============================================================================
--- 12. ТРИГГЕРЫ ДЛЯ АВТООБНОВЛЕНИЯ updated_at
+-- 12. НАСТРОЙКИ ПЛАТФОРМЫ
+-- ============================================================================
+
+-- Глобальные настройки платформы
+CREATE TABLE platform_settings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value JSONB NOT NULL,
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_platform_settings_key ON platform_settings(setting_key);
+
+COMMENT ON TABLE platform_settings IS 'Глобальные настройки платформы (видимость меню, feature flags и т.д.)';
+COMMENT ON COLUMN platform_settings.setting_key IS 'Уникальный ключ настройки (например, navigation_config)';
+COMMENT ON COLUMN platform_settings.setting_value IS 'Значение настройки в формате JSONB';
+COMMENT ON COLUMN platform_settings.updated_by IS 'ID пользователя, который последним изменил настройку';
+
+-- ============================================================================
+-- 13. ТРИГГЕРЫ ДЛЯ АВТООБНОВЛЕНИЯ updated_at
 -- ============================================================================
 
 -- Функция для автообновления updated_at
@@ -779,8 +802,12 @@ CREATE TRIGGER update_admin_calls_updated_at
     BEFORE UPDATE ON admin_calls
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_platform_settings_updated_at
+    BEFORE UPDATE ON platform_settings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================================================
--- 13. ТРИГГЕР ДЛЯ СЧЁТЧИКА ЛАЙКОВ
+-- 14. ТРИГГЕР ДЛЯ СЧЁТЧИКА ЛАЙКОВ
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION update_project_likes_count()
@@ -800,7 +827,7 @@ CREATE TRIGGER trigger_update_project_likes
     FOR EACH ROW EXECUTE FUNCTION update_project_likes_count();
 
 -- ============================================================================
--- 14. ПОЛЕЗНЫЕ ПРЕДСТАВЛЕНИЯ (VIEWS)
+-- 15. ПОЛЕЗНЫЕ ПРЕДСТАВЛЕНИЯ (VIEWS)
 -- ============================================================================
 
 -- Статистика для админ-дашборда
