@@ -319,6 +319,23 @@ INSERT INTO admin_calls (id, title, description, meeting_link, scheduled_for, du
  NOW() + INTERVAL '7 days', 60, 'scheduled', NOW());
 
 
+-- ===================================
+-- 8. PLATFORM SETTINGS (Настройки платформы)
+-- ===================================
+
+-- Настройки видимости навигационного меню (все вкладки видимы по умолчанию)
+INSERT INTO platform_settings (setting_key, setting_value) VALUES
+('navigation_config', '{
+  "dashboard": true,
+  "lessons": true,
+  "roadmaps": true,
+  "styles": true,
+  "prompts": true,
+  "glossary": true,
+  "assistant": true
+}'::jsonb);
+
+
 COMMIT;
 
 -- ===================================

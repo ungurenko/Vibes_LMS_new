@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Settings, 
   Link, 
@@ -14,10 +14,12 @@ import {
   Volume2,
   Volume1,
   Music,
-  X
+  X,
+  Eye,
+  Loader
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { InviteLink } from '../types';
+import { InviteLink, NavigationConfig } from '../types';
 import { useSound } from '../SoundContext';
 import { Modal, PageHeader, ConfirmModal } from '../components/Shared';
 
@@ -48,6 +50,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
   // Deletion State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [inviteToDelete, setInviteToDelete] = useState<string | null>(null);
+
+  // Navigation Config State
+  const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
+  const [navConfigLoading, setNavConfigLoading] = useState(true);
+  const [navConfigSaving, setNavConfigSaving] = useState<string | null>(null);
 
   // --- Helpers ---
 
@@ -100,12 +107,82 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
   }, [invites, filterStatus]);
 
   const formatDate = (dateStr: string) => {
-      return new Date(dateStr).toLocaleDateString('ru-RU', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric' 
+      return new Date(dateStr).toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
       });
   };
+
+  // --- Navigation Config Effects ---
+  useEffect(() => {
+    // Загружаем конфигурацию навигации при монтировании
+    fetch('/api/admin?resource=navigation', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('vibes_token')}`
+      }
+    })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          setNavConfig(result.data);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load navigation config:', err);
+        showToast('Ошибка загрузки настроек навигации', 'error');
+      })
+      .finally(() => setNavConfigLoading(false));
+  }, []);
+
+  const handleNavToggle = async (key: keyof NavigationConfig) => {
+    if (!navConfig || key === 'dashboard') return; // Dashboard нельзя скрыть
+
+    const updatedConfig = { ...navConfig, [key]: !navConfig[key] };
+
+    // Optimistic update
+    setNavConfig(updatedConfig);
+    setNavConfigSaving(key);
+
+    try {
+      const response = await fetch('/api/admin?resource=navigation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('vibes_token')}`
+        },
+        body: JSON.stringify(updatedConfig)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setNavConfig(result.data);
+        showToast('Настройки сохранены', 'success');
+      } else {
+        // Откат при ошибке
+        setNavConfig(navConfig);
+        showToast('Ошибка сохранения', 'error');
+      }
+    } catch (error) {
+      // Откат при ошибке
+      setNavConfig(navConfig);
+      console.error('Failed to update navigation config:', error);
+      showToast('Ошибка сохранения', 'error');
+    } finally {
+      setNavConfigSaving(null);
+    }
+  };
+
+  const navItems = [
+    { key: 'dashboard' as keyof NavigationConfig, label: 'Дашборд', disabled: true },
+    { key: 'lessons' as keyof NavigationConfig, label: 'Уроки', disabled: false },
+    { key: 'roadmaps' as keyof NavigationConfig, label: 'Дорожные карты', disabled: false },
+    { key: 'styles' as keyof NavigationConfig, label: 'Стили', disabled: false },
+    { key: 'prompts' as keyof NavigationConfig, label: 'Промпты', disabled: false },
+    { key: 'glossary' as keyof NavigationConfig, label: 'Словарик', disabled: false },
+    { key: 'assistant' as keyof NavigationConfig, label: 'Ассистент', disabled: false },
+  ];
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
@@ -393,15 +470,69 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                     </div>
                 </div>
 
-                {/* Placeholder for other settings */}
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5 flex flex-col items-center justify-center text-center opacity-60">
-                    <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
-                        <Settings size={32} />
+                {/* Navigation Visibility Settings Card */}
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5 shadow-sm">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <Eye size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Видимость меню</h3>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Управление разделами для студентов</p>
+                        </div>
                     </div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Дополнительно</h3>
-                    <p className="text-zinc-500 max-w-sm">
-                        Другие глобальные настройки (темы, уведомления, безопасность) будут доступны в следующих обновлениях.
-                    </p>
+
+                    <div className="space-y-4">
+                        {navConfigLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader size={24} className="animate-spin text-zinc-400" />
+                            </div>
+                        ) : (
+                            navItems.map(item => (
+                                <div key={item.key} className="flex items-center justify-between py-2">
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-medium ${item.disabled ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                                            {item.label}
+                                        </span>
+                                        {item.disabled && (
+                                            <span className="text-xs text-zinc-400 dark:text-zinc-600">(обязательно)</span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => handleNavToggle(item.key)}
+                                        disabled={item.disabled || navConfigSaving === item.key}
+                                        className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 ${
+                                            item.disabled
+                                                ? 'bg-zinc-100 dark:bg-zinc-800 cursor-not-allowed opacity-50'
+                                                : navConfig && navConfig[item.key]
+                                                    ? 'bg-emerald-600'
+                                                    : 'bg-zinc-200 dark:bg-zinc-700'
+                                        } ${navConfigSaving === item.key ? 'opacity-50' : ''}`}
+                                    >
+                                        {navConfigSaving === item.key ? (
+                                            <div className="flex items-center justify-center w-full h-full">
+                                                <Loader size={14} className="animate-spin text-white" />
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className={`w-6 h-6 rounded-full bg-white shadow-sm transform transition-transform duration-300 ${
+                                                    navConfig && navConfig[item.key] ? 'translate-x-6' : 'translate-x-0'
+                                                }`}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {!navConfigLoading && (
+                        <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-white/10">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Скрытые разделы не будут отображаться в меню студентов. Изменения применяются сразу после переключения.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         )}

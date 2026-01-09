@@ -190,6 +190,17 @@ export interface InviteLink {
   usedAt?: string; // ISO Date
 }
 
+// Platform Settings Types
+export interface NavigationConfig {
+  dashboard: boolean;
+  lessons: boolean;
+  roadmaps: boolean;
+  styles: boolean;
+  prompts: boolean;
+  glossary: boolean;
+  assistant: boolean;
+}
+
 // Community / Showcase Types
 export type ProjectCategory = 'Лендинг' | 'Веб-сервис' | 'E-commerce' | 'Креатив';
 

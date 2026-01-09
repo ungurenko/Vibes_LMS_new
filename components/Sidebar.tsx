@@ -21,7 +21,7 @@ import {
   VolumeX,
   Lock
 } from 'lucide-react';
-import { NavItem, TabId } from '../types';
+import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 
@@ -34,6 +34,7 @@ interface SidebarProps {
   toggleTheme: () => void;
   mode: 'student' | 'admin';
   setMode: (mode: 'student' | 'admin') => void;
+  navConfig: NavigationConfig | null;
 }
 
 const studentNavItems: NavItem[] = [
@@ -54,9 +55,19 @@ const adminNavItems: NavItem[] = [
   { id: 'admin-settings', label: 'Настройки', icon: Settings },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setIsOpen, theme, toggleTheme, mode, setMode }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setIsOpen, theme, toggleTheme, mode, setMode, navConfig }) => {
   const { playSound, isEnabled, toggleSound } = useSound();
-  const navItems = mode === 'student' ? studentNavItems : adminNavItems;
+
+  // Фильтруем студенческие вкладки на основе конфигурации
+  const visibleStudentNavItems = studentNavItems.filter(item => {
+    // Если конфигурация не загружена - показываем все (fallback)
+    if (!navConfig) return true;
+
+    // Проверяем видимость вкладки
+    return navConfig[item.id as keyof NavigationConfig] !== false;
+  });
+
+  const navItems = mode === 'student' ? visibleStudentNavItems : adminNavItems;
 
   const sidebarContent = (
     <div className="h-full flex flex-col px-6 pb-6 pt-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-zinc-200 dark:border-white/5 transition-colors duration-300 shadow-xl shadow-zinc-200/20 dark:shadow-none">
