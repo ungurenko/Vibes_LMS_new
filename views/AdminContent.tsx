@@ -28,6 +28,7 @@ import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { COURSE_MODULES, STYLES_DATA, PROMPTS_DATA, GLOSSARY_DATA, ROADMAPS_DATA } from '../data';
 import { Lesson, StyleCard, PromptItem, GlossaryTerm, CourseModule, Roadmap, RoadmapStep } from '../types';
 import { Drawer, PageHeader, Input, Select, ConfirmModal } from '../components/Shared';
+import { removeCache, CACHE_KEYS } from '../lib/cache';
 
 // --- Types & Config ---
 
@@ -94,6 +95,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   const [glossary, setGlossary] = useState<GlossaryTerm[]>([]);
   const [roadmaps, setRoadmaps] = useState<AdminRoadmap[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // --- API Functions ---
 
@@ -226,6 +228,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setStyles(prev => prev.filter(i => i.id !== id));
+        removeCache(CACHE_KEYS.STYLES);
       }
       else if (type === 'prompts') {
         await fetch(`/api/admin-content?type=prompts&id=${id}`, {
@@ -233,6 +236,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setPrompts(prev => prev.filter(i => i.id !== id));
+        removeCache(CACHE_KEYS.PROMPTS);
       }
       else if (type === 'glossary') {
         await fetch(`/api/admin-content?type=glossary&id=${id}`, {
@@ -240,6 +244,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setGlossary(prev => prev.filter(i => i.id !== id));
+        removeCache(CACHE_KEYS.GLOSSARY);
       }
       else if (type === 'roadmaps') {
         await fetch(`/api/admin-content?type=roadmaps&id=${id}`, {
@@ -324,6 +329,8 @@ const AdminContent: React.FC<AdminContentProps> = () => {
 
         if (!response.ok) throw new Error('Failed to save style');
         await loadStyles();
+        // Инвалидируем кэш стилей для студентов
+        removeCache(CACHE_KEYS.STYLES);
       }
       else if (activeTab === 'prompts') {
         const response = await fetch('/api/admin-content?type=prompts', {
@@ -337,6 +344,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
 
         if (!response.ok) throw new Error('Failed to save prompt');
         await loadPrompts();
+        removeCache(CACHE_KEYS.PROMPTS);
       }
       else if (activeTab === 'glossary') {
         const response = await fetch('/api/admin-content?type=glossary', {
@@ -350,6 +358,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
 
         if (!response.ok) throw new Error('Failed to save glossary term');
         await loadGlossary();
+        removeCache(CACHE_KEYS.GLOSSARY);
       }
       else if (activeTab === 'roadmaps') {
         const response = await fetch('/api/admin-content?type=roadmaps', {
@@ -372,14 +381,48 @@ const AdminContent: React.FC<AdminContentProps> = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+
+      // Конвертируем файл в base64
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditingItem((prev: any) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const base64 = await base64Promise;
+
+      // Отправляем на /api/upload для загрузки в Vercel Blob
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ base64, filename: file.name })
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки изображения');
+      }
+
+      const result = await response.json();
+
+      // Сохраняем URL из Blob вместо base64
+      setEditingItem((prev: any) => ({ ...prev, image: result.data.url }));
+
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Ошибка при загрузке изображения');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -757,13 +800,14 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                             value={editingItem?.image || ''}
                             onChange={(e) => updateField('image', e.target.value)}
                             placeholder="https://..."
+                            disabled={isUploadingImage}
                          />
                          <div className="flex items-center gap-3">
                             <span className="text-xs text-zinc-400">или</span>
-                            <label className="cursor-pointer px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-sm font-bold text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-2">
-                                <Upload size={14} />
-                                Загрузить файл
-                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                            <label className={`px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm font-bold text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-2 ${isUploadingImage ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}>
+                                <Upload size={14} className={isUploadingImage ? 'animate-spin' : ''} />
+                                {isUploadingImage ? 'Загрузка...' : 'Загрузить файл'}
+                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploadingImage} />
                             </label>
                          </div>
                       </div>

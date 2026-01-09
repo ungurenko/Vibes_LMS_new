@@ -80,8 +80,8 @@ async function getStyles(req: VercelRequest, res: VercelResponse) {
 
     const { rows } = await query(sql, params);
 
-    // HTTP кэширование для статичных данных
-    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    // Отключаем агрессивное кэширование для изменяемых данных
+    res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
 
     const styles = rows.map((row: any) => ({
       id: row.id,
