@@ -316,7 +316,11 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                          </td>
                          <td className="px-6 py-4">
                             <button onClick={() => openProfile(student)} className="flex items-center gap-3 text-left group-hover:translate-x-1 transition-transform">
-                               <img src={student.avatar} alt="" className="w-10 h-10 rounded-full bg-zinc-200 object-cover" />
+                               <img 
+                                 src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=8b5cf6&color=fff`} 
+                                 alt="" 
+                                 className="w-10 h-10 rounded-full bg-zinc-200 object-cover" 
+                               />
                                <div>
                                   <div className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-violet-600 transition-colors">{student.name}</div>
                                   <div className="text-xs text-zinc-500">{student.email}</div>
@@ -412,7 +416,11 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                 <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
                    <div className="flex items-center gap-6">
                       <div className="relative">
-                         <img src={selectedStudent.avatar} alt="" className="w-24 h-24 rounded-full object-cover border-4 border-zinc-50 dark:border-zinc-800" />
+                         <img 
+                           src={selectedStudent.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&background=8b5cf6&color=fff`} 
+                           alt="" 
+                           className="w-24 h-24 rounded-full object-cover border-4 border-zinc-50 dark:border-zinc-800" 
+                         />
                          <span className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white dark:border-zinc-900 ${
                             selectedStudent.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'
                          }`}></span>
