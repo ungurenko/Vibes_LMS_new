@@ -100,8 +100,9 @@ const AppContent: React.FC = () => {
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
-                            // Загрузить инвайты для админ-панели
+                            // Загрузить инвайты и студентов для админ-панели
                             loadInvites();
+                            loadStudents();
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
@@ -243,6 +244,11 @@ const AppContent: React.FC = () => {
                 if (user.role === 'admin') {
                     setMode('admin');
                     setActiveTab('admin-students');
+                    // Загружаем данные для админки сразу после входа
+                    setTimeout(() => {
+                        loadInvites();
+                        loadStudents();
+                    }, 0);
                 } else {
                     setMode('student');
                     setActiveTab('dashboard');
@@ -335,6 +341,27 @@ const AppContent: React.FC = () => {
             }
         } catch (error) {
             console.error('Error loading invites:', error);
+        }
+    };
+
+    const loadStudents = async () => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/admin?resource=students', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setStudents(result.data);
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
         }
     };
 
