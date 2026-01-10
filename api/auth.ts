@@ -389,7 +389,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
 
     // Формируем динамический UPDATE запрос
     const updates: string[] = [];
-    const params: (string | null)[] = [];
+    const params: (string | boolean | null)[] = [];
     let paramIndex = 1;
 
     if (firstName) {
