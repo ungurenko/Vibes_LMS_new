@@ -19,7 +19,8 @@ import {
   ListTodo,
   Volume2,
   VolumeX,
-  Lock
+  Lock,
+  Laptop
 } from 'lucide-react';
 import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,6 +47,7 @@ const studentNavItems: NavItem[] = [
   { id: 'prompts', label: 'Промпты', icon: Terminal },
   { id: 'glossary', label: 'Словарик', icon: Book },
   { id: 'assistant', label: 'Ассистент', icon: Bot },
+  { id: 'practice', label: 'Практика', icon: Laptop, href: 'https://vibes-praktic.vercel.app/' },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -138,6 +140,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
       <nav className="flex-1 space-y-1.5 overflow-y-auto scrollbar-none py-2">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
+          
+          if (item.href) {
+            return (
+              <a
+                key={item.id}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  playSound('click');
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200`}
+              >
+                <div className={`relative z-10 p-1.5 rounded-lg transition-colors duration-300 group-hover:text-violet-500 dark:group-hover:text-violet-300`}>
+                  <item.icon size={20} strokeWidth={2} />
+                </div>
+                <span className={`relative z-10 text-base font-medium tracking-wide`}>{item.label}</span>
+              </a>
+            );
+          }
+
           return (
             <button
               key={item.id}

@@ -2,13 +2,14 @@
 import React from 'react';
 
 export type TabId = 
-  | 'dashboard' | 'lessons' | 'roadmaps' | 'styles' | 'prompts' | 'glossary' | 'assistant' | 'community' | 'profile'
+  | 'dashboard' | 'lessons' | 'roadmaps' | 'styles' | 'prompts' | 'glossary' | 'assistant' | 'community' | 'profile' | 'practice'
   | 'admin-students' | 'admin-content' | 'admin-calls' | 'admin-assistant' | 'admin-settings';
 
 export interface NavItem {
   id: TabId;
   label: string;
   icon: React.ElementType;
+  href?: string;
 }
 
 export type StyleCategory = 'Все' | 'Светлые' | 'Тёмные' | 'Яркие' | 'Минимализм';
