@@ -1,12 +1,12 @@
 
-import React from 'react';
-import { 
-  LayoutDashboard, 
-  Palette, 
-  Book, 
-  Bot, 
-  X, 
-  Moon, 
+import React, { useState } from 'react';
+import {
+  LayoutDashboard,
+  Palette,
+  Book,
+  Bot,
+  X,
+  Moon,
   Sun,
   GraduationCap,
   Terminal,
@@ -24,6 +24,7 @@ import {
 import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
+import AdminPasswordModal from './AdminPasswordModal';
 
 interface SidebarProps {
   activeTab: TabId;
@@ -57,6 +58,7 @@ const adminNavItems: NavItem[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setIsOpen, theme, toggleTheme, mode, setMode, navConfig }) => {
   const { playSound, isEnabled, toggleSound } = useSound();
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Фильтруем студенческие вкладки на основе конфигурации
   const visibleStudentNavItems = studentNavItems.filter(item => {
@@ -103,14 +105,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
              <button
                 onClick={() => {
                     playSound('click');
-                    const newMode = mode === 'student' ? 'admin' : 'student';
-                    setMode(newMode);
-                    setActiveTab(newMode === 'student' ? 'dashboard' : 'admin-students');
-                    setIsOpen(false);
+                    if (mode === 'student') {
+                        // Вход в админку - показываем модальное окно с паролем
+                        setShowAdminModal(true);
+                    } else {
+                        // Выход из админки - без пароля
+                        setMode('student');
+                        setActiveTab('dashboard');
+                        setIsOpen(false);
+                    }
                 }}
                 className={`p-2 rounded-xl transition-all duration-300 ${
-                    mode === 'admin' 
-                    ? 'text-red-500 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20' 
+                    mode === 'admin'
+                    ? 'text-red-500 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20'
                     : 'text-zinc-300 dark:text-zinc-600 hover:text-zinc-50 dark:hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
                 title={mode === 'student' ? 'Вход для куратора' : 'Выйти из админки'}
@@ -236,6 +243,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
           </>
         )}
       </AnimatePresence>
+
+      {/* Admin Password Modal */}
+      <AdminPasswordModal
+        isOpen={showAdminModal}
+        onClose={() => setShowAdminModal(false)}
+        onSuccess={() => {
+          setMode('admin');
+          setActiveTab('admin-students');
+          setIsOpen(false);
+        }}
+      />
     </>
   );
 };
