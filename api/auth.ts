@@ -38,6 +38,7 @@ interface UpdateProfileRequest {
   lastName?: string;
   avatarUrl?: string;
   newPassword?: string;
+  onboardingCompleted?: boolean;
 }
 
 interface User {
@@ -374,10 +375,10 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    const { firstName, lastName, avatarUrl, newPassword } = req.body as UpdateProfileRequest;
+    const { firstName, lastName, avatarUrl, newPassword, onboardingCompleted } = req.body as UpdateProfileRequest;
 
     // Проверяем, что есть что обновлять
-    if (!firstName && lastName === undefined && !avatarUrl && !newPassword) {
+    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && onboardingCompleted === undefined) {
       return res.status(400).json(errorResponse('Нет данных для обновления'));
     }
 
@@ -413,6 +414,12 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       const passwordHash = await hashPassword(newPassword);
       updates.push(`password_hash = $${paramIndex}`);
       params.push(passwordHash);
+      paramIndex++;
+    }
+
+    if (onboardingCompleted !== undefined) {
+      updates.push(`onboarding_completed = $${paramIndex}`);
+      params.push(onboardingCompleted);
       paramIndex++;
     }
 

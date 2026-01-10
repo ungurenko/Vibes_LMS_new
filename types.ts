@@ -166,6 +166,7 @@ export interface Student {
   joinedDate: string; // ISO Date string
   projects: StudentProjects;
   notes?: string;
+  onboardingCompleted?: boolean;
 }
 
 export interface AdminStat {

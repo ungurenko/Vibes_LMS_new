@@ -22,21 +22,9 @@ import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './ty
 import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
+import { fetchWithAuth } from './lib/fetchWithAuth';
 
-// Mock DB Initializer
-const initializeInvites = (): InviteLink[] => {
-    const saved = localStorage.getItem('vibes_invites');
-    if (saved) return JSON.parse(saved);
-    return [
-        { id: '1', token: 'demo123', status: 'active', created: new Date().toISOString() }
-    ];
-};
 
-const initializeStudents = (): Student[] => {
-    const saved = localStorage.getItem('vibes_students_db');
-    if (saved) return JSON.parse(saved);
-    return STUDENTS_DATA;
-}
 
 const AppContent: React.FC = () => {
     // --- Auth & Routing State ---
@@ -45,8 +33,8 @@ const AppContent: React.FC = () => {
     const [view, setView] = useState<'login' | 'register' | 'app' | 'reset-password' | 'onboarding'>('login');
 
     // --- App Data State (The "Database") ---
-    const [students, setStudents] = useState<Student[]>(initializeStudents);
-    const [invites, setInvites] = useState<InviteLink[]>(initializeInvites);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [invites, setInvites] = useState<InviteLink[]>([]);
 
     // Modules теперь загружаются напрямую из API в компонентах
 
@@ -96,6 +84,7 @@ const AppContent: React.FC = () => {
                             lastActive: 'Сейчас',
                             joinedDate: user.createdAt || new Date().toISOString(),
                             projects: {},
+                            onboardingCompleted: user.onboardingCompleted
                         });
                         if (user.role === 'admin') {
                             setMode('admin');
@@ -106,6 +95,10 @@ const AppContent: React.FC = () => {
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
+
+                            if (!user.onboardingCompleted) {
+                                setView('onboarding');
+                            }
                         }
                         setView('app');
                     } else {
@@ -147,14 +140,7 @@ const AppContent: React.FC = () => {
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    // 3. Persist Data
-    useEffect(() => {
-        localStorage.setItem('vibes_invites', JSON.stringify(invites));
-    }, [invites]);
 
-    useEffect(() => {
-        localStorage.setItem('vibes_students_db', JSON.stringify(students));
-    }, [students]);
 
     // 4. Load Navigation Config (только после авторизации)
     useEffect(() => {
@@ -239,6 +225,7 @@ const AppContent: React.FC = () => {
                     lastActive: 'Сейчас',
                     joinedDate: user.createdAt || new Date().toISOString(),
                     projects: {},
+                    onboardingCompleted: user.onboardingCompleted
                 });
 
                 if (user.role === 'admin') {
@@ -253,8 +240,7 @@ const AppContent: React.FC = () => {
                     setMode('student');
                     setActiveTab('dashboard');
 
-                    const hasOnboarded = localStorage.getItem(`vibes_onboarded_${user.id}`);
-                    if (!hasOnboarded) {
+                    if (!user.onboardingCompleted) {
                         setView('onboarding');
                         return;
                     }
@@ -293,10 +279,24 @@ const AppContent: React.FC = () => {
         setView('onboarding');
     };
 
-    const completeOnboarding = () => {
+    const completeOnboarding = async () => {
         if (currentUser?.id) {
-            localStorage.setItem(`vibes_onboarded_${currentUser.id}`, 'true');
-            setView('app');
+            try {
+                await fetchWithAuth('/api/auth/me', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ onboardingCompleted: true })
+                });
+                
+                // Update local state
+                setCurrentUser(prev => prev ? { ...prev, onboardingCompleted: true } : null);
+                setView('app');
+            } catch (error) {
+                console.error('Failed to update onboarding status', error);
+                // Fallback to local storage if API fails, just to let user pass
+                localStorage.setItem(`vibes_onboarded_${currentUser.id}`, 'true');
+                setView('app');
+            }
         }
     };
 

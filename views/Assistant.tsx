@@ -17,7 +17,6 @@ import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { DEFAULT_AI_SYSTEM_INSTRUCTION } from '../data';
 
 // --- Configuration ---
 
@@ -132,17 +131,10 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [systemInstruction, setSystemInstruction] = useState(DEFAULT_AI_SYSTEM_INSTRUCTION);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load system instruction from localStorage
-  useEffect(() => {
-    const savedInstruction = localStorage.getItem('vibes_ai_system_instruction');
-    if (savedInstruction) {
-      setSystemInstruction(savedInstruction);
-    }
-  }, []);
+
 
   useEffect(() => {
     const saved = localStorage.getItem('vibes_chat_history');
@@ -236,7 +228,6 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
         },
         body: JSON.stringify({
           messages: historyForApi,
-          systemInstruction: systemInstruction,
         }),
       });
 

@@ -7,6 +7,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { OpenRouter } from '@openrouter/sdk';
 import { getUserFromRequest, errorResponse } from './_lib/auth.js';
+import { query } from './_lib/db.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -30,11 +31,33 @@ export default async function handler(
     }
 
     // Получаем данные из запроса
-    const { messages, systemInstruction } = req.body;
+    const { messages } = req.body;
     console.log('[CHAT API] Messages count:', messages?.length);
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json(errorResponse('Некорректный формат сообщений'));
+    }
+
+    // Получаем активную системную инструкцию из БД
+    let systemInstruction = '';
+    try {
+      const { rows } = await query(
+        `SELECT content FROM ai_system_instructions WHERE is_active = true LIMIT 1`
+      );
+      if (rows.length > 0) {
+        systemInstruction = rows[0].content;
+        console.log('[CHAT API] Using active system instruction from DB');
+      } else {
+        console.log('[CHAT API] No active instruction in DB, using default');
+        // Default instruction fallback
+        systemInstruction = `Ты — опытный ментор по веб-разработке (вайб-кодингу). 
+Твоя цель — помогать студентам создавать красивые и функциональные веб-приложения, объяснять сложные концепции простым языком и поддерживать их мотивацию.
+Отвечай кратко, по делу, используй примеры кода.`;
+      }
+    } catch (dbError) {
+      console.error('[CHAT API] Failed to fetch system instruction:', dbError);
+      // Fallback on error
+      systemInstruction = 'Ты полезный помощник по программированию.';
     }
 
     // Проверяем наличие API ключа

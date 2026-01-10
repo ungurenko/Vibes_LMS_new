@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, ConfirmModal } from '../components/Shared';
 import { DEFAULT_AI_SYSTEM_INSTRUCTION } from '../data';
+import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
 
 const INITIAL_QUESTIONS = [
   "Как задеплоить на Vercel?",
@@ -36,8 +37,20 @@ const AdminAssistant: React.FC = () => {
   const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   useEffect(() => {
-      const saved = localStorage.getItem('vibes_ai_system_instruction');
-      setSystemPrompt(saved || DEFAULT_AI_SYSTEM_INSTRUCTION);
+      const loadInstruction = async () => {
+          try {
+              const data = await fetchWithAuthGet<{ content: string }>('/api/admin?resource=ai-instruction');
+              if (data && data.content) {
+                  setSystemPrompt(data.content);
+              } else {
+                  setSystemPrompt(DEFAULT_AI_SYSTEM_INSTRUCTION);
+              }
+          } catch (e) {
+              console.error('Failed to load AI instruction:', e);
+              setSystemPrompt(DEFAULT_AI_SYSTEM_INSTRUCTION);
+          }
+      };
+      loadInstruction();
   }, []);
 
   // --- Handlers ---
@@ -85,9 +98,18 @@ const AdminAssistant: React.FC = () => {
     setEditingText('');
   };
 
-  const handleSaveSystemPrompt = () => {
-      localStorage.setItem('vibes_ai_system_instruction', systemPrompt);
-      alert('Системный промпт обновлен и сохранен.');
+  const handleSaveSystemPrompt = async () => {
+      try {
+          await fetchWithAuth('/api/admin?resource=ai-instruction', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: systemPrompt })
+          });
+          alert('Системный промпт обновлен и сохранен в базе данных.');
+      } catch (e) {
+          console.error('Failed to save AI instruction:', e);
+          alert('Ошибка сохранения промпта.');
+      }
   };
 
   return (

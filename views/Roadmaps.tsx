@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     ArrowLeft,
@@ -15,7 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Roadmap, RoadmapCategory } from '../types';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 // Types for local storage
 type ProgressMap = Record<string, string[]>; // roadmapId -> array of completed step IDs
@@ -48,22 +47,67 @@ const Roadmaps: React.FC = () => {
         fetchRoadmaps();
     }, []);
 
-    // Load progress from local storage
+    // Load progress from API (with legacy localStorage migration)
     useEffect(() => {
-        const saved = localStorage.getItem('vibes_roadmap_progress');
-        if (saved) {
+        const loadProgress = async () => {
             try {
-                setCompletedSteps(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to load roadmap progress", e);
+                // 1. Загружаем прогресс с сервера
+                const serverData = await fetchWithAuthGet<ProgressMap>('/api/progress');
+                
+                // 2. Проверяем локальное хранилище (Legacy)
+                const localSaved = localStorage.getItem('vibes_roadmap_progress');
+                let localData: ProgressMap = {};
+                if (localSaved) {
+                    try {
+                        localData = JSON.parse(localSaved);
+                    } catch (e) { console.error(e); }
+                }
+
+                // 3. Логика слияния/миграции
+                const hasServerData = Object.keys(serverData || {}).length > 0;
+                const hasLocalData = Object.keys(localData).length > 0;
+
+                if (!hasServerData && hasLocalData) {
+                    // Если на сервере пусто, а локально есть -> используем локальные и отправляем на сервер
+                    console.log('Migrating local roadmap progress to server...');
+                    setCompletedSteps(localData);
+                    
+                    // Фоновая миграция
+                    syncLocalToServer(localData);
+                } else {
+                    // Иначе (на сервере есть данные или везде пусто) -> используем серверные
+                    setCompletedSteps(serverData || {});
+                    
+                    // Если локальные данные устарели, можно их очистить
+                    if (hasLocalData) {
+                        localStorage.removeItem('vibes_roadmap_progress');
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load roadmap progress", error);
             }
-        }
+        };
+
+        loadProgress();
     }, []);
 
-    // Save progress
-    useEffect(() => {
-        localStorage.setItem('vibes_roadmap_progress', JSON.stringify(completedSteps));
-    }, [completedSteps]);
+    const syncLocalToServer = async (data: ProgressMap) => {
+        for (const [roadmapId, stepIds] of Object.entries(data)) {
+            for (const stepId of stepIds) {
+                try {
+                    await fetchWithAuthPost('/api/progress', {
+                        stepId,
+                        roadmapId,
+                        completed: true
+                    });
+                } catch (e) {
+                    console.error('Migration failed for step', stepId);
+                }
+            }
+        }
+        // После успешной миграции чистим localStorage
+        localStorage.removeItem('vibes_roadmap_progress');
+    };
 
     // Scroll to top when opening a map
     useEffect(() => {
@@ -76,9 +120,10 @@ const Roadmaps: React.FC = () => {
         roadmaps.find(r => r.id === activeMapId),
         [activeMapId, roadmaps]);
 
-    const toggleStep = (stepId: string) => {
+    const toggleStep = async (stepId: string) => {
         if (!activeMapId) return;
 
+        // Optimistic update
         setCompletedSteps(prev => {
             const currentMapSteps = prev[activeMapId] || [];
             const isCompleted = currentMapSteps.includes(stepId);
@@ -90,18 +135,35 @@ const Roadmaps: React.FC = () => {
                 newMapSteps = [...currentMapSteps, stepId];
                 playSound('success'); // Play sound on completion
             }
-
-            const newState = { ...prev, [activeMapId]: newMapSteps };
-
-            // Check for completion and trigger confetti
+            
+            // Check for completion and trigger confetti (UI effect)
             if (!isCompleted && activeMap) {
-                if (newMapSteps.length === activeMap.steps.length) {
-                    triggerConfetti();
-                }
+                 if (newMapSteps.length === activeMap.steps.length) {
+                     triggerConfetti();
+                 }
             }
 
-            return newState;
+            return { ...prev, [activeMapId]: newMapSteps };
         });
+
+        // Server Sync
+        try {
+            const isNowCompleted = !completedSteps[activeMapId]?.includes(stepId); // Calculate based on PREVIOUS state (before optimistic update, but logic is tricky here due to closure)
+            
+            // Re-calculate based on what we just did. 
+            // Better: determine action before setState.
+            const currentSteps = completedSteps[activeMapId] || [];
+            const willBeCompleted = !currentSteps.includes(stepId);
+
+            await fetchWithAuthPost('/api/progress', {
+                stepId,
+                roadmapId: activeMapId,
+                completed: willBeCompleted
+            });
+        } catch (error) {
+            console.error('Failed to sync step progress', error);
+            // Revert logic could go here
+        }
     };
 
     const triggerConfetti = () => {
