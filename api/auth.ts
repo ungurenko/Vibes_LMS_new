@@ -39,6 +39,7 @@ interface UpdateProfileRequest {
   avatarUrl?: string;
   newPassword?: string;
   onboardingCompleted?: boolean;
+  preferences?: Record<string, any>;
 }
 
 interface User {
@@ -66,6 +67,7 @@ interface UserData {
   service_url: string | null;
   github_url: string | null;
   onboarding_completed: boolean;
+  preferences: Record<string, any>;
   current_stage_title: string | null;
 }
 
@@ -323,6 +325,7 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
         u.service_url,
         u.github_url,
         u.onboarding_completed,
+        u.preferences,
         ds.title as current_stage_title
       FROM users u
       LEFT JOIN user_stage_progress usp ON usp.user_id = u.id AND usp.status = 'current'
@@ -358,6 +361,7 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
           github: user.github_url,
         },
         onboardingCompleted: user.onboarding_completed,
+        preferences: user.preferences,
         currentStage: user.current_stage_title,
       })
     );
@@ -375,10 +379,10 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    const { firstName, lastName, avatarUrl, newPassword, onboardingCompleted } = req.body as UpdateProfileRequest;
+    const { firstName, lastName, avatarUrl, newPassword, onboardingCompleted, preferences } = req.body as UpdateProfileRequest;
 
     // Проверяем, что есть что обновлять
-    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && onboardingCompleted === undefined) {
+    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && onboardingCompleted === undefined && !preferences) {
       return res.status(400).json(errorResponse('Нет данных для обновления'));
     }
 
@@ -389,7 +393,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
 
     // Формируем динамический UPDATE запрос
     const updates: string[] = [];
-    const params: (string | boolean | null)[] = [];
+    const params: (string | boolean | null | object)[] = [];
     let paramIndex = 1;
 
     if (firstName) {
@@ -423,6 +427,12 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       paramIndex++;
     }
 
+    if (preferences) {
+        updates.push(`preferences = $${paramIndex}`);
+        params.push(preferences);
+        paramIndex++;
+    }
+
     // Добавляем updated_at
     updates.push(`updated_at = NOW()`);
 
@@ -450,6 +460,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
         u.service_url,
         u.github_url,
         u.onboarding_completed,
+        u.preferences,
         ds.title as current_stage_title
       FROM users u
       LEFT JOIN user_stage_progress usp ON usp.user_id = u.id AND usp.status = 'current'
@@ -480,6 +491,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
           github: user.github_url,
         },
         onboardingCompleted: user.onboarding_completed,
+        preferences: user.preferences,
         currentStage: user.current_stage_title,
       })
     );

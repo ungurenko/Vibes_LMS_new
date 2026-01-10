@@ -47,42 +47,13 @@ const Roadmaps: React.FC = () => {
         fetchRoadmaps();
     }, []);
 
-    // Load progress from API (with legacy localStorage migration)
+    // Load progress from API
     useEffect(() => {
         const loadProgress = async () => {
             try {
-                // 1. Загружаем прогресс с сервера
+                // Загружаем прогресс с сервера
                 const serverData = await fetchWithAuthGet<ProgressMap>('/api/progress');
-                
-                // 2. Проверяем локальное хранилище (Legacy)
-                const localSaved = localStorage.getItem('vibes_roadmap_progress');
-                let localData: ProgressMap = {};
-                if (localSaved) {
-                    try {
-                        localData = JSON.parse(localSaved);
-                    } catch (e) { console.error(e); }
-                }
-
-                // 3. Логика слияния/миграции
-                const hasServerData = Object.keys(serverData || {}).length > 0;
-                const hasLocalData = Object.keys(localData).length > 0;
-
-                if (!hasServerData && hasLocalData) {
-                    // Если на сервере пусто, а локально есть -> используем локальные и отправляем на сервер
-                    console.log('Migrating local roadmap progress to server...');
-                    setCompletedSteps(localData);
-                    
-                    // Фоновая миграция
-                    syncLocalToServer(localData);
-                } else {
-                    // Иначе (на сервере есть данные или везде пусто) -> используем серверные
-                    setCompletedSteps(serverData || {});
-                    
-                    // Если локальные данные устарели, можно их очистить
-                    if (hasLocalData) {
-                        localStorage.removeItem('vibes_roadmap_progress');
-                    }
-                }
+                setCompletedSteps(serverData || {});
             } catch (error) {
                 console.error("Failed to load roadmap progress", error);
             }
@@ -90,24 +61,6 @@ const Roadmaps: React.FC = () => {
 
         loadProgress();
     }, []);
-
-    const syncLocalToServer = async (data: ProgressMap) => {
-        for (const [roadmapId, stepIds] of Object.entries(data)) {
-            for (const stepId of stepIds) {
-                try {
-                    await fetchWithAuthPost('/api/progress', {
-                        stepId,
-                        roadmapId,
-                        completed: true
-                    });
-                } catch (e) {
-                    console.error('Migration failed for step', stepId);
-                }
-            }
-        }
-        // После успешной миграции чистим localStorage
-        localStorage.removeItem('vibes_roadmap_progress');
-    };
 
     // Scroll to top when opening a map
     useEffect(() => {

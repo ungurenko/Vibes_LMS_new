@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
+import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
 
 // --- Configuration ---
 
@@ -134,25 +135,42 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-
-
+  // Load History from API
   useEffect(() => {
-    const saved = localStorage.getItem('vibes_chat_history');
-    if (saved) {
+    const loadHistory = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      } catch (e) {
-        console.error("Failed to parse chat history");
+        // Загружаем историю с сервера
+        const history = await fetchWithAuthGet<ChatMessage[]>('/api/chat');
+        
+        if (history && history.length > 0) {
+          // Преобразуем даты из строк в Date объекты
+          const formattedHistory = history.map(m => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          }));
+          setMessages(formattedHistory);
+        } else {
+          // Приветственное сообщение, если история пуста
+          setMessages([{
+            id: 'init',
+            role: 'assistant',
+            text: 'Привет! Я твой ИИ-ментор по вайб-кодингу. Готов помочь с кодом, ошибками или объяснить сложные штуки простыми словами. **С чего начнем?**',
+            timestamp: new Date()
+          }]);
+        }
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+        // Fallback: пустое состояние или ошибка
+        setMessages([{
+          id: 'error',
+          role: 'assistant',
+          text: 'Не удалось загрузить историю сообщений. Но мы можем начать новый диалог.',
+          timestamp: new Date()
+        }]);
       }
-    } else {
-      setMessages([{
-        id: 'init',
-        role: 'assistant',
-        text: 'Привет! Я твой ИИ-ментор по вайб-кодингу. Готов помочь с кодом, ошибками или объяснить сложные штуки простыми словами. **С чего начнем?**',
-        timestamp: new Date()
-      }]);
-    }
+    };
+
+    loadHistory();
   }, []);
 
   // Handle Initial Context from other pages
@@ -162,12 +180,6 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
       if (onMessageHandled) onMessageHandled();
     }
   }, [initialMessage]);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('vibes_chat_history', JSON.stringify(messages));
-    }
-  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -191,7 +203,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
     playSound('success'); // Play sound for sent message
 
     const newUserMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Временный ID для UI
       role: 'user',
       text: text,
       timestamp: new Date()
@@ -205,17 +217,6 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
     if (inputRef.current) inputRef.current.style.height = 'auto';
 
     try {
-      // Подготовка истории сообщений (последние 20)
-      const historyForApi = messages.slice(-20).map(m => ({
-        role: m.role,
-        text: m.text
-      }));
-
-      historyForApi.push({
-        role: 'user',
-        text: text
-      });
-
       // Получаем JWT токен из localStorage
       const token = localStorage.getItem('vibes_token');
 
@@ -227,7 +228,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          messages: historyForApi,
+          message: text, // Отправляем только новое сообщение
         }),
       });
 
@@ -307,8 +308,8 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
         timestamp: new Date()
       };
       setMessages(prev => {
-        // Удаляем пустое сообщение если оно есть
-        const filtered = prev.filter(m => m.text !== '');
+        // Удаляем пустое сообщение если оно есть (обычно последнее)
+        const filtered = prev.filter(m => m.text !== ''); 
         return [...filtered, errorMsg];
       });
     } finally {
@@ -328,15 +329,21 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
     }
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     if (window.confirm('Очистить историю переписки?')) {
-      setMessages([{
-        id: Date.now().toString(),
-        role: 'assistant',
-        text: 'Чат очищен. Я готов к новым задачам! 🚀',
-        timestamp: new Date()
-      }]);
-      localStorage.removeItem('vibes_chat_history');
+      try {
+        await fetchWithAuth('/api/chat', { method: 'DELETE' });
+        
+        setMessages([{
+          id: Date.now().toString(),
+          role: 'assistant',
+          text: 'Чат очищен. Я готов к новым задачам! 🚀',
+          timestamp: new Date()
+        }]);
+      } catch (error) {
+        console.error("Failed to clear chat:", error);
+        alert("Не удалось очистить историю.");
+      }
     }
   };
 

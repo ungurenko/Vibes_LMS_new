@@ -293,8 +293,7 @@ const AppContent: React.FC = () => {
                 setView('app');
             } catch (error) {
                 console.error('Failed to update onboarding status', error);
-                // Fallback to local storage if API fails, just to let user pass
-                localStorage.setItem(`vibes_onboarded_${currentUser.id}`, 'true');
+                // Even if API fails, we let user pass in this session, but we don't save to localStorage anymore
                 setView('app');
             }
         }
