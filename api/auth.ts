@@ -5,6 +5,7 @@
  * - POST /api/auth/login
  * - POST /api/auth/register
  * - GET /api/auth/me
+ * - PATCH /api/auth/me - обновление профиля
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -30,6 +31,13 @@ interface RegisterRequest {
   firstName: string;
   lastName?: string;
   inviteCode: string;
+}
+
+interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  newPassword?: string;
 }
 
 interface User {
@@ -279,10 +287,21 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
 
 // ==================== ME ====================
 async function handleMe(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json(errorResponse('Method not allowed'));
+  // GET - получить данные профиля
+  if (req.method === 'GET') {
+    return handleGetMe(req, res);
   }
 
+  // PATCH - обновить профиль
+  if (req.method === 'PATCH') {
+    return handleUpdateProfile(req, res);
+  }
+
+  return res.status(405).json(errorResponse('Method not allowed'));
+}
+
+// GET /api/auth/me - получить данные текущего пользователя
+async function handleGetMe(req: VercelRequest, res: VercelResponse) {
   try {
     const tokenData = getUserFromRequest(req);
     if (!tokenData) {
@@ -343,6 +362,122 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
     );
   } catch (error) {
     console.error('Get user error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// PATCH /api/auth/me - обновить профиль текущего пользователя
+async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
+  try {
+    const tokenData = getUserFromRequest(req);
+    if (!tokenData) {
+      return res.status(401).json(errorResponse('Не авторизован'));
+    }
+
+    const { firstName, lastName, avatarUrl, newPassword } = req.body as UpdateProfileRequest;
+
+    // Проверяем, что есть что обновлять
+    if (!firstName && lastName === undefined && !avatarUrl && !newPassword) {
+      return res.status(400).json(errorResponse('Нет данных для обновления'));
+    }
+
+    // Валидация пароля
+    if (newPassword && newPassword.length < 6) {
+      return res.status(400).json(errorResponse('Пароль должен быть минимум 6 символов'));
+    }
+
+    // Формируем динамический UPDATE запрос
+    const updates: string[] = [];
+    const params: (string | null)[] = [];
+    let paramIndex = 1;
+
+    if (firstName) {
+      updates.push(`first_name = $${paramIndex}`);
+      params.push(firstName);
+      paramIndex++;
+    }
+
+    if (lastName !== undefined) {
+      updates.push(`last_name = $${paramIndex}`);
+      params.push(lastName || null);
+      paramIndex++;
+    }
+
+    if (avatarUrl) {
+      updates.push(`avatar_url = $${paramIndex}`);
+      params.push(avatarUrl);
+      paramIndex++;
+    }
+
+    if (newPassword) {
+      const passwordHash = await hashPassword(newPassword);
+      updates.push(`password_hash = $${paramIndex}`);
+      params.push(passwordHash);
+      paramIndex++;
+    }
+
+    // Добавляем updated_at
+    updates.push(`updated_at = NOW()`);
+
+    // Добавляем user id в конец параметров
+    params.push(tokenData.userId);
+
+    // Выполняем обновление
+    await query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} AND deleted_at IS NULL`,
+      params
+    );
+
+    // Получаем обновленные данные пользователя
+    const { rows } = await query<UserData>(
+      `SELECT
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.avatar_url,
+        u.role,
+        u.status,
+        u.progress_percent,
+        u.landing_url,
+        u.service_url,
+        u.github_url,
+        u.onboarding_completed,
+        ds.title as current_stage_title
+      FROM users u
+      LEFT JOIN user_stage_progress usp ON usp.user_id = u.id AND usp.status = 'current'
+      LEFT JOIN dashboard_stages ds ON ds.id = usp.stage_id
+      WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [tokenData.userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json(errorResponse('Пользователь не найден'));
+    }
+
+    const user = rows[0];
+
+    return res.status(200).json(
+      successResponse({
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        avatarUrl: user.avatar_url,
+        role: user.role,
+        status: user.status,
+        progressPercent: user.progress_percent,
+        projects: {
+          landing: user.landing_url,
+          service: user.service_url,
+          github: user.github_url,
+        },
+        onboardingCompleted: user.onboarding_completed,
+        currentStage: user.current_stage_title,
+      })
+    );
+  } catch (error) {
+    console.error('Update profile error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }

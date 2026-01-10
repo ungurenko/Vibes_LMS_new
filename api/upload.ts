@@ -40,11 +40,7 @@ export default async function handler(
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    // Только админы могут загружать файлы
-    if (tokenData.role !== 'admin') {
-      return res.status(403).json(errorResponse('Доступ запрещен'));
-    }
-
+    // Разрешаем загрузку всем авторизованным пользователям (для аватаров и др.)
     const { base64, filename } = req.body as UploadRequest;
 
     if (!base64) {

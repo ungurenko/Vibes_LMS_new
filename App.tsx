@@ -204,6 +204,13 @@ const AppContent: React.FC = () => {
         setStudents(prev => prev.filter(s => s.id !== id));
     };
 
+    // Обновление профиля текущего пользователя
+    const handleUserUpdate = (updatedFields: Partial<Student>) => {
+        if (currentUser) {
+            setCurrentUser({ ...currentUser, ...updatedFields });
+        }
+    };
+
     const handleLogin = async (email: string, password: string) => {
         try {
             const response = await fetch('/api/auth/login', {
@@ -437,7 +444,7 @@ const AppContent: React.FC = () => {
             case 'prompts': return <PromptBase />;
             case 'glossary': return <Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} />;
             case 'assistant': return <Assistant initialMessage={assistantInitialMessage} onMessageHandled={() => setAssistantInitialMessage(null)} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} /> : <Home onNavigate={setActiveTab} />;
+            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} />;
 
             // Admin Views
             case 'admin-students': return <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />;

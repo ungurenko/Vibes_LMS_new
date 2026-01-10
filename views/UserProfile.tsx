@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
-import { 
-  User, 
-  Mail, 
-  Camera, 
-  Edit2, 
-  Save, 
+import {
+  User,
+  Mail,
+  Camera,
+  Edit2,
+  Save,
   Upload,
   Lock,
-  X
+  X,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Student } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,39 +18,130 @@ import { Input } from '../components/Shared';
 
 interface UserProfileProps {
   user: Student;
+  onUserUpdate?: (updatedUser: Partial<Student>) => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // State for form fields
   const [avatarUrl, setAvatarUrl] = useState(user.avatar);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null); // Для новых загрузок
   const [firstName, setFirstName] = useState(user.name.split(' ')[0] || '');
   const [lastName, setLastName] = useState(user.name.split(' ').slice(1).join(' ') || '');
-  const [email, setEmail] = useState(user.email); // Usually emails require confirmation to change, keeping simple for now
-  
+  const [email, setEmail] = useState(user.email);
+
   // Password state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSave = () => {
-      // Validation logic could go here
-      if (newPassword && newPassword !== confirmPassword) {
-          alert("Пароли не совпадают");
+  const handleSave = async () => {
+      setError(null);
+
+      // Валидация
+      if (!firstName.trim()) {
+          setError('Имя обязательно');
           return;
       }
-      
-      // In a real app, this would send a PATCH request to the API
-      console.log("Saving profile:", { firstName, lastName, email, newPassword, avatarUrl });
-      
-      setIsEditing(false);
-      setNewPassword('');
-      setConfirmPassword('');
+
+      if (newPassword && newPassword !== confirmPassword) {
+          setError('Пароли не совпадают');
+          return;
+      }
+
+      if (newPassword && newPassword.length < 6) {
+          setError('Пароль должен быть минимум 6 символов');
+          return;
+      }
+
+      setIsSaving(true);
+
+      try {
+          const token = localStorage.getItem('vibes_token');
+          if (!token) {
+              setError('Сессия истекла. Войдите снова.');
+              setIsSaving(false);
+              return;
+          }
+
+          let finalAvatarUrl = avatarUrl;
+
+          // Если есть новое фото - сначала загружаем его
+          if (avatarBase64) {
+              const uploadResponse = await fetch('/api/upload', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                      base64: avatarBase64,
+                      filename: `avatar-${Date.now()}.jpg`
+                  })
+              });
+
+              const uploadData = await uploadResponse.json();
+
+              if (!uploadResponse.ok) {
+                  throw new Error(uploadData.error || 'Ошибка загрузки фото');
+              }
+
+              finalAvatarUrl = uploadData.data.url;
+          }
+
+          // Обновляем профиль
+          const profileResponse = await fetch('/api/auth/me', {
+              method: 'PATCH',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  firstName: firstName.trim(),
+                  lastName: lastName.trim(),
+                  avatarUrl: finalAvatarUrl,
+                  ...(newPassword ? { newPassword } : {})
+              })
+          });
+
+          const profileData = await profileResponse.json();
+
+          if (!profileResponse.ok) {
+              throw new Error(profileData.error || 'Ошибка сохранения профиля');
+          }
+
+          // Успешно! Обновляем UI
+          setAvatarUrl(finalAvatarUrl);
+          setAvatarBase64(null);
+          setIsEditing(false);
+          setNewPassword('');
+          setConfirmPassword('');
+
+          // Уведомляем родительский компонент
+          if (onUserUpdate) {
+              onUserUpdate({
+                  name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+                  avatar: finalAvatarUrl,
+                  email: email
+              });
+          }
+
+      } catch (err) {
+          console.error('Save profile error:', err);
+          setError(err instanceof Error ? err.message : 'Ошибка сохранения');
+      } finally {
+          setIsSaving(false);
+      }
   };
 
   const handleCancel = () => {
       setIsEditing(false);
+      setError(null);
       // Reset fields to original
+      setAvatarUrl(user.avatar);
+      setAvatarBase64(null);
       setFirstName(user.name.split(' ')[0] || '');
       setLastName(user.name.split(' ').slice(1).join(' ') || '');
       setNewPassword('');
@@ -58,9 +151,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+          // Проверка размера (макс 5MB для аватаров)
+          if (file.size > 5 * 1024 * 1024) {
+              setError('Файл слишком большой (макс 5MB)');
+              return;
+          }
+
           const reader = new FileReader();
           reader.onloadend = () => {
-              setAvatarUrl(reader.result as string);
+              const base64 = reader.result as string;
+              setAvatarUrl(base64); // Показываем превью
+              setAvatarBase64(base64); // Сохраняем для загрузки
+              setError(null);
           };
           reader.readAsDataURL(file);
       }
@@ -192,20 +294,39 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
                               </div>
                           </div>
 
+                          {/* Сообщение об ошибке */}
+                          {error && (
+                              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400">
+                                  <AlertCircle size={20} />
+                                  <span className="font-medium">{error}</span>
+                              </div>
+                          )}
+
                           <div className="flex justify-end gap-3 pt-4">
-                              <button 
+                              <button
                                   onClick={handleCancel}
-                                  className="px-6 py-3 rounded-xl border border-zinc-200 dark:border-white/10 font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2"
+                                  disabled={isSaving}
+                                  className="px-6 py-3 rounded-xl border border-zinc-200 dark:border-white/10 font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 disabled:opacity-50"
                               >
                                   <X size={18} />
                                   Отмена
                               </button>
-                              <button 
+                              <button
                                   onClick={handleSave}
-                                  className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/20 flex items-center gap-2"
+                                  disabled={isSaving}
+                                  className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                  <Save size={18} />
-                                  Сохранить
+                                  {isSaving ? (
+                                      <>
+                                          <Loader2 size={18} className="animate-spin" />
+                                          Сохранение...
+                                      </>
+                                  ) : (
+                                      <>
+                                          <Save size={18} />
+                                          Сохранить
+                                      </>
+                                  )}
                               </button>
                           </div>
                       </motion.div>
