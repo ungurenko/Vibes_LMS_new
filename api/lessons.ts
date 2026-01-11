@@ -112,8 +112,8 @@ export default async function handler(
             [userId]
         );
 
-        // HTTP кэширование для данных с прогрессом
-        res.setHeader('Cache-Control', 'private, max-age=60');
+        // Отключаем кэширование, так как данные персонализированы и меняются динамически
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
 
         // Группируем результат в иерархическую структуру
         const modulesMap = new Map<string, any>();
@@ -137,6 +137,9 @@ export default async function handler(
 
             // Добавляем урок если ещё нет
             if (!lessonsMap.has(row.lesson_id)) {
+                // Если урок пройден пользователем, переопределяем его статус на 'completed' для фронтенда
+                const computedStatus = row.completed ? 'completed' : row.lesson_status;
+
                 const lesson = {
                     id: row.lesson_id,
                     moduleId: row.module_id,
@@ -144,7 +147,7 @@ export default async function handler(
                     description: row.lesson_description,
                     duration: row.duration,
                     videoUrl: row.video_url,
-                    status: row.lesson_status,
+                    status: computedStatus,
                     materials: [],
                     completed: row.completed,
                 };
