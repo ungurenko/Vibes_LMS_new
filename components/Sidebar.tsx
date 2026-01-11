@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
   const navItems = mode === 'student' ? visibleStudentNavItems : adminNavItems;
 
   const sidebarContent = (
-    <div className="h-full flex flex-col px-6 pb-6 pt-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-zinc-200 dark:border-white/5 transition-colors duration-300 shadow-xl shadow-zinc-200/20 dark:shadow-none">
+    <div className="h-full flex flex-col px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-zinc-200 dark:border-white/5 transition-colors duration-300 shadow-xl shadow-zinc-200/20 dark:shadow-none">
       {/* Logo Area */}
       <div className="flex items-center justify-between mb-6 pl-2 pt-2">
         <div className="flex items-center gap-3">

@@ -503,7 +503,7 @@ const AppContent: React.FC = () => {
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} theme={theme} toggleTheme={toggleTheme} mode={mode} setMode={setMode} navConfig={navConfig} />
 
             <main className="md:pl-72 min-h-[100dvh] flex flex-col relative z-10">
-                <header className="md:hidden h-auto py-4 flex items-center justify-between px-6 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-zinc-200 dark:border-white/5 transition-colors duration-300">
+                <header className="md:hidden h-auto pt-[calc(1rem+env(safe-area-inset-top))] pb-4 flex items-center justify-between px-6 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-zinc-200 dark:border-white/5 transition-colors duration-300">
                     <div className="flex items-center gap-3">
                         {mode === 'student' ? (
                             <img src="https://i.imgur.com/f3UfhpM.png" alt="VIBES Logo" className="h-10 w-auto object-contain dark:brightness-0 dark:invert" />

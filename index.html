@@ -222,9 +222,22 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
-</head>
-  <body>
+    <link rel="stylesheet" href="/index.css">
+    <link rel="manifest" href="/manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+</head>  <body>
     <div id="root"></div>
     <div class="bg-noise"></div>
   <script type="module" src="/index.tsx"></script>

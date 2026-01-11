@@ -93,3 +93,11 @@ The project is configured for Vercel deployment:
 ## Interaction Guidelines
 
 -   **Language:** Always respond in Russian (Русский).
+
+## Proactive Tool Usage Rules
+
+-   **Proactive MCP Strategy:**
+    -   **Goal:** Maximize result quality by proactively verifying best practices and documentation.
+    -   **Decision Process:** For every task (feature implementation, refactoring, research), ask: *"Will using Exa or Context7 MCP improve the result?"* If yes, **use them**.
+    -   **Exa MCP (`web_search_exa`, `get_code_context_exa`):** Use to find best practices, industry standards, and modern solutions for both frontend and backend.
+    -   **Context7 MCP (`resolve-library-id`, `query-docs`):** Use to fetch official documentation and usage examples for libraries/frameworks to ensure idiomatic code.
