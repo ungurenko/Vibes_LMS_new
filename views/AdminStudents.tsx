@@ -1,31 +1,23 @@
-
 import React, { useState, useMemo } from 'react';
-import { STUDENT_ACTIVITY_LOG, STUDENT_CHAT_HISTORY } from '../data';
-import { Student } from '../types';
+import { Student, StudentProfile as StudentProfileType } from '../types';
 import { 
   Search, 
-  MoreHorizontal, 
-  Mail, 
   ArrowUpDown, 
-  Download, 
   Trash2, 
   ChevronRight,
   Github,
   Globe,
   Layout,
-  MessageSquare,
-  Clock,
-  X,
-  Save,
-  User,
   Plus,
+  X,
   Eye,
   EyeOff,
-  Edit,
-  CheckCircle
+  Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/Shared';
+import { StudentProfile } from '../components/admin/students/StudentProfile';
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 // --- Types ---
 type ViewMode = 'list' | 'profile';
@@ -40,12 +32,6 @@ interface AdminStudentsProps {
 }
 
 // --- Sub-components ---
-
-const Badge: React.FC<{ children: React.ReactNode; color: string }> = ({ children, color }) => (
-  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${color}`}>
-    {children}
-  </span>
-);
 
 const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'github' }> = ({ url, type }) => {
   if (!url) return (
@@ -71,6 +57,10 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   
+  // Profile Data State
+  const [detailedProfile, setDetailedProfile] = useState<StudentProfileType | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Student['status']>('all');
@@ -93,9 +83,6 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
   });
   
   const [showPassword, setShowPassword] = useState(false);
-
-  // Note State (for profile)
-  const [adminNote, setAdminNote] = useState('');
 
   // --- Logic ---
 
@@ -121,15 +108,38 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
     }));
   };
 
-  const openProfile = (student: Student) => {
+  const openProfile = async (student: Student) => {
     setSelectedStudentId(student.id);
-    setAdminNote(student.notes || '');
     setViewMode('profile');
+    setIsLoadingProfile(true);
+    
+    try {
+        const data = await fetchWithAuth(`/api/admin?resource=students&id=${student.id}`);
+        setDetailedProfile(data);
+    } catch (error) {
+        console.error("Failed to fetch profile", error);
+    } finally {
+        setIsLoadingProfile(false);
+    }
   };
 
   const closeProfile = () => {
     setViewMode('list');
-    setTimeout(() => setSelectedStudentId(null), 300);
+    setTimeout(() => {
+        setSelectedStudentId(null);
+        setDetailedProfile(null);
+    }, 300);
+  };
+
+  const handleProfileUpdate = (updates: Partial<StudentProfileType>) => {
+      if (detailedProfile) {
+          setDetailedProfile({ ...detailedProfile, ...updates });
+          // Also update the list view state if needed
+          const studentInList = students.find(s => s.id === detailedProfile.id);
+          if (studentInList) {
+              onUpdateStudent({ ...studentInList, ...updates });
+          }
+      }
   };
 
   const openAddModal = () => {
@@ -224,8 +234,6 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       return 0;
     });
   }, [students, searchTerm, statusFilter, sortConfig]);
-
-  const selectedStudent = students.find(s => s.id === selectedStudentId);
 
   return (
     <div className="relative max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32 min-h-screen">
@@ -392,7 +400,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
 
       {/* --- PROFILE VIEW --- */}
       <AnimatePresence>
-        {viewMode === 'profile' && selectedStudent && (
+        {viewMode === 'profile' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -400,131 +408,17 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
             transition={{ duration: 0.2 }}
             className="absolute inset-0 z-10 bg-slate-50 dark:bg-zinc-950 overflow-y-auto pb-32"
           >
-            {/* Nav Back */}
-            <div className="mb-6">
-               <button 
-                  onClick={closeProfile}
-                  className="flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
-               >
-                  <ChevronRight size={16} className="rotate-180" />
-                  Назад к списку
-               </button>
-            </div>
-
-            {/* Profile Header */}
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 border border-zinc-200 dark:border-white/5 mb-6 shadow-sm">
-                <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
-                   <div className="flex items-center gap-6">
-                      <div className="relative">
-                         <img 
-                           src={selectedStudent.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&background=8b5cf6&color=fff`} 
-                           alt="" 
-                           className="w-24 h-24 rounded-full object-cover border-4 border-zinc-50 dark:border-zinc-800" 
-                         />
-                         <span className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white dark:border-zinc-900 ${
-                            selectedStudent.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'
-                         }`}></span>
-                      </div>
-                      <div>
-                         <h1 className="text-3xl font-display font-bold text-zinc-900 dark:text-white mb-1">{selectedStudent.name}</h1>
-                         <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 text-sm mb-3">
-                            <span className="flex items-center gap-1"><Mail size={14} /> {selectedStudent.email}</span>
-                            <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
-                            <span>В клубе с {new Date(selectedStudent.joinedDate).toLocaleDateString()}</span>
-                         </div>
-                         <div className="flex gap-2">
-                             <Badge color={
-                                selectedStudent.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                                selectedStudent.status === 'stalled' ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700'
-                             }>
-                                {selectedStudent.status === 'stalled' ? 'Застрял' : selectedStudent.status === 'active' ? 'Активен' : 'Завершил'}
-                             </Badge>
-                             <Badge color="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                                {selectedStudent.currentModule}
-                             </Badge>
-                         </div>
-                      </div>
-                   </div>
-                   
-                   <div className="flex gap-3">
-                      <button 
-                        onClick={(e) => openEditModal(e, selectedStudent)}
-                        className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
-                      >
-                         <Edit size={14} />
-                         Редактировать
-                      </button>
-                      <button 
-                        onClick={() => confirmDelete(selectedStudent.id)}
-                        className="p-2 border border-zinc-200 dark:border-white/10 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-colors"
-                      >
-                         <Trash2 size={20} />
-                      </button>
-                   </div>
-                </div>
-            </div>
-
-            {/* Content Grid (Same as before) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5">
-                        <h3 className="font-bold text-zinc-900 dark:text-white mb-4">Прогресс</h3>
-                        <div className="relative w-32 h-32 mx-auto mb-4">
-                           <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#eee" strokeWidth="2" className="dark:stroke-zinc-800"/>
-                              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeDasharray={`${selectedStudent.progress}, 100`} />
-                           </svg>
-                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                              <span className="text-2xl font-bold text-zinc-900 dark:text-white">{selectedStudent.progress}%</span>
-                           </div>
-                        </div>
-                        <p className="text-center text-sm text-zinc-500 mb-6">Текущий: {selectedStudent.currentModule}</p>
-                    </div>
-                    {/* Notes */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5">
-                        <div className="flex items-center justify-between mb-4">
-                           <h3 className="font-bold text-zinc-900 dark:text-white">Заметки ментора</h3>
-                           <Save size={16} className="text-zinc-400 hover:text-violet-600 cursor-pointer" />
-                        </div>
-                        <textarea 
-                           className="w-full h-32 bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-xl p-3 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-amber-300 resize-none"
-                           placeholder="Напишите заметку о студенте..."
-                           value={adminNote}
-                           onChange={(e) => setAdminNote(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 border border-zinc-200 dark:border-white/5">
-                        <div className="flex items-center gap-3 mb-6">
-                           <Clock size={20} className="text-zinc-400" />
-                           <h3 className="font-bold text-zinc-900 dark:text-white">История активности</h3>
-                        </div>
-                        <div className="space-y-6 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-zinc-100 dark:before:bg-zinc-800">
-                           {STUDENT_ACTIVITY_LOG.map((log) => (
-                              <div key={log.id} className="relative flex items-start gap-4">
-                                 <div className={`relative z-10 w-8 h-8 rounded-full border-4 border-white dark:border-zinc-900 flex items-center justify-center shrink-0 ${
-                                    log.iconType === 'lesson' ? 'bg-emerald-100 text-emerald-600' : 
-                                    log.iconType === 'chat' ? 'bg-violet-100 text-violet-600' : 'bg-zinc-100 text-zinc-500'
-                                 }`}>
-                                    {log.iconType === 'lesson' && <CheckCircle size={14} />}
-                                    {log.iconType === 'chat' && <MessageSquare size={14} />}
-                                    {log.iconType === 'login' && <User size={14} />}
-                                    {log.iconType === 'project' && <Layout size={14} />}
-                                 </div>
-                                 <div className="pt-1">
-                                    <p className="text-sm text-zinc-900 dark:text-white">
-                                       <span className="font-bold">Студент</span> {log.action} <span className="font-medium text-violet-600 dark:text-violet-400">«{log.target}»</span>
-                                    </p>
-                                    <span className="text-xs text-zinc-400">{log.date}</span>
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+             {isLoadingProfile || !detailedProfile ? (
+                 <div className="flex items-center justify-center h-full">
+                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+                 </div>
+             ) : (
+                 <StudentProfile 
+                    student={detailedProfile} 
+                    onBack={closeProfile}
+                    onUpdate={handleProfileUpdate}
+                 />
+             )}
           </motion.div>
         )}
       </AnimatePresence>

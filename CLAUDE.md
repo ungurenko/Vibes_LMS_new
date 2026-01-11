@@ -24,7 +24,6 @@ psql -h HOST -p PORT -U USER -d DATABASE -f database/seed.sql
 ## Environment Variables
 
 Required in `.env.local`:
-- `GEMINI_API_KEY` - Google Gemini API key
 - `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI assistant)
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - JWT signing secret (min 32 chars)

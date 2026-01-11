@@ -51,6 +51,8 @@ export default async function handler(
     switch (resourceType) {
       case 'students':
         return await handleStudents(req, res, tokenData);
+      case 'student-activity':
+        return await handleActivityLog(req, res, tokenData);
       case 'stats':
         return await handleStats(req, res, tokenData);
       case 'ai-instruction':
@@ -83,10 +85,112 @@ async function handleStudents(
   tokenData: any
 ) {
   try {
-    // GET - получить список студентов
+    // GET - получить список студентов или одного студента
     if (req.method === 'GET') {
-      const { status, search } = req.query;
+      const { status, search, id } = req.query;
 
+      // Если передан ID, возвращаем детальный профиль
+      if (id) {
+        // 1. Основные данные студента
+        const { rows: studentRows } = await query(
+          `SELECT
+            u.id, u.email, u.first_name, u.last_name, u.avatar_url,
+            u.role, u.status, u.progress_percent,
+            u.landing_url, u.service_url, u.github_url,
+            u.admin_notes, u.last_active_at, u.created_at,
+            cm.title as current_module
+          FROM users u
+          LEFT JOIN course_modules cm ON cm.id = u.current_module_id
+          WHERE u.id = $1 AND u.role = 'student'`,
+          [id]
+        );
+
+        if (studentRows.length === 0) {
+          return res.status(404).json(errorResponse('Студент не найден'));
+        }
+
+        const student = studentRows[0];
+
+        // 2. Статистика (параллельные запросы)
+        const [lessonsResult, projectsResult, chatResult] = await Promise.all([
+          query(
+            `SELECT COUNT(*) as count FROM user_lesson_progress WHERE user_id = $1 AND status = 'completed'`,
+            [id]
+          ),
+          query(
+            `SELECT COUNT(*) as count FROM showcase_projects WHERE author_id = $1`,
+            [id]
+          ),
+          query(
+            `SELECT COUNT(*) as count FROM chat_messages WHERE user_id = $1 AND role = 'user'`,
+            [id]
+          )
+        ]);
+        
+        // 3. Получаем прогресс по урокам для визуализации
+        const { rows: progressRows } = await query(
+           `SELECT 
+              cm.id as module_id, 
+              cm.title as module_title,
+              l.id as lesson_id,
+              l.title as lesson_title,
+              COALESCE(ulp.status, 'locked') as status
+            FROM course_modules cm
+            JOIN lessons l ON l.module_id = cm.id
+            LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = $1
+            WHERE cm.deleted_at IS NULL AND l.deleted_at IS NULL
+            ORDER BY cm.sort_order, l.sort_order`,
+            [id]
+        );
+        
+        // Группируем прогресс
+        const curriculum = [];
+        let currentModule = null;
+        
+        for (const row of progressRows) {
+            if (!currentModule || currentModule.id !== row.module_id) {
+                currentModule = {
+                    id: row.module_id,
+                    title: row.module_title,
+                    lessons: []
+                };
+                curriculum.push(currentModule);
+            }
+            currentModule.lessons.push({
+                id: row.lesson_id,
+                title: row.lesson_title,
+                status: row.status
+            });
+        }
+
+        const result = {
+          id: student.id,
+          name: [student.first_name, student.last_name].filter(Boolean).join(' '),
+          email: student.email,
+          avatar: student.avatar_url,
+          status: student.status,
+          progress: student.progress_percent,
+          currentModule: student.current_module || '',
+          lastActive: formatLastActive(student.last_active_at),
+          joinedDate: student.created_at?.toISOString().split('T')[0],
+          projects: {
+            landing: student.landing_url,
+            service: student.service_url,
+            github: student.github_url,
+          },
+          notes: student.admin_notes,
+          stats: {
+             lessonsCompleted: parseInt(lessonsResult.rows[0].count),
+             projectsSubmitted: parseInt(projectsResult.rows[0].count),
+             messagesSent: parseInt(chatResult.rows[0].count)
+          },
+          curriculum
+        };
+
+        return res.status(200).json(successResponse(result));
+      }
+
+      // Иначе возвращаем список (существующая логика)
       let sql = `
         SELECT
           u.id,
@@ -201,6 +305,68 @@ async function handleStudents(
     console.error('Admin students error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
+}
+
+// ===== ACTIVITY LOG =====
+
+async function handleActivityLog(
+  req: VercelRequest,
+  res: VercelResponse,
+  tokenData: any
+) {
+    if (req.method !== 'GET') {
+        return res.status(405).json(errorResponse('Method not allowed'));
+    }
+
+    try {
+        const { userId, limit = 50 } = req.query;
+        
+        if (!userId) {
+            return res.status(400).json(errorResponse('UserId обязателен'));
+        }
+
+        const { rows } = await query(
+            `SELECT 
+                id, action_type, action_description, target_type, target_title, created_at
+             FROM activity_log
+             WHERE user_id = $1
+             ORDER BY created_at DESC
+             LIMIT $2`,
+            [userId, limit]
+        );
+
+        const activity = rows.map((row: any) => ({
+            id: row.id,
+            action: row.action_description,
+            target: row.target_title || '',
+            date: formatActivityDate(row.created_at),
+            timestamp: row.created_at, // For sorting if needed
+            iconType: mapActionToIconType(row.action_type)
+        }));
+
+        return res.status(200).json(successResponse(activity));
+
+    } catch (error) {
+        console.error('Admin activity log error:', error);
+        return res.status(500).json(errorResponse('Ошибка сервера'));
+    }
+}
+
+function mapActionToIconType(actionType: string): string {
+    if (actionType === 'lesson' || actionType === 'task_complete') return 'lesson';
+    if (actionType === 'chat') return 'chat';
+    if (actionType === 'project') return 'project';
+    if (actionType === 'login' || actionType === 'logout' || actionType === 'registration') return 'login';
+    return 'login'; // default
+}
+
+function formatActivityDate(date: Date): string {
+    return new Date(date).toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 /**

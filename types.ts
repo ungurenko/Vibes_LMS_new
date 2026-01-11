@@ -169,6 +169,23 @@ export interface Student {
   onboardingCompleted?: boolean;
 }
 
+export interface StudentProfile extends Student {
+  stats: {
+    lessonsCompleted: number;
+    projectsSubmitted: number;
+    messagesSent: number;
+  };
+  curriculum: {
+    id: string;
+    title: string;
+    lessons: {
+      id: string;
+      title: string;
+      status: string;
+    }[];
+  }[];
+}
+
 export interface AdminStat {
   label: string;
   value: string;
@@ -182,6 +199,15 @@ export interface ActivityLogItem {
   action: string;
   target: string;
   date: string;
+  iconType: 'lesson' | 'project' | 'chat' | 'login';
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  action: string;
+  target: string;
+  date: string;
+  timestamp: string;
   iconType: 'lesson' | 'project' | 'chat' | 'login';
 }
 
