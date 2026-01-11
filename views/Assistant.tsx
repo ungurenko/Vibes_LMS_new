@@ -348,10 +348,10 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-1rem)] md:h-screen flex flex-col overflow-hidden bg-transparent">
+    <div className="relative w-full h-[calc(100dvh-80px)] md:h-[calc(100vh-2rem)] flex flex-col overflow-hidden bg-transparent">
 
-      {/* --- Header --- */}
-      <header className="px-4 md:px-8 py-4 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 z-20 sticky top-0 shadow-sm">
+      {/* --- Header (Desktop Only) --- */}
+      <header className="hidden md:flex px-8 py-4 items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 z-20 shrink-0">
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
@@ -379,16 +379,26 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
         </button>
       </header>
 
+      {/* --- Mobile Header Actions (Floating) --- */}
+      <div className="md:hidden absolute top-2 right-2 z-30">
+          <button
+            onClick={handleClearChat}
+            className="p-2 rounded-full bg-white/50 dark:bg-black/50 backdrop-blur text-zinc-500 hover:text-red-500 border border-zinc-200 dark:border-white/10"
+          >
+            <Trash2 size={16} />
+          </button>
+      </div>
+
       {/* --- Chat Area --- */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-48 pt-6 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-4 pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 overscroll-contain">
+        <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((msg) => (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
               key={msg.id}
-              className={`flex items-start gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex items-start gap-3 md:gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               {/* Avatar */}
               <div className={`shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-md ${msg.role === 'assistant'
@@ -402,8 +412,8 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
               </div>
 
               {/* Bubble */}
-              <div className={`flex flex-col max-w-[90%] md:max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`relative px-5 py-4 md:px-6 md:py-5 rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${msg.role === 'assistant'
+              <div className={`flex flex-col max-w-[85%] md:max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`relative px-4 py-3 md:px-6 md:py-5 rounded-2xl md:rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${msg.role === 'assistant'
                     ? 'bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-xl shadow-zinc-200/50 dark:shadow-none'
                     : 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-sm shadow-lg shadow-violet-500/30 border border-white/10'
                   }`}>
@@ -417,7 +427,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
                     <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                   )}
                 </div>
-                <span className="text-[10px] font-mono text-zinc-400 mt-2 px-1 opacity-60">
+                <span className="text-[10px] font-mono text-zinc-400 mt-1 md:mt-2 px-1 opacity-60">
                   {formatTime(msg.timestamp)}
                 </span>
               </div>
@@ -440,21 +450,21 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
               </div>
             </motion.div>
           )}
-          <div ref={messagesEndRef} className="h-4" />
+          <div ref={messagesEndRef} className="h-2" />
         </div>
       </div>
 
       {/* --- Input Area --- */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent dark:from-zinc-950 dark:via-zinc-950/95 z-20 pointer-events-none">
-        <div className="max-w-4xl mx-auto space-y-4 pointer-events-auto">
+      <div className="shrink-0 p-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-zinc-950 dark:via-zinc-950 z-20">
+        <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
 
           {/* Quick Questions */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2 mask-linear px-1">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mask-linear px-1">
             {QUICK_QUESTIONS.map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(q)}
-                className="whitespace-nowrap px-4 py-2.5 rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-violet-400 dark:hover:border-violet-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-300 transition-all shadow-sm hover:shadow-violet-500/10 flex items-center gap-2 group"
+                className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-violet-400 dark:hover:border-violet-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-300 transition-all shadow-sm hover:shadow-violet-500/10 flex items-center gap-2 group"
               >
                 <Zap size={14} className="text-violet-400 group-hover:text-violet-500 transition-colors" />
                 {q}
@@ -465,36 +475,36 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
           {/* Input Field */}
           <form
             onSubmit={onFormSubmit}
-            className="relative group rounded-3xl bg-white dark:bg-zinc-900 shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 border border-zinc-200 dark:border-white/10 focus-within:border-violet-500/50 dark:focus-within:border-violet-500/50 transition-all duration-300 ring-4 ring-transparent focus-within:ring-violet-500/10"
+            className="relative group rounded-3xl bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 border border-zinc-200 dark:border-white/10 focus-within:border-violet-500/50 dark:focus-within:border-violet-500/50 transition-all duration-300 ring-0 focus-within:ring-4 focus-within:ring-violet-500/10"
           >
             {/* Glow Effect */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl opacity-0 group-focus-within:opacity-30 blur-md transition-opacity duration-500 pointer-events-none" />
 
-            <div className="relative flex items-end p-2 bg-white dark:bg-zinc-900 rounded-3xl">
+            <div className="relative flex items-end p-1.5 md:p-2 bg-white dark:bg-zinc-900 rounded-3xl">
               <textarea
                 ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Спроси о коде, ошибках или терминах..."
-                className="w-full max-h-48 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 p-4 pl-5 focus:outline-none resize-none text-base scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700"
+                placeholder="Спроси нейросеть..."
+                className="w-full max-h-32 md:max-h-48 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 p-3 md:p-4 pl-4 md:pl-5 focus:outline-none resize-none text-sm md:text-base scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700"
                 rows={1}
-                style={{ minHeight: '56px' }}
+                style={{ minHeight: '48px' }}
               />
-              <div className="pb-1.5 pr-1.5">
+              <div className="pb-1 pr-1">
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isTyping}
-                  className="p-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-lg hover:shadow-zinc-500/20 flex items-center justify-center"
+                  className="p-2 md:p-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl md:rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-lg hover:shadow-zinc-500/20 flex items-center justify-center"
                 >
-                  <Send size={20} className={!inputValue.trim() ? "opacity-50" : ""} />
+                  <Send size={18} className={!inputValue.trim() ? "opacity-50" : ""} />
                 </button>
               </div>
             </div>
           </form>
-          <div className="text-center pb-2">
+          <div className="text-center">
             <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono opacity-70">
-              ИИ может допускать ошибки. Проверяйте важный код.
+              Gemini 2.5 Flash Lite
             </p>
           </div>
         </div>
