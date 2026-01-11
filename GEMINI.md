@@ -89,6 +89,7 @@ The project is configured for Vercel deployment:
 -   **API:** All API routes are strictly typed (using `VercelRequest`/`VercelResponse` types) and located in `api/`.
 -   **Styles:** Tailwind CSS utility classes are used for styling.
 -   **Strict Mode:** TypeScript strict mode is enabled.
+-   **STRICT API ROUTING:** Frontend `fetch` URLs **MUST** match the `api/` file structure exactly. Do NOT invent nested REST paths (e.g., `/api/tasks/complete`) unless a corresponding directory/file exists. Check the backend handler first; if it uses `req.query.action`, use `?action=...` (e.g., `/api/tasks?action=complete`).
 
 ## Interaction Guidelines
 

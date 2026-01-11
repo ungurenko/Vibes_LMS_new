@@ -122,7 +122,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
          if (isCompleted) {
             // Убрать отметку
-            await fetch('/api/stages/tasks/complete', {
+            await fetch('/api/stages?action=complete-task', {
                method: 'DELETE',
                headers: {
                   'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             setCompletedTasks(prev => prev.filter(id => id !== taskId));
          } else {
             // Отметить завершённой
-            await fetch('/api/stages/tasks/complete', {
+            await fetch('/api/stages?action=complete-task', {
                method: 'POST',
                headers: {
                   'Content-Type': 'application/json',
