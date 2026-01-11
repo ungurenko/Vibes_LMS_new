@@ -22,7 +22,7 @@ import {
   FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchWithAuth } from '@/lib/fetchWithAuth';
+import { fetchWithAuth, fetchWithAuthGet } from '@/lib/fetchWithAuth';
 
 interface StudentProfileProps {
   student: StudentProfileType;
@@ -339,7 +339,7 @@ const ActivityFeed: React.FC<{ userId: string }> = ({ userId }) => {
     React.useEffect(() => {
         const fetchActivity = async () => {
             try {
-                const data = await fetchWithAuth(`/api/admin?resource=student-activity&userId=${userId}`);
+                const data = await fetchWithAuthGet<ActivityLogEntry[]>(`/api/admin?resource=student-activity&userId=${userId}`);
                 setActivity(data);
             } catch (e) {
                 console.error(e);

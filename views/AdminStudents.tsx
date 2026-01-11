@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/Shared';
 import { StudentProfile } from '../components/admin/students/StudentProfile';
-import { fetchWithAuth } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 // --- Types ---
 type ViewMode = 'list' | 'profile';
@@ -114,7 +114,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
     setIsLoadingProfile(true);
     
     try {
-        const data = await fetchWithAuth(`/api/admin?resource=students&id=${student.id}`);
+        const data = await fetchWithAuthGet<StudentProfileType>(`/api/admin?resource=students&id=${student.id}`);
         setDetailedProfile(data);
     } catch (error) {
         console.error("Failed to fetch profile", error);
