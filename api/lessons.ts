@@ -17,6 +17,66 @@ export default async function handler(
     req: VercelRequest,
     res: VercelResponse
 ) {
+    if (req.method === 'POST') {
+        try {
+            const tokenData = getUserFromRequest(req);
+            if (!tokenData) {
+                return res.status(401).json(errorResponse('Не авторизован'));
+            }
+
+            const { lessonId, completed } = req.body;
+            if (!lessonId) {
+                return res.status(400).json(errorResponse('Не указан lessonId'));
+            }
+
+            const userId = tokenData.userId;
+
+            if (completed) {
+                // Mark as completed
+                await query(
+                    `INSERT INTO user_lesson_progress (user_id, lesson_id, status, completed_at, started_at)
+                     VALUES ($1, $2, 'completed', NOW(), NOW())
+                     ON CONFLICT (user_id, lesson_id)
+                     DO UPDATE SET
+                        status = 'completed',
+                        completed_at = NOW(),
+                        started_at = COALESCE(user_lesson_progress.started_at, NOW())`,
+                    [userId, lessonId]
+                );
+            } else {
+                // Mark as not completed (available)
+                await query(
+                    `UPDATE user_lesson_progress
+                     SET status = 'available', completed_at = NULL
+                     WHERE user_id = $1 AND lesson_id = $2`,
+                    [userId, lessonId]
+                );
+            }
+
+            // Also update total user progress (simple calculation based on total lessons)
+            // 1. Get total active lessons count
+            const totalRes = await query(`SELECT COUNT(*) as count FROM lessons WHERE deleted_at IS NULL AND status != 'draft'`);
+            const totalLessons = parseInt(totalRes.rows[0].count) || 1;
+
+            // 2. Get completed lessons count for user
+            const completedRes = await query(
+                `SELECT COUNT(*) as count FROM user_lesson_progress
+                 WHERE user_id = $1 AND status = 'completed'`,
+                [userId]
+            );
+            const completedLessons = parseInt(completedRes.rows[0].count) || 0;
+
+            // 3. Update user profile
+            const progressPercent = Math.min(100, Math.round((completedLessons / totalLessons) * 100));
+            await query(`UPDATE users SET progress_percent = $1 WHERE id = $2`, [progressPercent, userId]);
+
+            return res.status(200).json(successResponse({ completed, progressPercent }));
+        } catch (error) {
+            console.error('Update lesson progress error:', error);
+            return res.status(500).json(errorResponse('Ошибка сервера при обновлении прогресса'));
+        }
+    }
+
     if (req.method !== 'GET') {
         return res.status(405).json(errorResponse('Method not allowed'));
     }

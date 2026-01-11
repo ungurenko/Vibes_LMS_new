@@ -18,7 +18,7 @@ import {
     PlayCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CourseModule } from '../types';
+import { CourseModule, LessonStatus } from '../types';
 import { LessonItemSkeleton } from '../components/SkeletonLoader';
 
 const getYouTubeEmbedUrl = (url: string) => {
@@ -130,6 +130,46 @@ const Lessons: React.FC = () => {
 
     const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
+    const handleLessonCompletion = async () => {
+        if (!activeLesson) return;
+
+        const newCompletedStatus = activeLesson.status !== 'completed';
+
+        // Optimistic update
+        const updatedModules = modules.map(m => ({
+            ...m,
+            lessons: m.lessons.map(l => {
+                if (l.id === activeLesson.id) {
+                    return { ...l, status: (newCompletedStatus ? 'completed' : 'available') as LessonStatus };
+                }
+                return l;
+            })
+        }));
+        setModules(updatedModules);
+
+        try {
+            const token = localStorage.getItem('vibes_token');
+            const response = await fetch('/api/lessons', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    lessonId: activeLesson.id,
+                    completed: newCompletedStatus
+                })
+            });
+
+            if (!response.ok) {
+                console.error('Failed to update lesson status');
+                // Optional: Revert state here if needed
+            }
+        } catch (error) {
+            console.error('Error updating lesson status:', error);
+        }
+    };
+
     const embedUrl = activeLesson?.videoUrl ? getYouTubeEmbedUrl(activeLesson.videoUrl) : null;
 
     return (
@@ -223,6 +263,7 @@ const Lessons: React.FC = () => {
 
                                     {/* Primary Action */}
                                     <button
+                                        onClick={handleLessonCompletion}
                                         className={`flex-1 sm:flex-none h-12 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeLesson.status === 'completed'
                                                 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                                                 : 'bg-zinc-900 dark:bg-white text-white dark:text-black hover:scale-105 active:scale-95 shadow-lg shadow-zinc-500/10'
