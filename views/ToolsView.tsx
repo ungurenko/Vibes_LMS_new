@@ -214,7 +214,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
 
       {/* Bento Grid */}
       <div className="flex-1 px-4 md:px-8 pb-8">
-        <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
+        <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
           {/* Large Card - Ассистент */}
           <LargeToolCard
             tool={largeTool}
