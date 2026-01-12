@@ -187,3 +187,19 @@ try {
 - Нужен дополнительный redeploy после добавления токена
 
 **Правило 80/20:** 80% проблем с внешними сервисами — это отсутствие токенов или неправильные типы. Проверяй это ПЕРЕД деплоем, а не ПОСЛЕ.
+
+## Database Connection
+
+Прямое подключение к PostgreSQL для миграций и отладки:
+
+```bash
+export PGSSLROOTCERT=$HOME/.cloud-certs/root.crt
+psql 'postgresql://gen_user:MkKoNHutAX2Y%40E@5536e7cf4e31035978aa2f37.twc1.net:5432/vibes_platform?sslmode=verify-full'
+```
+
+**Важно:** Используй это подключение для:
+- Миграций схемы БД
+- Отладки данных
+- Ручных SQL-запросов
+
+Для кода приложения используй `DATABASE_URL` из `.env.local`.
