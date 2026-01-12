@@ -51,6 +51,8 @@ export default async function handler(
       return getGlossary(req, res);
     case 'roadmaps':
       return getRoadmaps(req, res, tokenData);
+    case 'quick-questions':
+      return getQuickQuestionsPublic(req, res);
     case 'content':
       return res.status(400).json(errorResponse('Content type required'));
     default:
@@ -334,6 +336,28 @@ async function getRoadmaps(req: VercelRequest, res: VercelResponse, tokenData: a
     return res.status(200).json(successResponse(result));
   } catch (error) {
     console.error('Get roadmaps error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== QUICK QUESTIONS (PUBLIC) ====================
+async function getQuickQuestionsPublic(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { rows } = await query(
+      `SELECT id, text, sort_order
+       FROM quick_questions
+       WHERE is_active = TRUE
+       ORDER BY sort_order`
+    );
+
+    // HTTP кэширование для статичных данных
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+
+    const questions = rows.map((row: any) => row.text);
+
+    return res.status(200).json(successResponse(questions));
+  } catch (error) {
+    console.error('Get quick questions error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }

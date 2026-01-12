@@ -21,7 +21,7 @@ import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
 
 // --- Configuration ---
 
-const QUICK_QUESTIONS = [
+const DEFAULT_QUICK_QUESTIONS = [
   "Как задеплоить на Vercel?",
   "Что такое API простыми словами?",
   "Как исправить ошибку 404?",
@@ -132,6 +132,8 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [quickQuestions, setQuickQuestions] = useState<string[]>(DEFAULT_QUICK_QUESTIONS);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -171,6 +173,27 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
     };
 
     loadHistory();
+  }, []);
+
+  // Load Quick Questions from API
+  useEffect(() => {
+    const loadQuickQuestions = async () => {
+      try {
+        const questions = await fetchWithAuthGet<string[]>('/api/content/quick-questions');
+
+        if (questions && questions.length > 0) {
+          setQuickQuestions(questions);
+        }
+        // Если пустой массив - оставляем дефолтные значения
+      } catch (error) {
+        console.error("Failed to load quick questions:", error);
+        // Fallback: используем дефолтные значения
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    };
+
+    loadQuickQuestions();
   }, []);
 
   // Handle Initial Context from other pages
@@ -459,18 +482,26 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
         <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
 
           {/* Quick Questions */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mask-linear px-1">
-            {QUICK_QUESTIONS.map((q, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(q)}
-                className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-violet-400 dark:hover:border-violet-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-300 transition-all shadow-sm hover:shadow-violet-500/10 flex items-center gap-2 group"
-              >
-                <Zap size={14} className="text-violet-400 group-hover:text-violet-500 transition-colors" />
-                {q}
-              </button>
-            ))}
-          </div>
+          {isLoadingQuestions ? (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mask-linear px-1">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="w-48 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mask-linear px-1">
+              {quickQuestions.map((q, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSend(q)}
+                  className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-violet-400 dark:hover:border-violet-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-300 transition-all shadow-sm hover:shadow-violet-500/10 flex items-center gap-2 group"
+                >
+                  <Zap size={14} className="text-violet-400 group-hover:text-violet-500 transition-colors" />
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Input Field */}
           <form

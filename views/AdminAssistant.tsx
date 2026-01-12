@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Zap, 
-  Plus, 
-  Trash2, 
-  Save, 
+import {
+  Zap,
+  Plus,
+  Trash2,
+  Save,
   Edit2,
   X,
   Check,
@@ -15,16 +15,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, ConfirmModal } from '../components/Shared';
 import { DEFAULT_AI_SYSTEM_INSTRUCTION } from '../data';
 import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
-
-const INITIAL_QUESTIONS = [
-  "Как задеплоить на Vercel?",
-  "Что такое API простыми словами?",
-  "Как исправить ошибку 404?",
-  "Напиши промпт для кнопки"
-];
+import { QuickQuestion } from '../types';
 
 const AdminAssistant: React.FC = () => {
-  const [questions, setQuestions] = useState<string[]>(INITIAL_QUESTIONS);
+  const [questions, setQuestions] = useState<QuickQuestion[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [newQuestion, setNewQuestion] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -53,14 +48,56 @@ const AdminAssistant: React.FC = () => {
       loadInstruction();
   }, []);
 
+  // Load Quick Questions from API
+  useEffect(() => {
+    const loadQuestions = async () => {
+      setIsLoadingQuestions(true);
+      try {
+        const data = await fetchWithAuthGet<QuickQuestion[]>('/api/admin?resource=quick-questions');
+        if (data && data.length > 0) {
+          setQuestions(data);
+        } else {
+          setQuestions([]);
+        }
+      } catch (e) {
+        console.error('Failed to load quick questions:', e);
+        alert('Ошибка загрузки быстрых вопросов.');
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    };
+    loadQuestions();
+  }, []);
+
   // --- Handlers ---
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuestion.trim()) return;
-    
-    setQuestions(prev => [...prev, newQuestion.trim()]);
-    setNewQuestion('');
+
+    if (newQuestion.trim().length > 255) {
+      alert('Текст вопроса не может превышать 255 символов');
+      return;
+    }
+
+    try {
+      const data = await fetchWithAuth('/api/admin?resource=quick-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: newQuestion.trim(),
+          sortOrder: questions.length
+        })
+      });
+
+      if (data.success) {
+        setQuestions(prev => [...prev, data.data]);
+        setNewQuestion('');
+      }
+    } catch (e) {
+      console.error('Failed to add question:', e);
+      alert('Ошибка добавления вопроса.');
+    }
   };
 
   const confirmDelete = (index: number) => {
@@ -68,11 +105,24 @@ const AdminAssistant: React.FC = () => {
       setIsDeleteModalOpen(true);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (indexToDelete !== null) {
-      setQuestions(prev => prev.filter((_, i) => i !== indexToDelete));
-      setIsDeleteModalOpen(false);
-      setIndexToDelete(null);
+      const questionToDelete = questions[indexToDelete];
+
+      try {
+        await fetchWithAuth(`/api/admin?resource=quick-questions&id=${questionToDelete.id}`, {
+          method: 'DELETE'
+        });
+
+        setQuestions(prev => prev.filter((_, i) => i !== indexToDelete));
+        setIsDeleteModalOpen(false);
+        setIndexToDelete(null);
+      } catch (e) {
+        console.error('Failed to delete question:', e);
+        alert('Ошибка удаления вопроса.');
+        setIsDeleteModalOpen(false);
+        setIndexToDelete(null);
+      }
     }
   };
 
@@ -81,15 +131,36 @@ const AdminAssistant: React.FC = () => {
     setEditingText(text);
   };
 
-  const saveEditing = () => {
+  const saveEditing = async () => {
     if (editingIndex !== null && editingText.trim()) {
-      setQuestions(prev => {
-        const newArr = [...prev];
-        newArr[editingIndex] = editingText.trim();
-        return newArr;
-      });
-      setEditingIndex(null);
-      setEditingText('');
+      if (editingText.trim().length > 255) {
+        alert('Текст вопроса не может превышать 255 символов');
+        return;
+      }
+
+      const questionToEdit = questions[editingIndex];
+
+      try {
+        await fetchWithAuth('/api/admin?resource=quick-questions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: questionToEdit.id,
+            text: editingText.trim()
+          })
+        });
+
+        setQuestions(prev => {
+          const newArr = [...prev];
+          newArr[editingIndex] = { ...questionToEdit, text: editingText.trim() };
+          return newArr;
+        });
+        setEditingIndex(null);
+        setEditingText('');
+      } catch (e) {
+        console.error('Failed to update question:', e);
+        alert('Ошибка обновления вопроса.');
+      }
     }
   };
 
@@ -177,8 +248,17 @@ const AdminAssistant: React.FC = () => {
                 
                 {/* List */}
                 <div className="space-y-3">
-                    <AnimatePresence mode="popLayout">
-                        {questions.map((q, idx) => (
+                    {isLoadingQuestions ? (
+                        <div className="flex items-center justify-center py-8 text-zinc-400">
+                            Загрузка вопросов...
+                        </div>
+                    ) : questions.length === 0 ? (
+                        <div className="text-center py-8 text-zinc-400">
+                            Нет активных вопросов. Добавьте первый!
+                        </div>
+                    ) : (
+                        <AnimatePresence mode="popLayout">
+                            {questions.map((q, idx) => (
                             <motion.div 
                                 key={idx}
                                 layout
@@ -215,11 +295,11 @@ const AdminAssistant: React.FC = () => {
                                 ) : (
                                     <>
                                         <span className="flex-1 text-zinc-700 dark:text-zinc-300 font-medium">
-                                            {q}
+                                            {q.text}
                                         </span>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => startEditing(idx, q)}
+                                            <button
+                                                onClick={() => startEditing(idx, q.text)}
                                                 className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors"
                                                 title="Редактировать"
                                             >
@@ -238,6 +318,7 @@ const AdminAssistant: React.FC = () => {
                             </motion.div>
                         ))}
                     </AnimatePresence>
+                    )}
                 </div>
 
                 {/* Add New Input */}

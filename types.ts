@@ -261,3 +261,10 @@ export interface ShowcaseProject {
   isLikedByCurrentUser: boolean;
   date: string;
 }
+
+export interface QuickQuestion {
+  id: string;
+  text: string;
+  sortOrder: number;
+  isActive: boolean;
+}
