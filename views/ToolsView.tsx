@@ -102,8 +102,6 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             />
-            {/* Gradient mask - плавное растворение слева */}
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/30 via-15% to-transparent pointer-events-none" />
           </div>
         </div>
 
