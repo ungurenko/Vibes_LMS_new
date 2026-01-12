@@ -26,11 +26,22 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-        alert("Пароли не совпадают");
+
+    // Проверка минимальной длины пароля
+    if (password.length < 8) {
+        setApiError('Пароль должен быть минимум 8 символов');
         return;
     }
-    if (!agreed) return;
+
+    if (password !== confirmPassword) {
+        setApiError("Пароли не совпадают");
+        return;
+    }
+
+    if (!agreed) {
+        setApiError('Необходимо согласиться с условиями использования');
+        return;
+    }
 
     setIsLoading(true);
     setApiError(null);

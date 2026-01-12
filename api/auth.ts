@@ -183,9 +183,9 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json(
-        errorResponse('Пароль должен быть минимум 6 символов')
+        errorResponse('Пароль должен быть минимум 8 символов')
       );
     }
 
@@ -387,8 +387,8 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
     }
 
     // Валидация пароля
-    if (newPassword && newPassword.length < 6) {
-      return res.status(400).json(errorResponse('Пароль должен быть минимум 6 символов'));
+    if (newPassword && newPassword.length < 8) {
+      return res.status(400).json(errorResponse('Пароль должен быть минимум 8 символов'));
     }
 
     // Формируем динамический UPDATE запрос

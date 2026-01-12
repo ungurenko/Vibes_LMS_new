@@ -137,13 +137,14 @@ const Login: React.FC<LoginProps> = ({
                             </div>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-violet-500 transition-colors" size={18} />
-                                <input 
+                                <input
                                     type={showPassword ? "text" : "password"}
                                     required
+                                    minLength={8}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                                    placeholder="••••••••"
+                                    placeholder="Минимум 8 символов"
                                 />
                                 <button
                                     type="button"
