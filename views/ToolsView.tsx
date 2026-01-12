@@ -1,6 +1,7 @@
 /**
  * ToolsView - Главный экран раздела "Инструменты"
  * Bento-grid с премиальными карточками и AI-иллюстрациями
+ * v2: CSS-фикс по фидбеку дизайнера
  */
 
 import React from 'react';
@@ -29,7 +30,7 @@ const tools: ToolCardData[] = [
     title: 'Ассистент',
     description: 'Универсальный помощник по вайб-кодингу. Ответит на вопросы, поможет с кодом и ошибками.',
     illustration: '/tools/assistant.png',
-    gradient: 'from-violet-600/20 via-indigo-600/10 to-transparent',
+    gradient: 'from-violet-600/30 via-indigo-600/20 to-transparent',
     glowColor: 'violet',
     size: 'large'
   },
@@ -38,7 +39,7 @@ const tools: ToolCardData[] = [
     title: 'Помощник по ТЗ',
     description: 'Создай техническое задание для проекта. Опиши идею — получи готовый промпт.',
     illustration: '/tools/tz-helper.png',
-    gradient: 'from-emerald-600/20 via-teal-600/10 to-transparent',
+    gradient: 'from-emerald-600/30 via-teal-600/20 to-transparent',
     glowColor: 'emerald',
     size: 'medium'
   },
@@ -47,7 +48,7 @@ const tools: ToolCardData[] = [
     title: 'Идеи для проектов',
     description: 'Не знаешь что создать? Найди идею под свою нишу, опыт и цели.',
     illustration: '/tools/ideas.png',
-    gradient: 'from-amber-600/20 via-orange-600/10 to-transparent',
+    gradient: 'from-amber-600/30 via-orange-600/20 to-transparent',
     glowColor: 'amber',
     size: 'medium'
   }
@@ -62,9 +63,9 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className="relative h-[280px] md:h-[260px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-violet-500/20 hover:border-violet-500/30">
+      <div className="relative h-[240px] md:h-[220px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-violet-500/30 hover:border-violet-500/40 hover:-translate-y-1">
         {/* Background gradient */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${tool.gradient} opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
+        <div className={`absolute inset-0 bg-gradient-to-r ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
         {/* Animated glow */}
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-violet-500/30 rounded-full blur-[80px] group-hover:bg-violet-500/50 transition-all duration-700" />
@@ -85,28 +86,29 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
                 className="text-violet-400 group-hover:translate-x-2 transition-transform duration-300"
               />
             </h3>
-            <p className="text-base text-zinc-400 leading-relaxed max-w-md group-hover:text-zinc-300 transition-colors">
+            <p className="text-base text-[#E0E0E0] leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
           </div>
 
-          {/* Illustration */}
-          <div className="relative w-full md:w-[45%] h-[140px] md:h-full flex items-center justify-center overflow-hidden">
+          {/* Illustration - на вылет */}
+          <div className="relative w-full md:w-[50%] h-[120px] md:h-full flex items-center justify-end overflow-hidden">
             <motion.img
               src={tool.illustration}
               alt={tool.title}
-              className="w-full h-full object-cover md:object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              className="w-auto h-[140%] md:h-[130%] max-w-none object-contain object-right group-hover:scale-110 transition-transform duration-700 ease-out"
+              style={{ marginRight: '-10%' }}
+              initial={{ opacity: 0, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             />
-            {/* Gradient overlay for mobile */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent md:bg-gradient-to-l md:from-transparent md:via-transparent md:to-zinc-900/50" />
+            {/* Gradient mask - плавное растворение слева */}
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/60 via-30% to-transparent pointer-events-none" />
           </div>
         </div>
 
         {/* Decorative corner glow */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/10 rounded-full blur-[60px] group-hover:bg-violet-500/20 transition-all duration-500" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/15 rounded-full blur-[60px] group-hover:bg-violet-500/25 transition-all duration-500" />
       </div>
     </motion.button>
   );
@@ -116,13 +118,13 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
   const glowColors = {
     emerald: {
       glow: 'bg-emerald-500/30 group-hover:bg-emerald-500/50',
-      border: 'hover:border-emerald-500/30 hover:shadow-emerald-500/20',
+      border: 'hover:border-emerald-500/40 hover:shadow-emerald-500/30',
       badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
       text: 'text-emerald-400'
     },
     amber: {
       glow: 'bg-amber-500/30 group-hover:bg-amber-500/50',
-      border: 'hover:border-amber-500/30 hover:shadow-amber-500/20',
+      border: 'hover:border-amber-500/40 hover:shadow-amber-500/30',
       badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
       text: 'text-amber-400'
     }
@@ -138,31 +140,31 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className={`relative h-[320px] md:h-[280px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 ${colors.border}`}>
+      <div className={`relative h-[280px] md:h-[260px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
         {/* Background gradient */}
-        <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
+        <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
         {/* Animated glow */}
         <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
 
-        {/* Illustration */}
-        <div className="relative h-[160px] md:h-[140px] overflow-hidden">
+        {/* Illustration с gradient mask */}
+        <div className="relative h-[140px] md:h-[130px] overflow-hidden">
           <motion.img
             src={tool.illustration}
             alt={tool.title}
-            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+            className="w-full h-[160%] object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
           />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
+          {/* Gradient mask - плавное растворение снизу */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/70 via-40% to-transparent pointer-events-none" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 p-5 md:p-6">
+        <div className="relative z-10 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`px-2.5 py-0.5 text-xs font-semibold ${colors.badge} rounded-full border`}>
+            <span className={`px-3 py-1 text-xs font-semibold ${colors.badge} rounded-full border`}>
               {tool.type === 'tz_helper' ? 'Генератор' : 'Креатив'}
             </span>
           </div>
@@ -173,7 +175,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
               className={`${colors.text} group-hover:translate-x-1 transition-transform duration-300`}
             />
           </h3>
-          <p className="text-sm text-zinc-400 leading-relaxed group-hover:text-zinc-300 transition-colors line-clamp-2">
+          <p className="text-sm text-[#E0E0E0] leading-relaxed group-hover:text-white transition-colors">
             {tool.description}
           </p>
         </div>
