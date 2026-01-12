@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   Palette,
   Book,
-  Bot,
+  Wrench,
   X,
   Moon,
   Sun,
@@ -46,7 +46,7 @@ const studentNavItems: NavItem[] = [
   { id: 'styles', label: 'Стили', icon: Palette },
   { id: 'prompts', label: 'Промпты', icon: Terminal },
   { id: 'glossary', label: 'Словарик', icon: Book },
-  { id: 'assistant', label: 'Ассистент', icon: Bot },
+  { id: 'tools', label: 'Инструменты', icon: Wrench },
   { id: 'practice', label: 'Практика', icon: Laptop, href: 'https://vibes-praktic.vercel.app/' },
 ];
 
@@ -54,7 +54,7 @@ const adminNavItems: NavItem[] = [
   { id: 'admin-students', label: 'Ученики', icon: Users },
   { id: 'admin-content', label: 'Контент', icon: Book },
   { id: 'admin-calls', label: 'Созвоны', icon: Video },
-  { id: 'admin-assistant', label: 'Чат-ассистент', icon: Sparkles },
+  { id: 'admin-tools', label: 'Инструменты', icon: Sparkles },
   { id: 'admin-settings', label: 'Настройки', icon: Settings },
 ];
 

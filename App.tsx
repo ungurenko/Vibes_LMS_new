@@ -5,7 +5,8 @@ import Sidebar from './components/Sidebar';
 import Home from './views/Home';
 import StyleLibrary from './views/StyleLibrary';
 import Glossary from './views/Glossary';
-import Assistant from './views/Assistant';
+import ToolsView from './views/ToolsView';
+import ToolChat from './views/ToolChat';
 import Lessons from './views/Lessons';
 import PromptBase from './views/PromptBase';
 import Roadmaps from './views/Roadmaps';
@@ -19,6 +20,8 @@ import Login from './views/Login';
 import Register from './views/Register';
 import Onboarding from './views/Onboarding';
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
+
+type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
 import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
@@ -44,7 +47,8 @@ const AppContent: React.FC = () => {
     const [theme, setTheme] = useState<'dark' | 'light'>('light');
     const [mode, setMode] = useState<'student' | 'admin'>('student');
 
-    const [assistantInitialMessage, setAssistantInitialMessage] = useState<string | null>(null);
+    const [selectedTool, setSelectedTool] = useState<ToolType>(null);
+    const [toolInitialMessage, setToolInitialMessage] = useState<string | null>(null);
     const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
 
     // Убрали сохранение modules в localStorage
@@ -308,8 +312,24 @@ const AppContent: React.FC = () => {
     };
 
     const handleAskAI = (prompt: string) => {
-        setAssistantInitialMessage(prompt);
-        setActiveTab('assistant');
+        setToolInitialMessage(prompt);
+        setSelectedTool('assistant');
+        setActiveTab('tools');
+    };
+
+    const handleSelectTool = (toolType: ToolType) => {
+        setSelectedTool(toolType);
+        setToolInitialMessage(null);
+    };
+
+    const handleBackFromTool = () => {
+        setSelectedTool(null);
+        setToolInitialMessage(null);
+    };
+
+    const handleTransferToTZ = (idea: string) => {
+        setToolInitialMessage(idea);
+        setSelectedTool('tz_helper');
     };
 
     const loadInvites = async () => {
@@ -469,7 +489,18 @@ const AppContent: React.FC = () => {
             case 'styles': return <StyleLibrary />;
             case 'prompts': return <PromptBase />;
             case 'glossary': return <Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} />;
-            case 'assistant': return <Assistant initialMessage={assistantInitialMessage} onMessageHandled={() => setAssistantInitialMessage(null)} />;
+            case 'tools':
+                if (selectedTool) {
+                    return (
+                        <ToolChat
+                            toolType={selectedTool}
+                            onBack={handleBackFromTool}
+                            onTransferToTZ={selectedTool === 'ideas' ? handleTransferToTZ : undefined}
+                            initialMessage={toolInitialMessage}
+                        />
+                    );
+                }
+                return <ToolsView onSelectTool={handleSelectTool} />;
             case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} />;
 
             // Admin Views
@@ -477,7 +508,7 @@ const AppContent: React.FC = () => {
             // Update AdminContent to receive modules and updater
             case 'admin-content': return <AdminContent />;
             case 'admin-calls': return <AdminCalls />;
-            case 'admin-assistant': return <AdminAssistant />;
+            case 'admin-tools': return <AdminAssistant />;
             case 'admin-settings': return <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />;
 
             default: return mode === 'admin' ? <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} /> : <Home onNavigate={setActiveTab} />;

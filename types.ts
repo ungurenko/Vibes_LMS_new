@@ -1,9 +1,9 @@
 
 import React from 'react';
 
-export type TabId = 
-  | 'dashboard' | 'lessons' | 'roadmaps' | 'styles' | 'prompts' | 'glossary' | 'assistant' | 'community' | 'profile' | 'practice'
-  | 'admin-students' | 'admin-content' | 'admin-calls' | 'admin-assistant' | 'admin-settings';
+export type TabId =
+  | 'dashboard' | 'lessons' | 'roadmaps' | 'styles' | 'prompts' | 'glossary' | 'tools' | 'community' | 'profile' | 'practice'
+  | 'admin-students' | 'admin-content' | 'admin-calls' | 'admin-tools' | 'admin-settings';
 
 export interface NavItem {
   id: TabId;
@@ -239,7 +239,7 @@ export interface NavigationConfig {
   styles: boolean;
   prompts: boolean;
   glossary: boolean;
-  assistant: boolean;
+  tools: boolean;
 }
 
 // Community / Showcase Types

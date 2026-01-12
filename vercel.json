@@ -13,6 +13,10 @@
       "destination": "/api/content"
     },
     {
+      "source": "/api/tools/:path*",
+      "destination": "/api/tools"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
