@@ -24,7 +24,7 @@ psql -h HOST -p PORT -U USER -d DATABASE -f database/seed.sql
 ## Environment Variables
 
 Required in `.env.local`:
-- `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI assistant)
+- `OPENROUTER_API_KEY` - OpenRouter API key (required for AI Tools)
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - JWT signing secret (min 32 chars)
 - `BLOB_READ_WRITE_TOKEN` - Vercel Blob Storage token (получить: Vercel Dashboard → Storage → Blob → Settings)
@@ -36,8 +36,9 @@ Required in `.env.local`:
 ### Tech Stack
 - **Frontend:** React 19 + TypeScript 5.8 + Vite 6 + Framer Motion + Tailwind CSS (CDN)
 - **Backend:** Vercel serverless functions (Node.js)
-- **Database:** PostgreSQL 15+ (28 tables)
+- **Database:** PostgreSQL 15+ (30 tables)
 - **Auth:** JWT (7-day expiry) + bcryptjs password hashing
+- **AI:** OpenRouter API (multiple models per tool)
 
 ### Directory Structure
 
@@ -48,6 +49,7 @@ Required in `.env.local`:
 | `/components` | Reusable React components |
 | `/views` | Page/screen components |
 | `/database` | PostgreSQL schema and seed data |
+| `/docs/plans` | Design documents and implementation plans |
 
 ### Key Files
 - `App.tsx` - Main router and state management
@@ -58,6 +60,13 @@ Required in `.env.local`:
 - `api/_lib/db.ts` - PostgreSQL connection pool (max 3, serverless optimized)
 - `api/_lib/auth.ts` - JWT + bcrypt helpers
 
+### Key Views
+- `views/ToolsView.tsx` - Главная страница инструментов (карточки)
+- `views/ToolChat.tsx` - Универсальный чат для всех AI инструментов
+- `views/AdminSettings.tsx` - Управление AI промптами и моделями
+- `views/Home.tsx` - Дашборд студента с этапами обучения
+- `views/Lessons.tsx` - Каталог уроков с модулями
+
 ### API Endpoints Structure
 
 Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issues):
@@ -66,7 +75,28 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 - `/api/admin.ts` - students, stats, invites, ai-instruction
 - `/api/lessons.ts` - course lessons with stages
 - `/api/showcase.ts` - community projects
-- `/api/chat.ts` - AI assistant
+- `/api/tools.ts` - AI instruments (assistant, tz_helper, ideas)
+
+### AI Tools System (`/api/tools`)
+
+Три AI-инструмента с отдельными моделями и промптами:
+
+| Tool Type | Purpose | Default Model |
+|-----------|---------|---------------|
+| `assistant` | Общий ассистент-ментор | google/gemini-2.5-flash-lite |
+| `tz_helper` | Помощник по ТЗ | zhipu-ai/glm-4-plus |
+| `ideas` | Генератор идей | microsoft/phi-4-reasoning-plus:free |
+
+**Эндпоинты:**
+- `GET /api/tools/chats?tool_type=X` - Получить/создать чат
+- `GET /api/tools/messages?tool_type=X` - История сообщений
+- `POST /api/tools/messages` - Отправить сообщение (SSE streaming)
+- `POST /api/tools/transfer` - Перенести идею в другой инструмент
+- `DELETE /api/tools/chats?tool_type=X` - Очистить историю
+
+**Маркеры для копирования:**
+- `[ТЗ_START]...[ТЗ_END]` - ТЗ Helper генерирует ТЗ
+- `[IDEA_START]...[IDEA_END]` - Ideas генерирует идеи с кнопкой переноса
 
 ### Database Schema Domains
 - **Users:** `users`, `invite_links`
@@ -74,7 +104,8 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 - **Progress:** `user_lesson_progress`, `user_stage_progress`, `user_roadmap_progress`
 - **Libraries:** `style_cards`, `glossary_terms`, `prompts`, `roadmaps`
 - **Community:** `showcase_projects`, `project_likes`
-- **AI/Admin:** `chat_messages`, `ai_system_instructions`, `activity_log`
+- **AI Tools:** `tool_chats`, `tool_messages`, `ai_system_instructions`
+- **Admin:** `activity_log`
 
 ### Database Patterns
 - **Soft delete:** Tables use `deleted_at` column (filter with `WHERE deleted_at IS NULL`)
@@ -84,8 +115,8 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 - **Transactions:** Use `getClient()` from db.ts for multi-query transactions
 
 ### Navigation (TabId types)
-Student views: `dashboard`, `lessons`, `roadmaps`, `styles`, `prompts`, `glossary`, `assistant`, `community`, `profile`
-Admin views: `admin-students`, `admin-content`, `admin-calls`, `admin-assistant`, `admin-settings`
+Student views: `dashboard`, `lessons`, `roadmaps`, `styles`, `prompts`, `glossary`, `tools`, `practice`
+Admin views: `admin-students`, `admin-content`, `admin-calls`, `admin-tools`, `admin-settings`
 Auth views: `login`, `register`, `onboarding`
 
 ## TypeScript Configuration
@@ -100,6 +131,61 @@ Deployed via Vercel (configured in `vercel.json`):
 - Serverless functions for API routes
 - Static hosting for React frontend
 - CORS headers pre-configured
+- Rewrites for catch-all API patterns
+
+## Database Migrations
+
+При добавлении новых таблиц используй Node.js скрипт вместо psql (psql может не быть установлен):
+
+```javascript
+// run-migration.js
+const { Client } = require('pg');
+
+const sql = `
+  -- Your SQL here
+`;
+
+async function run() {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  await client.query(sql);
+  await client.end();
+  console.log('Migration complete');
+}
+
+run().catch(console.error);
+```
+
+### Pending Migrations
+
+Таблицы `tool_chats` и `tool_messages` уже созданы в БД, но schema.sql ещё не обновлён. Если нужно пересоздать БД:
+
+```sql
+-- Tool Chats (для AI инструментов)
+CREATE TABLE IF NOT EXISTS tool_chats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tool_type VARCHAR(20) NOT NULL CHECK (tool_type IN ('assistant', 'tz_helper', 'ideas')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, tool_type)
+);
+
+CREATE TABLE IF NOT EXISTS tool_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chat_id UUID NOT NULL REFERENCES tool_chats(id) ON DELETE CASCADE,
+  role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'assistant')),
+  content TEXT NOT NULL,
+  has_copyable_content BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_tool_messages_chat_id ON tool_messages(chat_id);
+
+-- Добавить поля в ai_system_instructions (если не существуют)
+ALTER TABLE ai_system_instructions ADD COLUMN IF NOT EXISTS tool_type VARCHAR(20);
+ALTER TABLE ai_system_instructions ADD COLUMN IF NOT EXISTS model_id VARCHAR(100);
+```
 
 ## Правило: Интеграция с внешними сервисами (Vercel Blob, Storage и др.)
 
