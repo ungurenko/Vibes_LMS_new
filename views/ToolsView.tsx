@@ -140,7 +140,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className={`relative h-[280px] md:h-[260px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
+      <div className={`relative h-[320px] md:h-[300px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
         {/* Background gradient */}
         <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
