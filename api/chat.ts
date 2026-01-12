@@ -1,6 +1,9 @@
 /**
  * POST /api/chat
  *
+ * DEPRECATED: Используйте /api/tools вместо этого эндпоинта.
+ * Этот файл оставлен для обратной совместимости и перенаправляет на tool_type='assistant'.
+ *
  * Обработка чата с OpenRouter API (стриминг)
  */
 
@@ -8,6 +11,54 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { OpenRouter } from '@openrouter/sdk';
 import { getUserFromRequest, errorResponse, successResponse } from './_lib/auth.js';
 import { query } from './_lib/db.js';
+
+// Получить или создать чат для assistant
+async function getOrCreateAssistantChat(userId: string): Promise<string> {
+  const { rows: existing } = await query(
+    'SELECT id FROM tool_chats WHERE user_id = $1 AND tool_type = $2',
+    [userId, 'assistant']
+  );
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  const { rows: newChat } = await query(
+    'INSERT INTO tool_chats (user_id, tool_type) VALUES ($1, $2) RETURNING id',
+    [userId, 'assistant']
+  );
+
+  return newChat[0].id;
+}
+
+// Получить конфигурацию ассистента
+async function getAssistantConfig(): Promise<{ systemPrompt: string; modelId: string }> {
+  const defaultPrompt = `Ты — опытный ментор по веб-разработке (вайб-кодингу).
+Твоя цель — помогать студентам создавать красивые и функциональные веб-приложения, объяснять сложные концепции простым языком и поддерживать их мотивацию.
+Отвечай кратко, по делу, используй примеры кода.`;
+
+  const defaultModel = 'google/gemini-2.5-flash-lite';
+
+  try {
+    const { rows } = await query(
+      `SELECT content, model_id FROM ai_system_instructions
+       WHERE tool_type = 'assistant' AND is_active = true
+       LIMIT 1`
+    );
+
+    if (rows.length > 0) {
+      return {
+        systemPrompt: rows[0].content || defaultPrompt,
+        modelId: rows[0].model_id || defaultModel
+      };
+    }
+
+    return { systemPrompt: defaultPrompt, modelId: defaultModel };
+  } catch (error) {
+    console.error('[CHAT API] Failed to fetch assistant config:', error);
+    return { systemPrompt: defaultPrompt, modelId: defaultModel };
+  }
+}
 
 export default async function handler(
   req: VercelRequest,
@@ -18,21 +69,26 @@ export default async function handler(
     return res.status(200).end();
   }
 
-  // 1. GET /api/chat - Получение истории
+  // Проверяем авторизацию
+  const tokenData = getUserFromRequest(req);
+  if (!tokenData) {
+    return res.status(401).json(errorResponse('Unauthorized'));
+  }
+
+  const userId = tokenData.userId;
+
+  // GET /api/chat - Получение истории (из tool_messages)
   if (req.method === 'GET') {
     try {
-      const tokenData = getUserFromRequest(req);
-      if (!tokenData) {
-        return res.status(401).json(errorResponse('Unauthorized'));
-      }
+      const chatId = await getOrCreateAssistantChat(userId);
 
       const { rows } = await query(
-        `SELECT id, role, content as text, created_at as timestamp, model_used 
-         FROM chat_messages 
-         WHERE user_id = $1 
-         ORDER BY created_at ASC 
+        `SELECT id, role, content as text, created_at as timestamp
+         FROM tool_messages
+         WHERE chat_id = $1
+         ORDER BY created_at ASC
          LIMIT 50`,
-        [tokenData.userId]
+        [chatId]
       );
 
       return res.status(200).json(successResponse(rows));
@@ -42,17 +98,13 @@ export default async function handler(
     }
   }
 
-  // 1.5 DELETE /api/chat - Очистка истории
+  // DELETE /api/chat - Очистка истории
   if (req.method === 'DELETE') {
     try {
-      const tokenData = getUserFromRequest(req);
-      if (!tokenData) {
-        return res.status(401).json(errorResponse('Unauthorized'));
-      }
-
       await query(
-        `DELETE FROM chat_messages WHERE user_id = $1`,
-        [tokenData.userId]
+        `DELETE FROM tool_messages
+         WHERE chat_id IN (SELECT id FROM tool_chats WHERE user_id = $1 AND tool_type = 'assistant')`,
+        [userId]
       );
 
       return res.status(200).json(successResponse({ message: 'History cleared' }));
@@ -62,20 +114,13 @@ export default async function handler(
     }
   }
 
-  // 2. POST /api/chat - Отправка сообщения
+  // POST /api/chat - Отправка сообщения
   if (req.method === 'POST') {
-    console.log('[CHAT API] Request received:', req.method);
+    console.log('[CHAT API] Request received (deprecated, use /api/tools)');
 
     try {
-      // Проверяем авторизацию
-      const tokenData = getUserFromRequest(req);
-      if (!tokenData) {
-        return res.status(401).json(errorResponse('Unauthorized'));
-      }
-
-      // Получаем данные из запроса
       const { messages, message } = req.body;
-      
+
       // Определяем новое сообщение пользователя
       let newUserMessage = '';
       if (message) {
@@ -89,50 +134,36 @@ export default async function handler(
         return res.status(400).json(errorResponse('Message is required'));
       }
 
-      // 1. Сохраняем сообщение пользователя в БД
+      // Получаем или создаём чат
+      const chatId = await getOrCreateAssistantChat(userId);
+
+      // Сохраняем сообщение пользователя
       await query(
-        `INSERT INTO chat_messages (user_id, role, content) VALUES ($1, $2, $3)`,
-        [tokenData.userId, 'user', newUserMessage]
+        `INSERT INTO tool_messages (chat_id, role, content) VALUES ($1, $2, $3)`,
+        [chatId, 'user', newUserMessage]
       );
 
-      // 2. Загружаем контекст (историю) из БД для отправки в AI
-      // Берём последние 20 сообщений (включая только что добавленное)
+      // Загружаем историю
       const { rows: historyRows } = await query(
-        `SELECT role, content 
-         FROM chat_messages 
-         WHERE user_id = $1 
-         ORDER BY created_at DESC 
+        `SELECT role, content
+         FROM tool_messages
+         WHERE chat_id = $1
+         ORDER BY created_at DESC
          LIMIT 20`,
-        [tokenData.userId]
+        [chatId]
       );
-      
-      // Разворачиваем историю (она была DESC)
+
       const dbHistory = historyRows.reverse().map(row => ({
         role: row.role as 'user' | 'assistant',
         content: row.content
       }));
 
-      // Получаем активную системную инструкцию из БД
-      let systemInstruction = '';
-      try {
-        const { rows } = await query(
-          `SELECT content FROM ai_system_instructions WHERE is_active = true LIMIT 1`
-        );
-        if (rows.length > 0) {
-          systemInstruction = rows[0].content;
-        } else {
-          systemInstruction = `Ты — опытный ментор по веб-разработке (вайб-кодингу). 
-Твоя цель — помогать студентам создавать красивые и функциональные веб-приложения, объяснять сложные концепции простым языком и поддерживать их мотивацию.
-Отвечай кратко, по делу, используй примеры кода.`;
-        }
-      } catch (dbError) {
-        console.error('[CHAT API] Failed to fetch system instruction:', dbError);
-        systemInstruction = 'Ты полезный помощник по программированию.';
-      }
+      // Получаем конфигурацию
+      const config = await getAssistantConfig();
 
-      // Проверяем наличие API ключа
+      // Проверяем API ключ
       if (!process.env.OPENROUTER_API_KEY) {
-        console.error('[CHAT API] OPENROUTER_API_KEY not found in environment');
+        console.error('[CHAT API] OPENROUTER_API_KEY not found');
         return res.status(500).json(errorResponse('API ключ не настроен'));
       }
 
@@ -141,37 +172,31 @@ export default async function handler(
         apiKey: process.env.OPENROUTER_API_KEY,
       });
 
-      // Формируем массив сообщений для API
+      // Формируем сообщения для API
       const apiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
 
-      // Добавляем системную инструкцию
-      if (systemInstruction) {
+      if (config.systemPrompt) {
         apiMessages.push({
           role: 'system',
-          content: systemInstruction,
+          content: config.systemPrompt,
         });
       }
 
-      // Добавляем историю из БД
       apiMessages.push(...dbHistory);
 
-      console.log('[CHAT API] Sending request to OpenRouter');
+      console.log(`[CHAT API] Sending to ${config.modelId}`);
 
       // Настраиваем SSE стриминг
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
 
-      const modelName = 'google/gemini-2.5-flash-lite';
-
-      // Отправляем запрос с стримингом
+      // Отправляем запрос
       const stream = await openRouter.chat.send({
-        model: modelName,
+        model: config.modelId,
         messages: apiMessages,
         stream: true,
       });
-
-      console.log('[CHAT API] Stream started successfully');
 
       let fullResponse = '';
 
@@ -180,37 +205,32 @@ export default async function handler(
         const content = chunk.choices?.[0]?.delta?.content;
         if (content) {
           fullResponse += content;
-          // Отправляем данные в формате SSE
           res.write(`data: ${JSON.stringify({ content })}\n\n`);
         }
       }
 
-      // 3. Сохраняем ответ AI в БД
+      // Сохраняем ответ AI
       if (fullResponse) {
         try {
           await query(
-            `INSERT INTO chat_messages (user_id, role, content, model_used) VALUES ($1, $2, $3, $4)`,
-            [tokenData.userId, 'assistant', fullResponse, modelName]
+            `INSERT INTO tool_messages (chat_id, role, content) VALUES ($1, $2, $3)`,
+            [chatId, 'assistant', fullResponse]
           );
         } catch (e) {
           console.error('[CHAT API] Failed to save AI response:', e);
         }
       }
 
-      // Завершаем стрим
-      console.log('[CHAT API] Stream completed successfully');
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (error: any) {
       console.error('[CHAT API] Error occurred:', error);
-      
-      // Если стрим уже начался
+
       if (!res.headersSent) {
         const errorMessage = error?.response?.data?.error?.message || error?.message || 'Unknown error';
         return res.status(500).json(errorResponse('Ошибка сервера: ' + errorMessage));
       }
 
-      // Если стрим уже идёт
       res.write(`data: ${JSON.stringify({ error: 'Ошибка сервера' })}\n\n`);
       res.end();
     }

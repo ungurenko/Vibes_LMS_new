@@ -181,7 +181,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
     { key: 'styles' as keyof NavigationConfig, label: 'Стили', disabled: false },
     { key: 'prompts' as keyof NavigationConfig, label: 'Промпты', disabled: false },
     { key: 'glossary' as keyof NavigationConfig, label: 'Словарик', disabled: false },
-    { key: 'assistant' as keyof NavigationConfig, label: 'Ассистент', disabled: false },
+    { key: 'tools' as keyof NavigationConfig, label: 'Инструменты', disabled: false },
   ];
 
   return (
