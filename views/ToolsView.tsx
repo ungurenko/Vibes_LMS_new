@@ -86,7 +86,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
                 className="text-violet-400 group-hover:translate-x-2 transition-transform duration-300"
               />
             </h3>
-            <p className="text-base text-[#E0E0E0] leading-relaxed max-w-md group-hover:text-white transition-colors">
+            <p className="text-base text-zinc-300 leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
           </div>
@@ -97,13 +97,13 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
               src={tool.illustration}
               alt={tool.title}
               className="w-auto h-[140%] md:h-[130%] max-w-none object-contain object-right group-hover:scale-110 transition-transform duration-700 ease-out"
-              style={{ marginRight: '-10%' }}
+              style={{ marginRight: '5%' }}
               initial={{ opacity: 0, scale: 0.9, x: 20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             />
             {/* Gradient mask - плавное растворение слева */}
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/60 via-30% to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/30 via-15% to-transparent pointer-events-none" />
           </div>
         </div>
 
@@ -140,7 +140,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className={`relative h-[320px] md:h-[300px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
+      <div className={`relative h-[380px] md:h-[360px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
         {/* Background gradient */}
         <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
@@ -148,17 +148,17 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
         <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
 
         {/* Illustration с gradient mask */}
-        <div className="relative h-[140px] md:h-[130px] overflow-hidden">
+        <div className="relative h-[180px] md:h-[170px] overflow-hidden">
           <motion.img
             src={tool.illustration}
             alt={tool.title}
-            className="w-full h-[160%] object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+            className="w-full h-[120%] object-cover object-bottom group-hover:scale-105 transition-transform duration-700 ease-out"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
           />
           {/* Gradient mask - плавное растворение снизу */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/70 via-40% to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 via-70% to-transparent pointer-events-none" />
         </div>
 
         {/* Content */}
@@ -175,7 +175,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
               className={`${colors.text} group-hover:translate-x-1 transition-transform duration-300`}
             />
           </h3>
-          <p className="text-sm text-[#E0E0E0] leading-relaxed group-hover:text-white transition-colors">
+          <p className="text-sm text-zinc-300 leading-relaxed group-hover:text-white transition-colors">
             {tool.description}
           </p>
         </div>
