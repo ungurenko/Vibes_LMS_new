@@ -145,12 +145,12 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
         {/* Animated glow */}
         <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
 
-        {/* Illustration - крупнее, ближе к тексту */}
-        <div className="relative h-[200px] md:h-[190px] flex items-end justify-center pb-6">
+        {/* Illustration - по центру, полностью видна */}
+        <div className="relative h-[220px] md:h-[200px] flex items-center justify-center p-4">
           <motion.img
             src={tool.illustration}
             alt={tool.title}
-            className="w-full h-[125%] object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
