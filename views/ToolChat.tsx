@@ -506,8 +506,6 @@ const ToolChat: React.FC<ToolChatProps> = ({
         )}
 
         {afterMarker && <FormattedText text={afterMarker} />}
-
-        {!markerType && <FormattedText text={msg.text} />}
       </>
     );
   };
