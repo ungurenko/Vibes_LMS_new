@@ -79,14 +79,14 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
                 AI Ментор
               </span>
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 font-display flex items-center gap-3">
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display flex items-center gap-3">
               {tool.title}
               <ChevronRight
                 size={24}
                 className="text-violet-400 group-hover:translate-x-2 transition-transform duration-300"
               />
             </h3>
-            <p className="text-base text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
+            <p className="text-sm text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
           </div>
@@ -164,7 +164,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
               {tool.type === 'tz_helper' ? 'Генератор' : 'Креатив'}
             </span>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2 font-display flex items-center gap-2">
+          <h3 className="text-xl md:text-2xl font-bold text-white mb-2 font-display flex items-center gap-2">
             {tool.title}
             <ChevronRight
               size={20}
