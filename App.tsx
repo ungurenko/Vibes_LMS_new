@@ -547,21 +547,23 @@ const AppContent: React.FC = () => {
                     </button>
                 </header>
 
-                <div className="hidden md:flex justify-end items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
-                    <div className="flex items-center gap-4">
-                        <div className="flex flex-col items-end">
-                            <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>
-                            <button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 transition-colors">Выйти</button>
+                {!(activeTab === 'tools' && selectedTool) && (
+                    <div className="hidden md:flex justify-end items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col items-end">
+                                <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>
+                                <button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 transition-colors">Выйти</button>
+                            </div>
+                            <button onClick={() => setActiveTab('profile')} className={`w-10 h-10 rounded-full p-0.5 transition-transform hover:scale-105 ${mode === 'admin' ? 'bg-gradient-to-tr from-emerald-500 to-cyan-500' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
+                                {currentUser?.avatar && !currentUser.avatar.includes('ui-avatars') ? (
+                                    <img src={currentUser.avatar} alt="Profile" className="w-full h-full rounded-full object-cover border-2 border-white dark:border-zinc-900" />
+                                ) : (
+                                    <div className="w-full h-full rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center font-bold text-violet-600">{currentUser?.name?.[0]}</div>
+                                )}
+                            </button>
                         </div>
-                        <button onClick={() => setActiveTab('profile')} className={`w-10 h-10 rounded-full p-0.5 transition-transform hover:scale-105 ${mode === 'admin' ? 'bg-gradient-to-tr from-emerald-500 to-cyan-500' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
-                            {currentUser?.avatar && !currentUser.avatar.includes('ui-avatars') ? (
-                                <img src={currentUser.avatar} alt="Profile" className="w-full h-full rounded-full object-cover border-2 border-white dark:border-zinc-900" />
-                            ) : (
-                                <div className="w-full h-full rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center font-bold text-violet-600">{currentUser?.name?.[0]}</div>
-                            )}
-                        </button>
                     </div>
-                </div>
+                )}
 
                 <div className="flex-1 w-full max-w-[1600px] mx-auto pt-0">
                     <AnimatePresence mode="wait">
