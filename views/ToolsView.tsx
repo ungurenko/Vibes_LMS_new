@@ -86,7 +86,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
                 className="text-violet-400 group-hover:translate-x-2 transition-transform duration-300"
               />
             </h3>
-            <p className="text-base text-zinc-300 leading-relaxed max-w-md group-hover:text-white transition-colors">
+            <p className="text-base text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
           </div>
@@ -96,7 +96,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
             <motion.img
               src={tool.illustration}
               alt={tool.title}
-              className="w-auto h-[140%] md:h-[130%] max-w-none object-contain object-right group-hover:scale-110 transition-transform duration-700 ease-out"
+              className="w-auto h-[125%] md:h-[115%] max-w-none object-contain object-right group-hover:scale-110 transition-transform duration-700 ease-out"
               style={{ marginRight: '5%' }}
               initial={{ opacity: 0, scale: 0.9, x: 20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -145,12 +145,12 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
         {/* Animated glow */}
         <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
 
-        {/* Illustration - по центру */}
-        <div className="relative h-[180px] md:h-[170px] flex items-center justify-center">
+        {/* Illustration - крупнее, ближе к тексту */}
+        <div className="relative h-[200px] md:h-[190px] flex items-end justify-center pb-2">
           <motion.img
             src={tool.illustration}
             alt={tool.title}
-            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-[125%] object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
@@ -171,7 +171,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
               className={`${colors.text} group-hover:translate-x-1 transition-transform duration-300`}
             />
           </h3>
-          <p className="text-sm text-zinc-300 leading-relaxed group-hover:text-white transition-colors">
+          <p className="text-sm text-zinc-200 leading-relaxed group-hover:text-white transition-colors">
             {tool.description}
           </p>
         </div>
