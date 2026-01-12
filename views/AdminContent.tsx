@@ -1016,12 +1016,11 @@ const AdminContent: React.FC<AdminContentProps> = () => {
             label={activeTab === 'glossary' ? 'Термин' : 'Название'}
             placeholder="Введите название..."
             value={editingItem?.title || editingItem?.name || editingItem?.term || ''}
-            onChange={(e) => {
-                if (activeTab === 'glossary') updateField('term', e.target.value);
-                else if (activeTab === 'styles') updateField('name', e.target.value);
-                else updateField('title', e.target.value);
-            }}
-         />
+                              onChange={(e) => {
+                                  if (activeTab === 'glossary') updateField('term', e.target.value);
+                                  else if (activeTab === 'styles' || activeTab === 'prompt-categories') updateField('name', e.target.value);
+                                  else updateField('title', e.target.value);
+                              }}         />
 
          {/* Specific Fields */}
          {activeTab === 'lessons' && (
