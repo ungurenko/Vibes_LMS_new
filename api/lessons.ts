@@ -102,13 +102,19 @@ export default async function handler(
                 l.sort_order AS lesson_sort_order,
                 lm.id AS material_id, lm.title AS material_title,
                 lm.type AS material_type, lm.url AS material_url,
+                lm.sort_order AS material_sort_order,
+                lt.id AS task_id, lt.text AS task_text,
+                lt.sort_order AS task_sort_order,
+                CASE WHEN ultp.completed_at IS NOT NULL THEN true ELSE false END AS task_completed,
                 CASE WHEN ulp.completed_at IS NOT NULL THEN true ELSE false END AS completed
             FROM course_modules cm
             LEFT JOIN lessons l ON l.module_id = cm.id AND l.deleted_at IS NULL
             LEFT JOIN lesson_materials lm ON lm.lesson_id = l.id
+            LEFT JOIN lesson_tasks lt ON lt.lesson_id = l.id
             LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = $1
+            LEFT JOIN user_lesson_task_progress ultp ON ultp.task_id = lt.id AND ultp.user_id = $1
             WHERE cm.deleted_at IS NULL
-            ORDER BY cm.sort_order, l.sort_order, lm.id`,
+            ORDER BY cm.sort_order, l.sort_order, lm.sort_order, lt.sort_order`,
             [userId]
         );
 
@@ -149,6 +155,7 @@ export default async function handler(
                     videoUrl: row.video_url,
                     status: computedStatus,
                     materials: [],
+                    tasks: [],
                     completed: row.completed,
                 };
                 lessonsMap.set(row.lesson_id, lesson);
@@ -162,6 +169,15 @@ export default async function handler(
                     title: row.material_title,
                     type: row.material_type,
                     url: row.material_url,
+                });
+            }
+
+            // Добавляем задание если есть
+            if (row.task_id) {
+                lessonsMap.get(row.lesson_id)!.tasks.push({
+                    id: row.task_id,
+                    text: row.task_text,
+                    completed: row.task_completed,
                 });
             }
         }
