@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VIBES is a full-stack educational platform for teaching "vibe coding" (AI-assisted web development). Built with React 19, TypeScript, and PostgreSQL, deployed on Vercel with serverless functions.
 
+## Development Workflow
+
+**ВАЖНО:** Проект НЕ запускается локально. После любых изменений:
+1. Сделать коммит и push на GitHub
+2. Vercel автоматически деплоит изменения
+3. Тестирование происходит на production (Vercel)
+
+Не нужно запускать `npm run dev` или проверять локально — всё тестируется сразу на Vercel.
+
 ## Commands
 
 ```bash
@@ -84,8 +93,8 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 | Tool Type | Purpose | Default Model |
 |-----------|---------|---------------|
 | `assistant` | Общий ассистент-ментор | google/gemini-2.5-flash-lite |
-| `tz_helper` | Помощник по ТЗ | zhipu-ai/glm-4-plus |
-| `ideas` | Генератор идей | microsoft/phi-4-reasoning-plus:free |
+| `tz_helper` | Помощник по ТЗ | z-ai/glm-4.7 |
+| `ideas` | Генератор идей | xiaomi/mimo-v2-flash:free |
 
 **Эндпоинты:**
 - `GET /api/tools/chats?tool_type=X` - Получить/создать чат

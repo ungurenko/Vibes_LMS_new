@@ -71,8 +71,8 @@ const popularModels = [
   { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku' },
   { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
   { id: 'openai/gpt-4o', label: 'GPT-4o' },
-  { id: 'zhipu-ai/glm-4-plus', label: 'GLM-4 Plus (Zhipu)' },
-  { id: 'microsoft/phi-4-reasoning-plus:free', label: 'Phi-4 Reasoning Plus (Free)' },
+  { id: 'z-ai/glm-4.7', label: 'GLM-4.7 (Z-AI)' },
+  { id: 'xiaomi/mimo-v2-flash:free', label: 'MiMo V2 Flash (Free)' },
   { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
 ];
 
@@ -254,8 +254,8 @@ const ToolConfigCard: React.FC<{
 const AdminAssistant: React.FC = () => {
   const [configs, setConfigs] = useState<Record<ToolType, ToolConfig>>({
     assistant: { content: '', model_id: 'google/gemini-2.5-flash-lite', updatedAt: null },
-    tz_helper: { content: '', model_id: 'zhipu-ai/glm-4-plus', updatedAt: null },
-    ideas: { content: '', model_id: 'microsoft/phi-4-reasoning-plus:free', updatedAt: null },
+    tz_helper: { content: '', model_id: 'z-ai/glm-4.7', updatedAt: null },
+    ideas: { content: '', model_id: 'xiaomi/mimo-v2-flash:free', updatedAt: null },
   });
   const [loading, setLoading] = useState(true);
   const [savingTool, setSavingTool] = useState<ToolType | null>(null);

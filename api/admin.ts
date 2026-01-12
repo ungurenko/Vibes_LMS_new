@@ -469,8 +469,8 @@ function formatNumber(num: number): string {
 // Модели по умолчанию для каждого инструмента
 const DEFAULT_TOOL_MODELS: Record<string, string> = {
   assistant: 'google/gemini-2.5-flash-lite',
-  tz_helper: 'zhipu-ai/glm-4-plus',
-  ideas: 'microsoft/phi-4-reasoning-plus:free'
+  tz_helper: 'z-ai/glm-4.7',
+  ideas: 'xiaomi/mimo-v2-flash:free'
 };
 
 async function handleAiinstruction(
