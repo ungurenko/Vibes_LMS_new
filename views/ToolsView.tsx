@@ -145,18 +145,16 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
         {/* Animated glow */}
         <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
 
-        {/* Illustration с gradient mask */}
-        <div className="relative h-[180px] md:h-[170px] overflow-hidden">
+        {/* Illustration - по центру */}
+        <div className="relative h-[180px] md:h-[170px] flex items-center justify-center">
           <motion.img
             src={tool.illustration}
             alt={tool.title}
-            className="w-full h-[120%] object-cover object-bottom group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
           />
-          {/* Gradient mask - плавное растворение снизу */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 via-70% to-transparent pointer-events-none" />
         </div>
 
         {/* Content */}
