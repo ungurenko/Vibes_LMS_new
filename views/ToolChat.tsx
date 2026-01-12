@@ -9,12 +9,10 @@ import {
   Bot,
   User,
   Sparkles,
-  Cpu,
   Trash2,
   Copy,
   Check,
   Terminal,
-  Zap,
   ArrowLeft,
   FileText,
   Lightbulb,
@@ -44,21 +42,21 @@ const TOOL_CONFIG: Record<ToolType, {
 }> = {
   assistant: {
     title: 'Ассистент',
-    subtitle: 'google/gemini-2.5-flash-lite',
+    subtitle: 'Помощник по вайб-кодингу',
     icon: <Bot size={20} />,
     gradient: 'from-violet-600 to-indigo-600',
     welcomeMessage: 'Привет! Я твой ИИ-ментор по вайб-кодингу. Готов помочь с кодом, ошибками или объяснить сложные штуки простыми словами. **С чего начнем?**'
   },
   tz_helper: {
     title: 'Помощник по ТЗ',
-    subtitle: 'zhipu-ai/glm-4-plus',
+    subtitle: 'Создание технического задания',
     icon: <FileText size={20} />,
     gradient: 'from-emerald-500 to-teal-600',
     welcomeMessage: 'Привет! Я помогу тебе создать техническое задание для нейросети. **Опиши свою идею проекта** — что ты хочешь создать?'
   },
   ideas: {
     title: 'Идеи для проектов',
-    subtitle: 'microsoft/phi-4-reasoning-plus:free',
+    subtitle: 'Генерация идей для проектов',
     icon: <Lightbulb size={20} />,
     gradient: 'from-amber-500 to-orange-600',
     welcomeMessage: 'Привет! Я помогу найти идею проекта, которая подойдёт именно тебе. **В какой сфере ты работаешь или чем увлекаешься?**'
@@ -550,12 +548,9 @@ const ToolChat: React.FC<ToolChatProps> = ({
             <h1 className="font-display text-base md:text-lg font-bold text-zinc-900 dark:text-white leading-tight">
               {config.title}
             </h1>
-            <div className="flex items-center gap-2">
-              <Cpu size={12} className="text-zinc-500" />
-              <span className="text-[10px] font-mono font-bold text-zinc-500 tracking-wider">
-                {config.subtitle}
-              </span>
-            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {config.subtitle}
+            </p>
           </div>
         </div>
 
@@ -661,11 +656,6 @@ const ToolChat: React.FC<ToolChatProps> = ({
               </div>
             </div>
           </form>
-          <div className="text-center mt-2">
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono opacity-70">
-              {config.subtitle}
-            </p>
-          </div>
         </div>
       </div>
     </div>
