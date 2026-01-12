@@ -1,17 +1,11 @@
 /**
  * ToolsView - Главный экран раздела "Инструменты"
- * Витрина с карточками инструментов: Ассистент, Помощник по ТЗ, Идеи
+ * Bento-grid с премиальными карточками и AI-иллюстрациями
  */
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import {
-  Bot,
-  FileText,
-  Lightbulb,
-  ChevronRight,
-  Sparkles
-} from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas';
 
@@ -21,93 +15,188 @@ interface ToolsViewProps {
 
 interface ToolCardData {
   type: ToolType;
-  icon: React.ReactNode;
   title: string;
   description: string;
+  illustration: string;
   gradient: string;
-  iconBg: string;
+  glowColor: string;
+  size: 'large' | 'medium';
 }
 
 const tools: ToolCardData[] = [
   {
     type: 'assistant',
-    icon: <Bot size={24} />,
     title: 'Ассистент',
     description: 'Универсальный помощник по вайб-кодингу. Ответит на вопросы, поможет с кодом и ошибками.',
-    gradient: 'from-violet-500 to-indigo-600',
-    iconBg: 'bg-violet-500'
+    illustration: '/tools/assistant.png',
+    gradient: 'from-violet-600/20 via-indigo-600/10 to-transparent',
+    glowColor: 'violet',
+    size: 'large'
   },
   {
     type: 'tz_helper',
-    icon: <FileText size={24} />,
     title: 'Помощник по ТЗ',
-    description: 'Создай техническое задание для проекта. Опиши идею — получи готовый промпт для нейросети.',
-    gradient: 'from-emerald-500 to-teal-600',
-    iconBg: 'bg-emerald-500'
+    description: 'Создай техническое задание для проекта. Опиши идею — получи готовый промпт.',
+    illustration: '/tools/tz-helper.png',
+    gradient: 'from-emerald-600/20 via-teal-600/10 to-transparent',
+    glowColor: 'emerald',
+    size: 'medium'
   },
   {
     type: 'ideas',
-    icon: <Lightbulb size={24} />,
     title: 'Идеи для проектов',
     description: 'Не знаешь что создать? Найди идею под свою нишу, опыт и цели.',
-    gradient: 'from-amber-500 to-orange-600',
-    iconBg: 'bg-amber-500'
+    illustration: '/tools/ideas.png',
+    gradient: 'from-amber-600/20 via-orange-600/10 to-transparent',
+    glowColor: 'amber',
+    size: 'medium'
   }
 ];
 
-const ToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index: number }> = ({
-  tool,
-  onClick,
-  index
-}) => {
+const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ tool, onClick }) => {
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className="relative p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-        {/* Gradient overlay on hover */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+      <div className="relative h-[280px] md:h-[260px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-violet-500/20 hover:border-violet-500/30">
+        {/* Background gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${tool.gradient} opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
 
-        {/* Icon */}
-        <div className={`w-12 h-12 rounded-xl ${tool.iconBg} flex items-center justify-center text-white shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300`}>
-          {tool.icon}
+        {/* Animated glow */}
+        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-violet-500/30 rounded-full blur-[80px] group-hover:bg-violet-500/50 transition-all duration-700" />
+
+        {/* Content */}
+        <div className="relative z-10 h-full flex flex-col md:flex-row">
+          {/* Text content */}
+          <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-3 py-1 text-xs font-semibold bg-violet-500/20 text-violet-300 rounded-full border border-violet-500/30">
+                AI Ментор
+              </span>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 font-display flex items-center gap-3">
+              {tool.title}
+              <ChevronRight
+                size={24}
+                className="text-violet-400 group-hover:translate-x-2 transition-transform duration-300"
+              />
+            </h3>
+            <p className="text-base text-zinc-400 leading-relaxed max-w-md group-hover:text-zinc-300 transition-colors">
+              {tool.description}
+            </p>
+          </div>
+
+          {/* Illustration */}
+          <div className="relative w-full md:w-[45%] h-[140px] md:h-full flex items-center justify-center overflow-hidden">
+            <motion.img
+              src={tool.illustration}
+              alt={tool.title}
+              className="w-full h-full object-cover md:object-contain object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            />
+            {/* Gradient overlay for mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent md:bg-gradient-to-l md:from-transparent md:via-transparent md:to-zinc-900/50" />
+          </div>
+        </div>
+
+        {/* Decorative corner glow */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/10 rounded-full blur-[60px] group-hover:bg-violet-500/20 transition-all duration-500" />
+      </div>
+    </motion.button>
+  );
+};
+
+const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index: number }> = ({ tool, onClick, index }) => {
+  const glowColors = {
+    emerald: {
+      glow: 'bg-emerald-500/30 group-hover:bg-emerald-500/50',
+      border: 'hover:border-emerald-500/30 hover:shadow-emerald-500/20',
+      badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      text: 'text-emerald-400'
+    },
+    amber: {
+      glow: 'bg-amber-500/30 group-hover:bg-amber-500/50',
+      border: 'hover:border-amber-500/30 hover:shadow-amber-500/20',
+      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      text: 'text-amber-400'
+    }
+  };
+
+  const colors = glowColors[tool.glowColor as keyof typeof glowColors] || glowColors.emerald;
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 + index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      onClick={onClick}
+      className="group w-full text-left"
+    >
+      <div className={`relative h-[320px] md:h-[280px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 ${colors.border}`}>
+        {/* Background gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
+
+        {/* Animated glow */}
+        <div className={`absolute -bottom-10 -right-10 w-40 h-40 ${colors.glow} rounded-full blur-[60px] transition-all duration-700`} />
+
+        {/* Illustration */}
+        <div className="relative h-[160px] md:h-[140px] overflow-hidden">
+          <motion.img
+            src={tool.illustration}
+            alt={tool.title}
+            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+          />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
         </div>
 
         {/* Content */}
-        <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2 font-display flex items-center gap-2">
-          {tool.title}
-          <ChevronRight
-            size={18}
-            className="text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 group-hover:translate-x-1 transition-all"
-          />
-        </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-          {tool.description}
-        </p>
-
-        {/* Decorative element */}
-        <div className={`absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br ${tool.gradient} rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
+        <div className="relative z-10 p-5 md:p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`px-2.5 py-0.5 text-xs font-semibold ${colors.badge} rounded-full border`}>
+              {tool.type === 'tz_helper' ? 'Генератор' : 'Креатив'}
+            </span>
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2 font-display flex items-center gap-2">
+            {tool.title}
+            <ChevronRight
+              size={20}
+              className={`${colors.text} group-hover:translate-x-1 transition-transform duration-300`}
+            />
+          </h3>
+          <p className="text-sm text-zinc-400 leading-relaxed group-hover:text-zinc-300 transition-colors line-clamp-2">
+            {tool.description}
+          </p>
+        </div>
       </div>
     </motion.button>
   );
 };
 
 const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
+  const largeTool = tools.find(t => t.size === 'large')!;
+  const mediumTools = tools.filter(t => t.size === 'medium');
+
   return (
     <div className="w-full min-h-[calc(100dvh-80px)] md:min-h-[calc(100vh-2rem)] flex flex-col bg-transparent">
       {/* Header */}
       <header className="px-4 md:px-8 py-6 md:py-8">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
               <Sparkles size={20} className="text-white" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white font-display">
@@ -125,25 +214,39 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
         </div>
       </header>
 
-      {/* Tools Grid */}
+      {/* Bento Grid */}
       <div className="flex-1 px-4 md:px-8 pb-8">
-        <div className="max-w-3xl mx-auto grid gap-4 md:gap-6">
-          {tools.map((tool, index) => (
-            <ToolCard
-              key={tool.type}
-              tool={tool}
-              onClick={() => onSelectTool(tool.type)}
-              index={index}
-            />
-          ))}
+        <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
+          {/* Large Card - Ассистент */}
+          <LargeToolCard
+            tool={largeTool}
+            onClick={() => onSelectTool(largeTool.type)}
+          />
+
+          {/* Medium Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {mediumTools.map((tool, index) => (
+              <MediumToolCard
+                key={tool.type}
+                tool={tool}
+                onClick={() => onSelectTool(tool.type)}
+                index={index}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Footer hint */}
       <div className="px-4 md:px-8 pb-6 text-center">
-        <p className="text-xs text-zinc-400 dark:text-zinc-600">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-xs text-zinc-500 dark:text-zinc-600"
+        >
           Все инструменты сохраняют историю диалога
-        </p>
+        </motion.p>
       </div>
     </div>
   );
