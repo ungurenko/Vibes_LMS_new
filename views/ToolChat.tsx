@@ -698,7 +698,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 p-3 md:p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-zinc-950 dark:via-zinc-950 z-20">
+      <div className="shrink-0 pt-2 px-3 md:px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-zinc-950 dark:via-zinc-950/80 z-20">
         <div className="max-w-4xl mx-auto">
           <form
             onSubmit={onFormSubmit}
