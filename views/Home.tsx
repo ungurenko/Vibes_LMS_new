@@ -6,7 +6,7 @@ import {
    Palette,
    Terminal,
    Book,
-   Bot,
+   Wrench,
    Sparkles,
    Target,
    Zap
@@ -300,7 +300,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                      { id: 'styles', icon: Palette, color: 'text-fuchsia-500', label: 'Стили', bg: 'bg-fuchsia-50 dark:bg-fuchsia-500/10' },
                      { id: 'prompts', icon: Terminal, color: 'text-emerald-500', label: 'Промпты', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
                      { id: 'glossary', icon: Book, color: 'text-amber-500', label: 'Термины', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                     { id: 'assistant', icon: Bot, color: 'text-cyan-500', label: 'AI Чат', bg: 'bg-cyan-50 dark:bg-cyan-500/10' },
+                     { id: 'tools', icon: Wrench, color: 'text-cyan-500', label: 'Инструменты', bg: 'bg-cyan-50 dark:bg-cyan-500/10' },
                   ].map(item => (
                      <button
                         key={item.id}
