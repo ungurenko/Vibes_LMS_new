@@ -8,7 +8,8 @@ import {
    Book,
    Bot,
    Sparkles,
-   Target
+   Target,
+   Zap
 } from 'lucide-react';
 import { TabId } from '../types';
 import { motion } from 'framer-motion';
@@ -218,8 +219,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                      </div>
                   </button>
                   <div className="hidden sm:flex flex-col ml-2">
-                     <span className="text-xs font-bold uppercase tracking-wider text-white/60 mb-1.5">Прогресс этапа</span>
-                     <div className="w-32 h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+                     <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-bold uppercase tracking-wider text-white/60">Прогресс этапа</span>
+                        <span className="text-xs font-bold text-white/80">{totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0}%</span>
+                     </div>
+                     <div className="w-36 h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                         <div
                            className="h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-500"
                            style={{ width: `${totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0}%` }}
@@ -240,51 +244,58 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   </span>
                </div>
 
-               <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-none mask-linear">
-                  {activeStage?.tasks.map((task) => {
-                     const isDone = completedTasks.includes(task.id);
-                     return (
-                        <div
-                           key={task.id}
-                           onClick={() => handleTaskToggle(task.id)}
-                           className={`group p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${isDone
-                              ? 'bg-zinc-50 dark:bg-zinc-800/30 border-transparent opacity-60 order-last'
-                              : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/5'
-                              }`}
-                        >
-                           <div className="flex items-start gap-3 relative z-10">
-                              <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ${isDone
-                                 ? 'bg-violet-600 border-violet-600 text-white'
-                                 : 'border-zinc-300 dark:border-zinc-600 group-hover:border-violet-400'
-                                 }`}>
-                                 {isDone && <CheckCircle2 size={12} />}
+               {/* Celebration State ИЛИ список задач */}
+               {completedCount === totalTasks && totalTasks > 0 ? (
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.8 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     className="flex-1 flex flex-col items-center justify-center text-center p-6"
+                  >
+                     <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 text-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-500/5">
+                        <Sparkles size={32} />
+                     </div>
+                     <p className="text-lg font-bold text-zinc-900 dark:text-white mb-1">Все задачи выполнены!</p>
+                     <p className="text-sm text-zinc-500">Отдохни или переходи к следующему этапу</p>
+                  </motion.div>
+               ) : (
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-none">
+                     {activeStage?.tasks.map((task) => {
+                        const isDone = completedTasks.includes(task.id);
+                        return (
+                           <div
+                              key={task.id}
+                              onClick={() => handleTaskToggle(task.id)}
+                              className={`group p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden min-h-[56px] ${isDone
+                                 ? 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-100 dark:border-white/5 opacity-80'
+                                 : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/5'
+                                 }`}
+                           >
+                              <div className="flex items-start gap-3 relative z-10">
+                                 <div className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-300 flex-shrink-0 ${isDone
+                                    ? 'bg-violet-600 border-violet-600 text-white'
+                                    : 'border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 group-hover:border-violet-400'
+                                    }`}>
+                                    {isDone && <CheckCircle2 size={14} />}
+                                 </div>
+                                 <span className={`text-base font-medium leading-relaxed transition-colors ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'
+                                    }`}>
+                                    {task.title}
+                                 </span>
                               </div>
-                              <span className={`text-sm font-medium leading-tight transition-colors ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'
-                                 }`}>
-                                 {task.title}
-                              </span>
                            </div>
-                        </div>
-                     )
-                  })}
-
-                  {/* Empty State / Celebration */}
-                  {completedCount === totalTasks && (
-                     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col items-center justify-center text-center p-4">
-                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 text-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-500/5">
-                           <Sparkles size={24} />
-                        </div>
-                        <p className="text-sm font-bold text-zinc-900 dark:text-white">Все задачи выполнены!</p>
-                        <p className="text-xs text-zinc-500">Отдохни или переходи к следующему этапу.</p>
-                     </motion.div>
-                  )}
-               </div>
+                        )
+                     })}
+                  </div>
+               )}
             </motion.div>
 
             {/* 3. QUICK ACTIONS WIDGET - Spans 1 col, 1 row */}
             <motion.div variants={cardVariants} className="md:col-span-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 flex flex-col justify-center">
-               <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 px-1">Инструменты</h3>
-               <div className="grid grid-cols-2 gap-3">
+               <h3 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4 px-1 flex items-center gap-2">
+                  <Zap size={14} className="text-violet-500" />
+                  Инструменты
+               </h3>
+               <div className="grid grid-cols-2 gap-4">
                   {[
                      { id: 'styles', icon: Palette, color: 'text-fuchsia-500', label: 'Стили', bg: 'bg-fuchsia-50 dark:bg-fuchsia-500/10' },
                      { id: 'prompts', icon: Terminal, color: 'text-emerald-500', label: 'Промпты', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
@@ -294,12 +305,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                      <button
                         key={item.id}
                         onClick={() => onNavigate(item.id as TabId)}
-                        className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 group border border-transparent hover:border-zinc-200 dark:hover:border-white/10"
+                        className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 group border border-transparent hover:border-zinc-200 dark:hover:border-white/10 min-h-[80px]"
                      >
-                        <div className={`p-2 rounded-xl mb-2 ${item.bg} transition-colors group-hover:scale-110 duration-300`}>
-                           <item.icon size={20} className={item.color} />
+                        <div className={`p-2.5 rounded-xl mb-2 ${item.bg} transition-colors group-hover:scale-110 duration-300`}>
+                           <item.icon size={22} className={item.color} />
                         </div>
-                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">{item.label}</span>
+                        <span className="text-sm font-bold text-zinc-600 dark:text-zinc-300">{item.label}</span>
                      </button>
                   ))}
                </div>
@@ -312,11 +323,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl translate-y-1/3 -translate-x-1/3" />
 
                   <div className="relative z-10 flex flex-col h-full">
-                     <div className="flex justify-between items-start mb-auto">
+                     <div className="flex items-center gap-3 mb-auto">
                         <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
                            <Calendar size={20} />
                         </div>
-                        <div className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider shadow-sm">
+                        <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider shadow-sm">
                            {upcomingCall.relativeDate}
                         </div>
                      </div>
