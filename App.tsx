@@ -547,7 +547,7 @@ const AppContent: React.FC = () => {
                     </button>
                 </header>
 
-                {!(activeTab === 'tools' && selectedTool) && (
+                {(activeTab === 'dashboard' || activeTab.startsWith('admin-')) && (
                     <div className="hidden md:flex justify-end items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
