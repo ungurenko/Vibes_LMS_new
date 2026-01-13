@@ -137,7 +137,7 @@ const StyleLibrary: React.FC = () => {
                 opacity: { duration: 0.4 }
               }}
               key={style.id}
-              className="group relative bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px]"
+              className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px]"
             >
               {/* Image Area */}
               <div className="relative h-[65%] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -153,7 +153,7 @@ const StyleLibrary: React.FC = () => {
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                   <button
                     onClick={() => { playSound('click'); setSelectedStyle(style); }}
-                    className="p-3.5 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black hover:scale-110 transition-all duration-300 shadow-lg"
+                    className="p-4 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black hover:scale-110 transition-all duration-300 shadow-lg"
                     title="Посмотреть пример"
                   >
                     <Eye size={24} />
@@ -163,7 +163,7 @@ const StyleLibrary: React.FC = () => {
                       e.stopPropagation();
                       handleCopy(style.id, style.prompt);
                     }}
-                    className="p-3.5 rounded-full bg-violet-600 border border-violet-500 text-white hover:bg-violet-500 hover:scale-110 transition-all duration-300 shadow-lg"
+                    className="p-4 rounded-full bg-violet-600 border border-violet-500 text-white hover:bg-violet-500 hover:scale-110 transition-all duration-300 shadow-lg"
                     title="Скопировать промпт"
                   >
                     {copiedId === style.id ? <Check size={24} /> : <Copy size={24} />}
@@ -189,7 +189,7 @@ const StyleLibrary: React.FC = () => {
 
                 <div className="flex flex-wrap gap-2">
                   {style.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">
+                    <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs uppercase font-bold tracking-wider">
                       {tag}
                     </span>
                   ))}
@@ -218,7 +218,7 @@ const StyleLibrary: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-6xl bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden shadow-2xl flex flex-col md:flex-row h-full md:h-auto md:max-h-[85vh] z-10"
+              className="relative w-full max-w-6xl bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row h-full md:h-auto md:max-h-[85vh] z-10"
             >
               {/* Close Button */}
               <button

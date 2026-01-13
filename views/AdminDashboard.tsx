@@ -133,7 +133,7 @@ const AdminDashboard: React.FC = () => {
              <button className="px-5 py-2.5 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 rounded-xl font-bold text-sm shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-2">
                  <Bell size={18} />
                  <span>Уведомления</span>
-                 {alerts.length > 0 && <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{alerts.length}</span>}
+                 {alerts.length > 0 && <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">{alerts.length}</span>}
              </button>
              <button className="px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
                  <Send size={18} />
@@ -217,7 +217,7 @@ const AdminDashboard: React.FC = () => {
                                         <img src={src} alt="" className="w-full h-full object-cover" />
                                     </div>
                                 ))}
-                                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-500 shadow-sm z-0">
+                                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-xs font-bold text-zinc-500 shadow-sm z-0">
                                     +{stage.count - stage.avatars.length}
                                 </div>
                             </div>
@@ -295,8 +295,8 @@ const AdminDashboard: React.FC = () => {
                 transition={{ delay: 0.4 }}
                 className="relative group perspective-1000"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-[2rem] blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
-                <div className="relative bg-zinc-900 dark:bg-white text-white dark:text-black rounded-[2rem] overflow-hidden shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+                <div className="relative bg-zinc-900 dark:bg-white text-white dark:text-black rounded-3xl overflow-hidden shadow-2xl">
                     {/* Noise & Texture */}
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
                     
@@ -321,12 +321,12 @@ const AdminDashboard: React.FC = () => {
 
                         <div className="flex items-center gap-6">
                             <div>
-                                <div className="text-[10px] uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Начало</div>
+                                <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Начало</div>
                                 <div className="text-xl font-mono font-bold">{callDetails.time}</div>
                             </div>
                             <div className="w-px h-8 bg-white/20 dark:bg-black/10" />
                             <div>
-                                <div className="text-[10px] uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Участники</div>
+                                <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Участники</div>
                                 <div className="text-xl font-mono font-bold">{callDetails.attendees}</div>
                             </div>
                         </div>

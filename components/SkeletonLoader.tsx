@@ -42,7 +42,7 @@ export const StyleCardSkeleton: React.FC = () => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border border-zinc-200 dark:border-white/5 h-[400px] flex flex-col"
+    className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 h-[400px] flex flex-col"
   >
     {/* Image Area - 65% */}
     <Skeleton className="h-[65%] rounded-none" />
@@ -68,7 +68,7 @@ export const PromptCardSkeleton: React.FC = () => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-zinc-200 dark:border-white/5"
+    className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5"
   >
     <div className="flex justify-between items-start mb-4">
       <Skeleton className="w-24 h-6" />

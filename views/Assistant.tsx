@@ -388,7 +388,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
             </h1>
             <div className="flex items-center gap-2">
               <Cpu size={12} className="text-zinc-500" />
-              <span className="text-[10px] font-mono font-bold text-zinc-500 tracking-wider">google/gemini-2.5-flash-lite</span>
+              <span className="text-xs font-mono font-bold text-zinc-500 tracking-wider">google/gemini-2.5-flash-lite</span>
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
                     <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                   )}
                 </div>
-                <span className="text-[10px] font-mono text-zinc-400 mt-1 md:mt-2 px-1 opacity-60">
+                <span className="text-xs font-mono text-zinc-400 mt-1 md:mt-2 px-1 opacity-60">
                   {formatTime(msg.timestamp)}
                 </span>
               </div>
@@ -534,7 +534,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
             </div>
           </form>
           <div className="text-center">
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono opacity-70">
+            <p className="text-xs text-zinc-400 dark:text-zinc-600 font-mono opacity-70">
               Gemini 2.5 Flash Lite
             </p>
           </div>

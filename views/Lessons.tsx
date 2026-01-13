@@ -312,7 +312,7 @@ const Lessons: React.FC = () => {
                                     >
                                         Материалы и Задания
                                         {activeLesson.materials.length > 0 && (
-                                            <span className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-600 text-[10px] flex items-center justify-center text-current opacity-80">
+                                            <span className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-600 text-xs flex items-center justify-center text-current opacity-80">
                                                 {activeLesson.materials.length + activeLesson.tasks.length}
                                             </span>
                                         )}
@@ -495,7 +495,7 @@ const Lessons: React.FC = () => {
                                                             }`}>
                                                             {lesson.title}
                                                         </span>
-                                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
                                                             {!isLocked && <PlayCircle size={10} />}
                                                             {lesson.duration}
                                                         </div>

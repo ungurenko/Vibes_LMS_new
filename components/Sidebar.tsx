@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                     </div>
                     <div className="flex flex-col">
                         <span className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-white leading-none">ADMIN</span>
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">Panel</span>
+                        <span className="text-xs font-bold tracking-widest text-zinc-400 uppercase">Panel</span>
                     </div>
                 </div>
             )}

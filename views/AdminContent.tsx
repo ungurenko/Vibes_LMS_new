@@ -584,8 +584,8 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                           <div className="flex-1 min-w-0">
                              <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-bold text-sm text-zinc-900 dark:text-white truncate">{lesson.title}</h4>
-                                {lesson.status === 'locked' && <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded">Draft</span>}
-                                {lesson.status === 'completed' && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded">Live</span>}
+                                {lesson.status === 'locked' && <span className="text-xs px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded">Draft</span>}
+                                {lesson.status === 'completed' && <span className="text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded">Live</span>}
                              </div>
                              <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
                                 <span className="flex items-center gap-1"><Video size={12} /> {lesson.duration}</span>
@@ -632,7 +632,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                     </div>
                  )}
                  <div className="absolute top-3 right-3 flex gap-2">
-                    <span className="px-2 py-1 rounded-full bg-black/50 backdrop-blur text-white text-[10px] font-bold uppercase tracking-wider">
+                    <span className="px-2 py-1 rounded-full bg-black/50 backdrop-blur text-white text-xs font-bold uppercase tracking-wider">
                        {style.category}
                     </span>
                  </div>
@@ -657,7 +657,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                  </div>
                  <div className="flex flex-wrap gap-2">
                     {style.tags?.map(tag => (
-                       <span key={tag} className="text-[10px] px-2 py-1 rounded bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400">#{tag}</span>
+                       <span key={tag} className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400">#{tag}</span>
                     ))}
                  </div>
               </div>
@@ -696,7 +696,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                           {prompt.copyCount}
                        </td>
                        <td className="px-6 py-4">
-                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${
                              prompt.status === 'published' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-amber-100 text-amber-600'
                           }`}>
                              <span className={`w-1.5 h-1.5 rounded-full ${prompt.status === 'published' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
@@ -824,7 +824,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                     
                     <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-white/10 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-white/10 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                                 {map.category}
                             </span>
                             <span className={`w-2 h-2 rounded-full ${map.difficulty === 'Легко' ? 'bg-emerald-500' : map.difficulty === 'Средне' ? 'bg-amber-500' : 'bg-red-500'}`} />

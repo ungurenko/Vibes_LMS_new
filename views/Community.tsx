@@ -178,7 +178,7 @@ const Community: React.FC = () => {
 
                      {/* Top Badge */}
                      <div className="absolute top-4 left-4">
-                        <span className="px-2 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider">
+                        <span className="px-2 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 text-white text-xs font-bold uppercase tracking-wider">
                            {project.category}
                         </span>
                      </div>
@@ -211,7 +211,7 @@ const Community: React.FC = () => {
                            <img src={project.author.avatar} alt="" className="w-6 h-6 rounded-full bg-zinc-200 ring-2 ring-white dark:ring-zinc-800" />
                            <div className="flex flex-col">
                               <span className="text-xs font-bold text-zinc-900 dark:text-white leading-none">{project.author.name}</span>
-                              <span className="text-[10px] text-zinc-400">{project.author.level}</span>
+                              <span className="text-xs text-zinc-400">{project.author.level}</span>
                            </div>
                         </div>
 

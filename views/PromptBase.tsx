@@ -154,7 +154,7 @@ const PromptBase: React.FC = () => {
                             <div
                                 key={prompt.id}
                                 onClick={() => { playSound('click'); setSelectedPrompt(prompt); }}
-                                className="group cursor-pointer bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-500/10 flex flex-col h-full relative overflow-hidden"
+                                className="group cursor-pointer bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-500/10 flex flex-col h-full relative overflow-hidden"
                             >
                                 {/* Hover Glow */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-violet-500/0 group-hover:from-violet-500/5 group-hover:to-fuchsia-500/5 transition-colors duration-500" />
@@ -162,11 +162,11 @@ const PromptBase: React.FC = () => {
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex gap-2">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${colorClass}`}>
+                                            <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${colorClass}`}>
                                                 {prompt.category}
                                             </span>
                                             {isStack && (
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-violet-200 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:border-violet-500/30 dark:text-violet-300 flex items-center gap-1">
+                                                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-violet-200 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:border-violet-500/30 dark:text-violet-300 flex items-center gap-1">
                                                     <Layers size={10} />
                                                     {prompt.steps?.length} шага
                                                 </span>
@@ -195,7 +195,7 @@ const PromptBase: React.FC = () => {
 
                                     <div className="mt-auto flex flex-wrap gap-2">
                                         {prompt.tags.slice(0, 3).map(tag => (
-                                            <span key={tag} className="text-[10px] text-zinc-400 font-medium bg-zinc-50 dark:bg-white/5 px-2 py-1 rounded-md">
+                                            <span key={tag} className="text-xs text-zinc-400 font-medium bg-zinc-50 dark:bg-white/5 px-2 py-1 rounded-md">
                                                 #{tag}
                                             </span>
                                         ))}

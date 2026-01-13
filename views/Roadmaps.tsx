@@ -166,7 +166,7 @@ const Roadmaps: React.FC = () => {
                 </button>
 
                 {/* Header */}
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-10 border border-zinc-200 dark:border-white/5 shadow-xl shadow-zinc-200/50 dark:shadow-none mb-8 relative overflow-hidden">
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 border border-zinc-200 dark:border-white/5 shadow-xl shadow-zinc-200/50 dark:shadow-none mb-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                     <div className="relative z-10">
@@ -363,7 +363,7 @@ const Roadmaps: React.FC = () => {
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 key={map.id}
                                 onClick={() => { playSound('click'); setActiveMapId(map.id); }}
-                                className={`group cursor-pointer bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative overflow-hidden flex flex-col h-full ${isCompleted
+                                className={`group cursor-pointer bg-white dark:bg-zinc-900 rounded-3xl p-6 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative overflow-hidden flex flex-col h-full ${isCompleted
                                         ? 'border-emerald-200 dark:border-emerald-500/30'
                                         : 'border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30'
                                     }`}
@@ -374,7 +374,7 @@ const Roadmaps: React.FC = () => {
                                         {map.icon}
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        <span className="px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-white/10">
+                                        <span className="px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-white/5 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-white/10">
                                             {map.estimatedTime}
                                         </span>
                                     </div>

@@ -127,7 +127,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                animate={{ opacity: 1, y: 0 }}
                className="mb-12"
             >
-               <div className="relative overflow-hidden rounded-[2.5rem] bg-zinc-900 dark:bg-white text-white dark:text-black p-8 md:p-12 shadow-2xl shadow-zinc-500/20">
+               <div className="relative overflow-hidden rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-black p-8 md:p-12 shadow-2xl shadow-zinc-500/20">
                   <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
                   <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start justify-between">
@@ -238,7 +238,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                                     </span>
                                  )}
                               </div>
-                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${colorClass}`}>
+                              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${colorClass}`}>
                                  {item.category}
                               </span>
                            </div>

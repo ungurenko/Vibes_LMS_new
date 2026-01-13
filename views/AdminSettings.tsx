@@ -340,7 +340,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                                 </span>
                                             )}
                                             {invite.expiresAt && (
-                                                <div className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
+                                                <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
                                                     <Clock size={10} />
                                                     до {formatDate(invite.expiresAt)}
                                                 </div>

@@ -184,7 +184,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
           )}
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm">
           
           {/* Avatar Section */}
           <div className="p-8 border-b border-zinc-100 dark:border-white/5 flex flex-col md:flex-row items-center gap-8">
@@ -201,7 +201,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                   {isEditing && (
                       <label className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
                           <Camera size={24} className="mb-1" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Загрузить</span>
+                          <span className="text-xs font-bold uppercase tracking-wider">Загрузить</span>
                           <input 
                               type="file" 
                               className="hidden" 

@@ -184,7 +184,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             {/* 1. HERO CARD (Focus Mode) - Spans 2 cols, 2 rows */}
             <motion.div
                variants={cardVariants}
-               className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-[2.5rem] bg-zinc-900 dark:bg-white text-white dark:text-black p-8 md:p-10 flex flex-col justify-between group shadow-2xl shadow-zinc-200/50 dark:shadow-none ring-1 ring-white/10 dark:ring-black/5"
+               className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-black p-8 flex flex-col justify-between group shadow-2xl shadow-zinc-200/50 dark:shadow-none ring-1 ring-white/10 dark:ring-black/5"
             >
                {/* Animated Background */}
                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
@@ -218,7 +218,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                      </div>
                   </button>
                   <div className="hidden sm:flex flex-col ml-2">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 mb-1.5">Прогресс этапа</span>
+                     <span className="text-xs font-bold uppercase tracking-wider text-white/60 mb-1.5">Прогресс этапа</span>
                      <div className="w-32 h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                         <div
                            className="h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-500"
@@ -230,7 +230,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </motion.div>
 
             {/* 2. TASK STACK - Spans 1 col, 2 rows */}
-            <motion.div variants={cardVariants} className="md:col-span-1 md:row-span-2 bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 border border-zinc-200 dark:border-white/5 flex flex-col relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <motion.div variants={cardVariants} className="md:col-span-1 md:row-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 flex flex-col relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                <div className="flex items-center justify-between mb-6">
                   <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                      <Target className="text-red-500" /> Задачи
@@ -282,7 +282,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </motion.div>
 
             {/* 3. QUICK ACTIONS WIDGET - Spans 1 col, 1 row */}
-            <motion.div variants={cardVariants} className="md:col-span-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2.5rem] p-6 border border-zinc-200 dark:border-white/5 flex flex-col justify-center">
+            <motion.div variants={cardVariants} className="md:col-span-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 flex flex-col justify-center">
                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 px-1">Инструменты</h3>
                <div className="grid grid-cols-2 gap-3">
                   {[
@@ -299,7 +299,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                         <div className={`p-2 rounded-xl mb-2 ${item.bg} transition-colors group-hover:scale-110 duration-300`}>
                            <item.icon size={20} className={item.color} />
                         </div>
-                        <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300">{item.label}</span>
+                        <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">{item.label}</span>
                      </button>
                   ))}
                </div>
@@ -307,7 +307,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
             {/* 4. EVENT WIDGET - Spans 1 col, 1 row */}
             {upcomingCall ? (
-               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2.5rem] p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-lg shadow-emerald-500/20">
+               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-lg shadow-emerald-500/20">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/30 transition-colors" />
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl translate-y-1/3 -translate-x-1/3" />
 
@@ -329,7 +329,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
                         <div className="h-px w-full bg-gradient-to-r from-white/40 to-transparent mb-4" />
 
-                        <div className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mb-1.5 opacity-90 flex items-center gap-2">
+                        <div className="text-xs font-bold text-emerald-100 uppercase tracking-widest mb-1.5 opacity-90 flex items-center gap-2">
                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                            Созвон
                         </div>
@@ -338,7 +338,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   </div>
                </motion.div>
             ) : (
-               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 rounded-[2.5rem] p-6 relative overflow-hidden border border-zinc-200 dark:border-white/5">
+               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 rounded-3xl p-6 relative overflow-hidden border border-zinc-200 dark:border-white/5">
                   <div className="relative z-10 flex flex-col h-full items-center justify-center text-center">
                      <Calendar size={32} className="text-zinc-400 dark:text-zinc-600 mb-3" />
                      <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400">Пока нет запланированных созвонов</p>
