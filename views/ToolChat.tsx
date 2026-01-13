@@ -585,7 +585,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
   }
 
   return (
-    <div className="relative w-full h-[calc(100dvh-80px)] md:h-[calc(100vh-7rem)] flex flex-col overflow-hidden bg-transparent">
+    <div className="relative w-full h-[calc(100dvh-80px)] md:h-screen flex flex-col overflow-hidden bg-transparent">
 
       {/* Header */}
       <header className="px-4 md:px-6 py-3 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 z-20 shrink-0">
