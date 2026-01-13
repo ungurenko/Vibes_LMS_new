@@ -117,19 +117,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                         setIsOpen(false);
                     }
                 }}
-                className={`p-2 rounded-xl transition-all duration-300 ${
+                className={`p-2.5 rounded-xl transition-all duration-300 min-w-[44px] min-h-[44px] flex items-center justify-center ${
                     mode === 'admin'
                     ? 'text-red-500 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20'
-                    : 'text-zinc-300 dark:text-zinc-600 hover:text-zinc-50 dark:hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'
+                    : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
                 title={mode === 'student' ? 'Вход для куратора' : 'Выйти из админки'}
              >
-                {mode === 'student' ? <Lock size={16} /> : <LogOut size={16} />}
+                {mode === 'student' ? <Lock size={18} /> : <LogOut size={18} />}
              </button>
 
-            <button 
-              onClick={() => setIsOpen(false)} 
-              className="md:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors p-2"
+            <button
+              onClick={() => setIsOpen(false)}
+              className="md:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors p-2.5 rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <X size={24} />
             </button>

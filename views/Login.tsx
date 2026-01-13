@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Lock, Mail, ArrowLeft, RefreshCcw, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Lock, Mail, ArrowLeft, RefreshCcw, Eye, EyeOff, Check } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => void;
@@ -156,10 +156,14 @@ const Login: React.FC<LoginProps> = ({
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 mb-2">
-                            <input type="checkbox" id="remember" className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500" />
-                            <label htmlFor="remember" className="text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer">Запомнить меня</label>
-                        </div>
+                        <label className="flex items-center gap-3 mb-2 cursor-pointer group py-2">
+                            <div className="relative w-6 h-6">
+                                <input type="checkbox" id="remember" className="peer sr-only" />
+                                <div className="absolute inset-0 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 peer-checked:bg-violet-600 peer-checked:border-violet-600 transition-all group-hover:border-violet-400" />
+                                <Check size={14} className="absolute inset-0 m-auto text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
+                            <span className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">Запомнить меня</span>
+                        </label>
 
                         <button 
                             type="submit"

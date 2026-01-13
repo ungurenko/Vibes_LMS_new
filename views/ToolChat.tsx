@@ -234,20 +234,20 @@ const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
       </div>
       <button
         onClick={handleCopy}
-        className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
+        className={`w-full py-3.5 px-5 rounded-xl font-bold text-base flex items-center justify-center gap-2.5 transition-all ${
           copied
-            ? 'bg-emerald-500 text-white'
-            : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30'
+            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+            : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30'
         }`}
       >
         {copied ? (
           <>
-            <Check size={16} />
+            <Check size={18} />
             Скопировано!
           </>
         ) : (
           <>
-            <Copy size={16} />
+            <Copy size={18} />
             Скопировать ТЗ
           </>
         )}
@@ -265,11 +265,11 @@ const IdeaContent: React.FC<{ content: string; onTransfer: () => void }> = ({ co
       </div>
       <button
         onClick={onTransfer}
-        className="w-full py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-all"
+        className="w-full py-3.5 px-5 rounded-xl font-bold text-base flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
       >
-        <FileText size={16} />
+        <FileText size={18} />
         Создать ТЗ для этой идеи
-        <ArrowRight size={16} />
+        <ArrowRight size={18} />
       </button>
     </div>
   );
