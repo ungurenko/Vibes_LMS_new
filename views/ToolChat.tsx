@@ -9,7 +9,7 @@ import {
   Bot,
   User,
   Sparkles,
-  Trash2,
+  Plus,
   Copy,
   Check,
   Terminal,
@@ -31,6 +31,28 @@ interface ToolChatProps {
   onTransferToTZ?: (idea: string) => void;
   initialMessage?: string | null;
 }
+
+// Быстрые подсказки для начала диалога
+const QUICK_PROMPTS: Record<ToolType, string[]> = {
+  assistant: [
+    'Напиши код кнопки',
+    'Объясни Flexbox',
+    'Найди ошибку в коде',
+    'Как сделать адаптив?'
+  ],
+  tz_helper: [
+    'Интернет-магазин',
+    'Портфолио дизайнера',
+    'Лендинг для курса',
+    'Мобильное приложение'
+  ],
+  ideas: [
+    'Для фрилансера',
+    'Для малого бизнеса',
+    'Для студента',
+    'Для хобби'
+  ]
+};
 
 // Конфигурация инструментов
 const TOOL_CONFIG: Record<ToolType, {
@@ -250,6 +272,46 @@ const IdeaContent: React.FC<{ content: string; onTransfer: () => void }> = ({ co
         <ArrowRight size={16} />
       </button>
     </div>
+  );
+};
+
+// Компонент быстрых подсказок для пустого чата
+const QuickPrompts: React.FC<{
+  toolType: ToolType;
+  onSelect: (prompt: string) => void;
+  gradient: string;
+}> = ({ toolType, onSelect, gradient }) => {
+  const prompts = QUICK_PROMPTS[toolType];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="flex flex-wrap justify-center gap-2 mt-6 px-4"
+    >
+      {prompts.map((prompt, index) => (
+        <motion.button
+          key={prompt}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+          onClick={() => onSelect(prompt)}
+          className={`px-4 py-2 text-sm font-medium rounded-full
+            bg-zinc-100 dark:bg-white/5
+            border border-zinc-200 dark:border-white/10
+            text-zinc-600 dark:text-zinc-400
+            hover:bg-violet-50 dark:hover:bg-violet-500/10
+            hover:border-violet-300 dark:hover:border-violet-500/30
+            hover:text-violet-700 dark:hover:text-violet-300
+            transition-all duration-200
+            hover:scale-105 active:scale-95
+          `}
+        >
+          {prompt}
+        </motion.button>
+      ))}
+    </motion.div>
   );
 };
 
@@ -546,7 +608,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
             <h1 className="font-display text-base md:text-lg font-bold text-zinc-900 dark:text-white leading-tight">
               {config.title}
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-300">
               {config.subtitle}
             </p>
           </div>
@@ -554,10 +616,10 @@ const ToolChat: React.FC<ToolChatProps> = ({
 
         <button
           onClick={handleClearChat}
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-          title="Очистить историю"
+          className="p-2.5 rounded-xl text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+          title="Новый чат"
         >
-          <Trash2 size={20} />
+          <Plus size={20} />
         </button>
       </header>
 
@@ -585,8 +647,8 @@ const ToolChat: React.FC<ToolChatProps> = ({
               </div>
 
               {/* Bubble */}
-              <div className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`relative px-4 py-3 md:px-6 md:py-5 rounded-2xl md:rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${
+              <div className={`flex flex-col max-w-[85%] md:max-w-[650px] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`relative px-4 py-3 md:px-5 md:py-4 pb-7 rounded-2xl md:rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${
                   msg.role === 'assistant'
                     ? 'bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-xl shadow-zinc-200/50 dark:shadow-none'
                     : 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-sm shadow-lg shadow-violet-500/30 border border-white/10'
@@ -595,13 +657,25 @@ const ToolChat: React.FC<ToolChatProps> = ({
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${config.gradient} opacity-30`} />
                   )}
                   {renderMessage(msg)}
+                  {/* Timestamp inside bubble */}
+                  <span className={`absolute bottom-2 right-3 text-[9px] font-mono opacity-40 ${
+                    msg.role === 'assistant' ? 'text-zinc-500' : 'text-white/70'
+                  }`}>
+                    {formatTime(msg.timestamp)}
+                  </span>
                 </div>
-                <span className="text-[10px] font-mono text-zinc-400 mt-1 md:mt-2 px-1 opacity-60">
-                  {formatTime(msg.timestamp)}
-                </span>
               </div>
             </motion.div>
           ))}
+
+          {/* Quick Prompts для пустого чата */}
+          {messages.length <= 1 && !isTyping && (
+            <QuickPrompts
+              toolType={toolType}
+              onSelect={handleSend}
+              gradient={config.gradient}
+            />
+          )}
 
           {isTyping && (
             <motion.div
@@ -624,15 +698,14 @@ const ToolChat: React.FC<ToolChatProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 p-3 md:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-zinc-950 dark:via-zinc-950 z-20">
+      <div className="shrink-0 p-3 md:p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-zinc-950 dark:via-zinc-950 z-20">
         <div className="max-w-4xl mx-auto">
           <form
             onSubmit={onFormSubmit}
-            className="relative group rounded-3xl bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 border border-zinc-200 dark:border-white/10 focus-within:border-violet-500/50 dark:focus-within:border-violet-500/50 transition-all duration-300 ring-0 focus-within:ring-4 focus-within:ring-violet-500/10"
+            className="relative rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-white/10 focus-within:border-violet-400 dark:focus-within:border-violet-500/50 transition-all duration-200 ring-0 focus-within:ring-2 focus-within:ring-violet-500/20"
           >
-            <div className={`absolute -inset-0.5 bg-gradient-to-r ${config.gradient} rounded-3xl opacity-0 group-focus-within:opacity-30 blur-md transition-opacity duration-500 pointer-events-none`} />
 
-            <div className="relative flex items-end p-1.5 md:p-2 bg-white dark:bg-zinc-900 rounded-3xl">
+            <div className="relative flex items-end p-1.5 md:p-2 bg-white dark:bg-zinc-900 rounded-2xl">
               <textarea
                 ref={inputRef}
                 value={inputValue}
@@ -647,9 +720,13 @@ const ToolChat: React.FC<ToolChatProps> = ({
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isTyping}
-                  className="p-2 md:p-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl md:rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-lg hover:shadow-zinc-500/20 flex items-center justify-center"
+                  className={`p-2.5 md:p-3 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                    inputValue.trim() && !isTyping
+                      ? 'bg-zinc-900 dark:bg-white text-white dark:text-black hover:scale-105 active:scale-95 shadow-md'
+                      : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+                  }`}
                 >
-                  <Send size={18} className={!inputValue.trim() ? "opacity-50" : ""} />
+                  <Send size={18} />
                 </button>
               </div>
             </div>

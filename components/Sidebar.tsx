@@ -179,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
               {isActive && (
                 <motion.div
                   layoutId="activeTabBg"
-                  className="absolute inset-0 bg-white dark:bg-white/[0.08] rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-none border border-zinc-100 dark:border-white/[0.05]"
+                  className="absolute inset-0 bg-white dark:bg-white/[0.08] rounded-2xl shadow-[0_1px_6px_rgba(0,0,0,0.03)] dark:shadow-none border border-zinc-100 dark:border-white/[0.05]"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -195,9 +195,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
               </div>
               <span className={`relative z-10 text-base font-medium tracking-wide ${isActive ? 'font-bold' : ''}`}>{item.label}</span>
               {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="activeTabIndicator"
-                    className="absolute left-0 w-1 h-5 bg-violet-600 rounded-r-full shadow-[0_0_10px_rgba(139,92,246,0.5)]"
+                    className="absolute left-0 w-0.5 h-4 bg-violet-600 rounded-full shadow-[0_0_8px_rgba(139,92,246,0.4)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
