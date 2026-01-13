@@ -169,7 +169,7 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, langua
 
 const FormattedText: React.FC<{ text: string }> = ({ text }) => {
   return (
-    <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none prose-p:leading-7 prose-p:mb-4 prose-pre:m-0 prose-pre:p-0 prose-pre:bg-transparent text-sm md:text-base break-words">
+    <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.6] prose-p:mb-3 prose-pre:m-0 prose-pre:p-0 prose-pre:bg-transparent text-[13px] md:text-[15px] break-words">
       <ReactMarkdown
         components={{
           a: ({ node, ...props }) => (
@@ -188,24 +188,24 @@ const FormattedText: React.FC<{ text: string }> = ({ text }) => {
             );
           },
           ul: ({ node, ...props }) => (
-            <ul className="list-disc list-outside ml-4 mb-4 space-y-1 marker:text-violet-500" {...props} />
+            <ul className="list-disc list-outside ml-4 mb-3 space-y-0.5 marker:text-violet-500" {...props} />
           ),
           ol: ({ node, ...props }) => (
-            <ol className="list-decimal list-outside ml-4 mb-4 space-y-1 marker:text-violet-500 font-medium" {...props} />
+            <ol className="list-decimal list-outside ml-4 mb-3 space-y-0.5 marker:text-violet-500 font-medium" {...props} />
           ),
           li: ({ node, ...props }) => (
             <li className="pl-1" {...props} />
           ),
           p: ({ node, ...props }) => (
-            <p className="mb-4 last:mb-0 whitespace-pre-wrap text-zinc-700 dark:text-zinc-200" {...props} />
+            <p className="mb-3 last:mb-0 whitespace-pre-wrap text-zinc-700 dark:text-zinc-200" {...props} />
           ),
-          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-900 dark:text-white font-display" {...props} />,
-          h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-900 dark:text-white font-display" {...props} />,
-          h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2 mt-4 text-zinc-900 dark:text-white font-display" {...props} />,
+          h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-3 mt-5 text-zinc-900 dark:text-white font-display" {...props} />,
+          h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-2.5 mt-4 text-zinc-900 dark:text-white font-display" {...props} />,
+          h3: ({ node, ...props }) => <h3 className="text-base font-bold mb-2 mt-3 text-zinc-900 dark:text-white font-display" {...props} />,
           strong: ({ node, ...props }) => <strong className="font-bold text-zinc-900 dark:text-white" {...props} />,
           em: ({ node, ...props }) => <em className="italic text-zinc-800 dark:text-zinc-300" {...props} />,
           blockquote: ({ node, ...props }) => (
-            <blockquote className="border-l-4 border-violet-500 pl-4 py-2 my-4 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
+            <blockquote className="border-l-3 border-violet-500 pl-3 py-1.5 my-3 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
           )
         }}
       >
@@ -228,13 +228,13 @@ const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
   };
 
   return (
-    <div className="mt-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
-      <div className="mb-3">
+    <div className="mt-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
+      <div className="mb-2.5">
         <FormattedText text={content} />
       </div>
       <button
         onClick={handleCopy}
-        className={`w-full py-3.5 px-5 rounded-xl font-bold text-base flex items-center justify-center gap-2.5 transition-all ${
+        className={`w-full py-2.5 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
           copied
             ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
             : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30'
@@ -242,12 +242,12 @@ const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
       >
         {copied ? (
           <>
-            <Check size={18} />
+            <Check size={16} />
             Скопировано!
           </>
         ) : (
           <>
-            <Copy size={18} />
+            <Copy size={16} />
             Скопировать ТЗ
           </>
         )}
@@ -259,17 +259,17 @@ const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
 // Компонент для идеи с кнопкой перехода
 const IdeaContent: React.FC<{ content: string; onTransfer: () => void }> = ({ content, onTransfer }) => {
   return (
-    <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-      <div className="mb-3">
+    <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+      <div className="mb-2.5">
         <FormattedText text={content} />
       </div>
       <button
         onClick={onTransfer}
-        className="w-full py-3.5 px-5 rounded-xl font-bold text-base flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+        className="w-full py-2.5 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
       >
-        <FileText size={18} />
+        <FileText size={16} />
         Создать ТЗ для этой идеи
-        <ArrowRight size={18} />
+        <ArrowRight size={16} />
       </button>
     </div>
   );
@@ -625,7 +625,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-4 pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 overscroll-contain">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-4">
           {messages.map((msg) => (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -635,20 +635,20 @@ const ToolChat: React.FC<ToolChatProps> = ({
               className={`flex items-start gap-3 md:gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               {/* Avatar */}
-              <div className={`shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-md ${
+              <div className={`shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-md ${
                 msg.role === 'assistant'
                   ? 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10'
                   : 'bg-zinc-900 dark:bg-white text-white dark:text-black'
               }`}>
                 {msg.role === 'assistant'
-                  ? <Sparkles size={16} className="text-violet-600 dark:text-violet-400" />
-                  : <User size={16} />
+                  ? <Sparkles size={14} className="text-violet-600 dark:text-violet-400" />
+                  : <User size={14} />
                 }
               </div>
 
               {/* Bubble */}
-              <div className={`flex flex-col max-w-[85%] md:max-w-[650px] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`relative px-4 py-3 md:px-5 md:py-4 pb-7 rounded-2xl md:rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${
+              <div className={`flex flex-col max-w-[90%] md:max-w-[768px] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`relative px-3.5 py-2.5 md:px-4 md:py-3 pb-6 rounded-xl md:rounded-2xl shadow-sm text-[13px] md:text-[15px] leading-[1.6] overflow-hidden ${
                   msg.role === 'assistant'
                     ? 'bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-xl shadow-zinc-200/50 dark:shadow-none'
                     : 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-sm shadow-lg shadow-violet-500/30 border border-white/10'
@@ -681,12 +681,12 @@ const ToolChat: React.FC<ToolChatProps> = ({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-start gap-4"
+              className="flex items-start gap-3"
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-md">
-                <Sparkles size={16} className="text-violet-600 dark:text-violet-400" />
+              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-md">
+                <Sparkles size={14} className="text-violet-600 dark:text-violet-400" />
               </div>
-              <div className="px-5 py-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-3xl rounded-tl-sm border border-zinc-200 dark:border-white/5 flex items-center gap-2 shadow-sm">
+              <div className="px-4 py-3 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl rounded-tl-sm border border-zinc-200 dark:border-white/5 flex items-center gap-2 shadow-sm">
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-violet-500 rounded-full" />
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-2 h-2 bg-violet-400 rounded-full" />
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-2 h-2 bg-violet-300 rounded-full" />
