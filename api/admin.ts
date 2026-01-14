@@ -934,9 +934,16 @@ async function getLessons(req: VercelRequest, res: VercelResponse) {
 
     // Получаем материалы для всех уроков
     const { rows: materials } = await query(
-        `SELECT id, lesson_id, title, type, url
+        `SELECT id, lesson_id, title, type, url, sort_order
      FROM lesson_materials
-     ORDER BY lesson_id`
+     ORDER BY lesson_id, sort_order`
+    );
+
+    // Получаем задания для всех уроков
+    const { rows: tasks } = await query(
+        `SELECT id, lesson_id, text, sort_order
+     FROM lesson_tasks
+     ORDER BY lesson_id, sort_order`
     );
 
     // Группируем материалы по урокам
@@ -950,6 +957,20 @@ async function getLessons(req: VercelRequest, res: VercelResponse) {
             title: material.title,
             type: material.type,
             url: material.url,
+            sortOrder: material.sort_order,
+        });
+    }
+
+    // Группируем задания по урокам
+    const tasksByLesson = new Map<string, any[]>();
+    for (const task of tasks) {
+        if (!tasksByLesson.has(task.lesson_id)) {
+            tasksByLesson.set(task.lesson_id, []);
+        }
+        tasksByLesson.get(task.lesson_id)!.push({
+            id: task.id,
+            text: task.text,
+            sortOrder: task.sort_order,
         });
     }
 
@@ -969,6 +990,7 @@ async function getLessons(req: VercelRequest, res: VercelResponse) {
             status: lesson.status,
             sortOrder: lesson.sort_order,
             materials: materialsByLesson.get(lesson.id) || [],
+            tasks: tasksByLesson.get(lesson.id) || [],
         });
     }
 
@@ -995,7 +1017,8 @@ async function createLesson(req: VercelRequest, res: VercelResponse) {
         videoUrl,
         status = 'draft',
         sortOrder,
-        materials = []
+        materials = [],
+        tasks = []
     } = req.body;
 
     if (!moduleId || !title) {
@@ -1005,7 +1028,7 @@ async function createLesson(req: VercelRequest, res: VercelResponse) {
     // Создаём урок
     const { rows } = await query(
         `INSERT INTO lessons (
-      module_id, title, description, duration, 
+      module_id, title, description, duration,
       video_url, status, sort_order
     ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *`,
@@ -1016,18 +1039,37 @@ async function createLesson(req: VercelRequest, res: VercelResponse) {
 
     // Добавляем материалы если есть
     const createdMaterials = [];
-    for (const material of materials) {
+    for (let i = 0; i < materials.length; i++) {
+        const material = materials[i];
         const { rows: matRows } = await query(
-            `INSERT INTO lesson_materials (lesson_id, title, type, url)
-       VALUES ($1, $2, $3, $4)
+            `INSERT INTO lesson_materials (lesson_id, title, type, url, sort_order)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-            [lessonId, material.title, material.type, material.url]
+            [lessonId, material.title, material.type, material.url, material.sortOrder || i + 1]
         );
         createdMaterials.push({
             id: matRows[0].id,
             title: matRows[0].title,
             type: matRows[0].type,
             url: matRows[0].url,
+            sortOrder: matRows[0].sort_order,
+        });
+    }
+
+    // Добавляем задания если есть
+    const createdTasks = [];
+    for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        const { rows: taskRows } = await query(
+            `INSERT INTO lesson_tasks (lesson_id, text, sort_order)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+            [lessonId, task.text, task.sortOrder || i + 1]
+        );
+        createdTasks.push({
+            id: taskRows[0].id,
+            text: taskRows[0].text,
+            sortOrder: taskRows[0].sort_order,
         });
     }
 
@@ -1041,6 +1083,7 @@ async function createLesson(req: VercelRequest, res: VercelResponse) {
         status: rows[0].status,
         sortOrder: rows[0].sort_order,
         materials: createdMaterials,
+        tasks: createdTasks,
     };
 
     return res.status(201).json(successResponse(lesson));
@@ -1056,7 +1099,8 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         videoUrl,
         status,
         sortOrder,
-        materials
+        materials,
+        tasks
     } = req.body;
 
     if (!id) {
@@ -1092,24 +1136,26 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         );
 
         // Добавляем новые материалы
-        for (const material of materials) {
+        for (let i = 0; i < materials.length; i++) {
+            const material = materials[i];
             const { rows: matRows } = await query(
                 `INSERT INTO lesson_materials (lesson_id, title, type, url, sort_order)
                  VALUES ($1, $2, $3, $4, $5)
                  RETURNING *`,
-                [id, material.title, material.type, material.url, material.sortOrder || 0]
+                [id, material.title, material.type, material.url, material.sortOrder || i + 1]
             );
             updatedMaterials.push({
                 id: matRows[0].id,
                 title: matRows[0].title,
                 type: matRows[0].type,
                 url: matRows[0].url,
+                sortOrder: matRows[0].sort_order,
             });
         }
     } else {
         // 3. Если материалы не переданы, получаем существующие
         const { rows: existingMaterials } = await query(
-            `SELECT id, title, type, url FROM lesson_materials WHERE lesson_id = $1`,
+            `SELECT id, title, type, url, sort_order FROM lesson_materials WHERE lesson_id = $1 ORDER BY sort_order`,
             [id]
         );
         updatedMaterials = existingMaterials.map((m: any) => ({
@@ -1117,6 +1163,44 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
             title: m.title,
             type: m.type,
             url: m.url,
+            sortOrder: m.sort_order,
+        }));
+    }
+
+    // 4. Если переданы задания - обновляем их
+    let updatedTasks = [];
+    if (tasks && Array.isArray(tasks)) {
+        // Удаляем старые задания
+        await query(
+            `DELETE FROM lesson_tasks WHERE lesson_id = $1`,
+            [id]
+        );
+
+        // Добавляем новые задания
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            const { rows: taskRows } = await query(
+                `INSERT INTO lesson_tasks (lesson_id, text, sort_order)
+                 VALUES ($1, $2, $3)
+                 RETURNING *`,
+                [id, task.text, task.sortOrder || i + 1]
+            );
+            updatedTasks.push({
+                id: taskRows[0].id,
+                text: taskRows[0].text,
+                sortOrder: taskRows[0].sort_order,
+            });
+        }
+    } else {
+        // 5. Если задания не переданы, получаем существующие
+        const { rows: existingTasks } = await query(
+            `SELECT id, text, sort_order FROM lesson_tasks WHERE lesson_id = $1 ORDER BY sort_order`,
+            [id]
+        );
+        updatedTasks = existingTasks.map((t: any) => ({
+            id: t.id,
+            text: t.text,
+            sortOrder: t.sort_order,
         }));
     }
 
@@ -1130,6 +1214,7 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
         status: rows[0].status,
         sortOrder: rows[0].sort_order,
         materials: updatedMaterials,
+        tasks: updatedTasks,
     };
 
     return res.status(200).json(successResponse(lesson));
