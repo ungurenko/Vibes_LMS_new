@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'vibes-cache-v1';
+const CACHE_NAME = 'vibes-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -17,18 +17,39 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Для API запросов используем стратегию Network Only или Network First
+  // API запросы — пропускаем (Network Only)
   if (event.request.url.includes('/api/')) {
     return;
   }
 
+  // HTML/навигация — Network First (всегда пытаемся взять свежий с сервера)
+  // Это решает проблему белого экрана после деплоя
+  if (event.request.mode === 'navigate' ||
+      event.request.url.endsWith('.html') ||
+      event.request.url.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Успешно получили с сервера — обновляем кэш для оффлайна
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Офлайн — отдаём из кэша
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Статические ресурсы (JS/CSS с хэшами) — Cache First
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
+        return response || fetch(event.request);
       })
   );
 });
