@@ -124,6 +124,8 @@ export default async function handler(
         // Группируем результат в иерархическую структуру
         const modulesMap = new Map<string, any>();
         const lessonsMap = new Map<string, any>();
+        const addedMaterials = new Map<string, Set<string>>(); // lesson_id -> Set<material_id>
+        const addedTasks = new Map<string, Set<string>>();     // lesson_id -> Set<task_id>
 
         for (const row of rows) {
             // Добавляем модуль если ещё нет
@@ -160,10 +162,13 @@ export default async function handler(
                 };
                 lessonsMap.set(row.lesson_id, lesson);
                 modulesMap.get(row.module_id)!.lessons.push(lesson);
+                addedMaterials.set(row.lesson_id, new Set());
+                addedTasks.set(row.lesson_id, new Set());
             }
 
-            // Добавляем материал если есть
-            if (row.material_id) {
+            // Добавляем материал если есть и ещё не добавлен (избегаем дублирования из-за JOIN)
+            if (row.material_id && !addedMaterials.get(row.lesson_id)?.has(row.material_id)) {
+                addedMaterials.get(row.lesson_id)!.add(row.material_id);
                 lessonsMap.get(row.lesson_id)!.materials.push({
                     id: row.material_id,
                     title: row.material_title,
@@ -172,8 +177,9 @@ export default async function handler(
                 });
             }
 
-            // Добавляем задание если есть
-            if (row.task_id) {
+            // Добавляем задание если есть и ещё не добавлено (избегаем дублирования из-за JOIN)
+            if (row.task_id && !addedTasks.get(row.lesson_id)?.has(row.task_id)) {
+                addedTasks.get(row.lesson_id)!.add(row.task_id);
                 lessonsMap.get(row.lesson_id)!.tasks.push({
                     id: row.task_id,
                     text: row.task_text,
