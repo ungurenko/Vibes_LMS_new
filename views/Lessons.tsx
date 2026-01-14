@@ -466,7 +466,12 @@ const Lessons: React.FC = () => {
                                             return (
                                                 <button
                                                     key={lesson.id}
-                                                    onClick={() => !isLocked && setActiveLessonId(lesson.id)}
+                                                    onClick={() => {
+                                                        if (!isLocked) {
+                                                            setActiveModuleId(module.id);
+                                                            setActiveLessonId(lesson.id);
+                                                        }
+                                                    }}
                                                     className={`relative w-full flex items-start gap-4 p-3 rounded-2xl text-left transition-all group ${isActive
                                                             ? 'bg-zinc-100 dark:bg-white/5'
                                                             : 'hover:bg-zinc-50 dark:hover:bg-white/[0.02]'
