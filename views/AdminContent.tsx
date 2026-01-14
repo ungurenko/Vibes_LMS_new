@@ -1299,7 +1299,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                                     className="px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
                                  >
                                     <option value="link">Ссылка</option>
-                                    <option value="pdf">PDF</option>
+                                    <option value="pdf">Документ</option>
                                     <option value="code">Код</option>
                                     <option value="figma">Figma</option>
                                     <option value="video">Видео</option>
@@ -1321,11 +1321,11 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                                  {material.type === 'pdf' && (
                                     <label className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${isUploadingImage ? 'bg-zinc-200 dark:bg-zinc-600 cursor-not-allowed' : 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/30 cursor-pointer'}`}>
                                        <Upload size={12} className={isUploadingImage ? 'animate-spin' : ''} />
-                                       {isUploadingImage ? '...' : 'PDF'}
+                                       {isUploadingImage ? '...' : 'Файл'}
                                        <input
                                           type="file"
                                           className="hidden"
-                                          accept=".pdf,application/pdf"
+                                          accept=".pdf,.txt,.docx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                           disabled={isUploadingImage}
                                           onChange={(e) => {
                                              const file = e.target.files?.[0];

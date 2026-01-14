@@ -4,7 +4,7 @@
  * Handles:
  * - POST /api/upload - загрузка файлов в Vercel Blob
  *
- * Поддерживаемые форматы: изображения (jpeg, png, gif, webp), PDF
+ * Поддерживаемые форматы: изображения (jpeg, png, gif, webp), PDF, TXT, DOCX
  * Принимает base64 файл в JSON и загружает в Blob Storage
  */
 
@@ -57,13 +57,15 @@ export default async function handler(
     const mimeType = matches[1];
     const base64Data = matches[2];
 
-    // Валидация типа файла (изображения + PDF)
+    // Валидация типа файла (изображения + документы)
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg',
-      'application/pdf'
+      'application/pdf',
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
     if (!allowedTypes.includes(mimeType)) {
-      return res.status(400).json(errorResponse('Неподдерживаемый формат файла. Разрешены: изображения и PDF'));
+      return res.status(400).json(errorResponse('Неподдерживаемый формат файла. Разрешены: изображения, PDF, TXT, DOCX'));
     }
 
     // Конвертируем base64 в Buffer
@@ -75,9 +77,14 @@ export default async function handler(
     }
 
     // Генерируем уникальное имя файла
-    const isPdf = mimeType === 'application/pdf';
-    const ext = isPdf ? 'pdf' : mimeType.split('/')[1];
-    const prefix = isPdf ? 'material' : 'image';
+    const extMap: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'text/plain': 'txt',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx'
+    };
+    const isDocument = mimeType in extMap;
+    const ext = extMap[mimeType] || mimeType.split('/')[1];
+    const prefix = isDocument ? 'material' : 'image';
     const uniqueFilename = filename || `${prefix}-${Date.now()}.${ext}`;
 
     // Загружаем в Vercel Blob
