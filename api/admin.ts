@@ -1029,6 +1029,12 @@ async function createLesson(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json(errorResponse('moduleId и title обязательны'));
     }
 
+    // Валидация статуса
+    const validStatuses = ['locked', 'available', 'completed', 'current', 'draft', 'hidden'];
+    if (status && !validStatuses.includes(status)) {
+        return res.status(400).json(errorResponse(`Недопустимый статус: ${status}`));
+    }
+
     // Создаём урок
     const { rows } = await query(
         `INSERT INTO lessons (
@@ -1109,6 +1115,12 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
 
     if (!id) {
         return res.status(400).json(errorResponse('ID урока обязателен'));
+    }
+
+    // Валидация статуса
+    const validStatuses = ['locked', 'available', 'completed', 'current', 'draft', 'hidden'];
+    if (status && !validStatuses.includes(status)) {
+        return res.status(400).json(errorResponse(`Недопустимый статус: ${status}`));
     }
 
     // 1. Обновляем урок

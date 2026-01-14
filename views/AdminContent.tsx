@@ -1837,12 +1837,12 @@ const AdminContent: React.FC<AdminContentProps> = () => {
          {/* Common Status/Order (Available for Lessons, Styles, Prompts) */}
          {activeTab !== 'glossary' && activeTab !== 'roadmaps' && activeTab !== 'stages' && (
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-white/5">
-                <Select 
+                <Select
                     label="Статус"
-                    value={editingItem?.status || 'published'}
+                    value={editingItem?.status || 'available'}
                     onChange={(e) => updateField('status', e.target.value)}
                     options={[
-                        { value: "published", label: "Опубликован" },
+                        { value: "available", label: "Опубликован" },
                         { value: "draft", label: "Черновик" },
                         { value: "hidden", label: "Скрыт" }
                     ]}
