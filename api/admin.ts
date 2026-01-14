@@ -1133,6 +1133,13 @@ async function updateLesson(req: VercelRequest, res: VercelResponse) {
     // 2. Если переданы материалы - обновляем их
     let updatedMaterials = [];
     if (materials && Array.isArray(materials)) {
+        // Валидация материалов перед сохранением
+        for (const material of materials) {
+            if (!material.title?.trim() || !material.url?.trim()) {
+                return res.status(400).json(errorResponse('Название и URL материала обязательны'));
+            }
+        }
+
         // Удаляем старые материалы
         await query(
             `DELETE FROM lesson_materials WHERE lesson_id = $1`,

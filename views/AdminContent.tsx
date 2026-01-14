@@ -421,6 +421,17 @@ const AdminContent: React.FC<AdminContentProps> = () => {
       }
 
       if (activeTab === 'lessons') {
+        // Валидация материалов
+        const materials = editingItem?.materials || [];
+        const invalidMaterials = materials.filter((m: any) =>
+          !m.title?.trim() || !m.url?.trim()
+        );
+
+        if (invalidMaterials.length > 0) {
+          setValidationErrors(['Заполните название и URL для всех материалов']);
+          return;
+        }
+
         const response = await fetch('/api/admin?resource=lessons', {
           method: isUpdate ? 'PUT' : 'POST',
           headers: {
@@ -635,6 +646,14 @@ const AdminContent: React.FC<AdminContentProps> = () => {
       }
 
       const result = await response.json();
+
+      // Автозаполнение названия из имени файла, если пустое
+      const currentTitle = editingItem?.materials?.[index]?.title;
+      if (!currentTitle?.trim()) {
+        const fileName = file.name.replace(/\.[^.]+$/, ''); // убираем расширение
+        updateMaterial(index, 'title', fileName);
+      }
+
       updateMaterial(index, 'url', result.data.url);
 
     } catch (error) {
