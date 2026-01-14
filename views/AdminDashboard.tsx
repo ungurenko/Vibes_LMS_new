@@ -1,44 +1,59 @@
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Activity, 
-  TrendingUp, 
-  Layout, 
-  Server, 
-  AlertCircle, 
-  CheckCircle2, 
-  X, 
-  MessageSquare, 
-  Clock, 
-  Calendar, 
-  MoreHorizontal, 
-  ArrowRight, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Users,
+  Activity,
+  TrendingUp,
+  Layout,
+  Server,
+  AlertCircle,
+  CheckCircle2,
+  X,
+  MessageSquare,
+  Clock,
+  Calendar,
+  MoreHorizontal,
+  ArrowRight,
   Bell,
   Save,
   Zap,
   ChevronRight,
   Send,
-  Play
+  Play,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer, Input } from '../components/Shared';
 
-// --- Mock Data ---
+// --- Types ---
 
-const METRICS = [
-  { id: 'total', label: 'Всего учеников', value: '1,248', change: '+12%', trend: [10, 15, 13, 18, 20, 25, 22], icon: Users, color: 'text-violet-500', bg: 'bg-violet-500/10' },
-  { id: 'active', label: 'Активных сейчас', value: '856', change: '+5%', trend: [20, 22, 25, 24, 30, 28, 35], icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { id: 'completion', label: 'Сдача домашек', value: '92%', change: '+2%', trend: [60, 65, 70, 68, 75, 80, 92], icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { id: 'landings', label: 'Новые проекты', value: '342', change: '+18', trend: [5, 8, 12, 15, 10, 18, 22], icon: Layout, color: 'text-fuchsia-500', bg: 'bg-fuchsia-500/10' },
-];
+interface DashboardMetrics {
+  totalStudents: { value: string; change: string; changePercent: number };
+  activeNow: { value: string; change: string; isPositive: boolean };
+  avgProgress: { value: string; isPositive: boolean };
+  newProjects: { value: string; change: string };
+}
 
-const PIPELINE_STAGES = [
-  { id: 'base', title: 'База', count: 124, color: 'bg-zinc-200 dark:bg-zinc-700', avatars: ['https://i.pravatar.cc/150?u=10', 'https://i.pravatar.cc/150?u=11', 'https://i.pravatar.cc/150?u=12'] },
-  { id: 'landing', title: 'Лендинг', count: 873, color: 'bg-violet-500', avatars: ['https://i.pravatar.cc/150?u=20', 'https://i.pravatar.cc/150?u=21', 'https://i.pravatar.cc/150?u=22', 'https://i.pravatar.cc/150?u=23', 'https://i.pravatar.cc/150?u=24'] },
-  { id: 'service', title: 'Веб-сервис', count: 374, color: 'bg-indigo-500', avatars: ['https://i.pravatar.cc/150?u=30', 'https://i.pravatar.cc/150?u=31', 'https://i.pravatar.cc/150?u=32'] },
-  { id: 'final', title: 'Финал', count: 42, color: 'bg-emerald-500', avatars: ['https://i.pravatar.cc/150?u=40', 'https://i.pravatar.cc/150?u=41'] },
-];
+interface PipelineStage {
+  id: string;
+  title: string;
+  count: number;
+  avatars: string[];
+}
+
+interface DashboardStats {
+  metrics: DashboardMetrics;
+  pipeline: PipelineStage[];
+  lastUpdated: string;
+}
+
+// --- Цвета для pipeline стадий ---
+const STAGE_COLORS: Record<string, string> = {
+  'База': 'bg-zinc-200 dark:bg-zinc-700',
+  'Лендинг': 'bg-violet-500',
+  'Веб-сервис': 'bg-indigo-500',
+  'Финал': 'bg-emerald-500',
+};
 
 const INITIAL_ALERTS = [
   { id: 1, type: 'danger', title: 'Отстающие', message: 'Иван и еще 2 студента не заходили 5 дней', action: 'Напомнить' },
@@ -85,17 +100,55 @@ const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color })
 const AdminDashboard: React.FC = () => {
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
   const [greeting, setGreeting] = useState('');
-  
+
+  // Dashboard stats from API
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Call Editor State
   const [isEditCallOpen, setIsEditCallOpen] = useState(false);
   const [callDetails, setCallDetails] = useState(NEXT_CALL);
 
-  useEffect(() => {
-      const hour = new Date().getHours();
-      if (hour < 12) setGreeting('Доброе утро');
-      else if (hour < 18) setGreeting('Добрый день');
-      else setGreeting('Добрый вечер');
+  // Загрузка статистики из API
+  const fetchStats = useCallback(async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) setIsRefreshing(true);
+
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const res = await fetch('/api/admin?resource=dashboard-stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setStats(result.data);
+          setLastRefresh(new Date());
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Доброе утро');
+    else if (hour < 18) setGreeting('Добрый день');
+    else setGreeting('Добрый вечер');
+
+    // Загружаем статистику при монтировании
+    fetchStats();
+
+    // Auto-refresh каждые 5 минут
+    const interval = setInterval(() => fetchStats(false), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
 
   const dismissAlert = (id: number) => {
     setAlerts(prev => prev.filter(a => a.id !== id));
@@ -144,36 +197,125 @@ const AdminDashboard: React.FC = () => {
 
       {/* 2. SMART METRICS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-         {METRICS.map((stat, idx) => (
-             <motion.div 
-                key={stat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-violet-300 dark:hover:border-violet-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-violet-500/5"
+         {isLoading ? (
+           // Skeleton loader
+           <>
+             {[1, 2, 3, 4].map((i) => (
+               <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 animate-pulse">
+                 <div className="flex justify-between items-start mb-4">
+                   <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
+                   <div className="w-16 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+                 </div>
+                 <div className="h-9 w-24 bg-zinc-200 dark:bg-zinc-800 rounded mb-2" />
+                 <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+               </div>
+             ))}
+           </>
+         ) : stats ? (
+           // Real metrics
+           <>
+             {/* Всего учеников */}
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0 }}
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-violet-300 dark:hover:border-violet-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-violet-500/5"
              >
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                   <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
-                      <stat.icon size={20} />
-                   </div>
-                   <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
-                      <TrendingUp size={12} />
-                      {stat.change}
-                   </div>
-                </div>
-                
-                <div className="relative z-10">
-                   <h3 className="text-3xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{stat.value}</h3>
-                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">{stat.label}</p>
-                </div>
-
-                {/* Decorative Sparkline at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none opacity-30 group-hover:opacity-50 transition-opacity">
-                    <Sparkline data={stat.trend} color={stat.color} />
-                </div>
+               <div className="flex justify-between items-start mb-4 relative z-10">
+                 <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-500">
+                   <Users size={20} />
+                 </div>
+                 <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
+                   <TrendingUp size={12} />
+                   {stats.metrics.totalStudents.change}
+                 </div>
+               </div>
+               <div className="relative z-10">
+                 <h3 className="text-3xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{stats.metrics.totalStudents.value}</h3>
+                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">Всего учеников</p>
+               </div>
              </motion.div>
-         ))}
+
+             {/* Активных сейчас */}
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.1 }}
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-violet-300 dark:hover:border-violet-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-violet-500/5"
+             >
+               <div className="flex justify-between items-start mb-4 relative z-10">
+                 <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
+                   <Zap size={20} />
+                 </div>
+                 <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${stats.metrics.activeNow.isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'}`}>
+                   {stats.metrics.activeNow.change}
+                 </div>
+               </div>
+               <div className="relative z-10">
+                 <h3 className="text-3xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{stats.metrics.activeNow.value}</h3>
+                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">Активных (7 дней)</p>
+               </div>
+             </motion.div>
+
+             {/* Средний прогресс */}
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.2 }}
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-violet-300 dark:hover:border-violet-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-violet-500/5"
+             >
+               <div className="flex justify-between items-start mb-4 relative z-10">
+                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
+                   <CheckCircle2 size={20} />
+                 </div>
+                 <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${stats.metrics.avgProgress.isPositive ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-amber-600 bg-amber-50 dark:bg-amber-500/10'}`}>
+                   {stats.metrics.avgProgress.isPositive ? 'Хорошо' : 'Низкий'}
+                 </div>
+               </div>
+               <div className="relative z-10">
+                 <h3 className="text-3xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{stats.metrics.avgProgress.value}</h3>
+                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">Средний прогресс</p>
+               </div>
+             </motion.div>
+
+             {/* Проекты */}
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.3 }}
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-violet-300 dark:hover:border-violet-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-violet-500/5"
+             >
+               <div className="flex justify-between items-start mb-4 relative z-10">
+                 <div className="p-3 rounded-2xl bg-fuchsia-500/10 text-fuchsia-500">
+                   <Layout size={20} />
+                 </div>
+                 <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
+                   <TrendingUp size={12} />
+                   {stats.metrics.newProjects.change}
+                 </div>
+               </div>
+               <div className="relative z-10">
+                 <h3 className="text-3xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{stats.metrics.newProjects.value}</h3>
+                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">Проектов в витрине</p>
+               </div>
+             </motion.div>
+           </>
+         ) : null}
       </div>
+
+      {/* Время последнего обновления */}
+      {lastRefresh && (
+        <div className="flex items-center justify-end gap-2 mb-4 -mt-4">
+          <button
+            onClick={() => fetchStats(true)}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          >
+            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
+            Обновлено {lastRefresh.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          
@@ -195,39 +337,74 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                   {PIPELINE_STAGES.map((stage, idx) => (
-                      <div key={stage.id} className="group cursor-pointer">
-                         <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-3">
-                               <span className={`w-3 h-3 rounded-full ${stage.color} shadow-[0_0_8px_currentColor] opacity-80`} />
+                   {isLoading ? (
+                     // Skeleton for pipeline
+                     <>
+                       {[1, 2, 3, 4].map((i) => (
+                         <div key={i} className="animate-pulse">
+                           <div className="flex justify-between items-center mb-3">
+                             <div className="flex items-center gap-3">
+                               <div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                               <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-700 rounded" />
+                             </div>
+                             <div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-700 rounded" />
+                           </div>
+                           <div className="h-14 bg-zinc-100 dark:bg-zinc-800/50 rounded-2xl" />
+                         </div>
+                       ))}
+                     </>
+                   ) : stats?.pipeline && stats.pipeline.length > 0 ? (
+                     stats.pipeline.map((stage) => {
+                       const stageColor = STAGE_COLORS[stage.title] || 'bg-zinc-500';
+                       const totalStudents = parseInt(stats.metrics.totalStudents.value.replace(/\s/g, '')) || 1;
+
+                       return (
+                         <div key={stage.id} className="group cursor-pointer">
+                           <div className="flex justify-between items-center mb-3">
+                             <div className="flex items-center gap-3">
+                               <span className={`w-3 h-3 rounded-full ${stageColor} shadow-[0_0_8px_currentColor] opacity-80`} />
                                <span className="font-bold text-zinc-700 dark:text-zinc-200 text-sm">{stage.title}</span>
-                            </div>
-                            <span className="font-mono text-xs text-zinc-400 font-bold">{stage.count} чел.</span>
+                             </div>
+                             <span className="font-mono text-xs text-zinc-400 font-bold">{stage.count} чел.</span>
+                           </div>
+
+                           {/* Pipeline Bar Visual */}
+                           <div className="relative h-14 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-white/5 flex items-center px-4 overflow-hidden group-hover:border-zinc-300 dark:group-hover:border-white/20 transition-colors">
+                             {/* Progress Fill Background */}
+                             <div
+                               className={`absolute top-0 left-0 bottom-0 ${stageColor} opacity-5 transition-all`}
+                               style={{ width: `${Math.min((stage.count / totalStudents) * 100, 100)}%` }}
+                             />
+
+                             {/* Avatars */}
+                             <div className="flex items-center -space-x-3 relative z-10">
+                               {stage.avatars.slice(0, 5).map((src, i) => (
+                                 <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 overflow-hidden ring-1 ring-black/5 hover:scale-110 hover:z-20 transition-transform bg-zinc-200">
+                                   <img src={src} alt="" className="w-full h-full object-cover" />
+                                 </div>
+                               ))}
+                               {stage.count > stage.avatars.length && (
+                                 <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-xs font-bold text-zinc-500 shadow-sm z-0">
+                                   +{stage.count - stage.avatars.length}
+                                 </div>
+                               )}
+                               {stage.count === 0 && (
+                                 <span className="text-xs text-zinc-400">Пока нет студентов</span>
+                               )}
+                             </div>
+
+                             <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                               <ChevronRight size={18} className="text-zinc-400" />
+                             </div>
+                           </div>
                          </div>
-                         
-                         {/* Pipeline Bar Visual */}
-                         <div className="relative h-14 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-white/5 flex items-center px-4 overflow-hidden group-hover:border-zinc-300 dark:group-hover:border-white/20 transition-colors">
-                            {/* Progress Fill Background */}
-                            <div className={`absolute top-0 left-0 bottom-0 ${stage.color} opacity-5 w-[${Math.random() * 100}%] transition-all`} style={{ width: `${(stage.count / 1248) * 100}%` }} />
-                            
-                            {/* Avatars */}
-                            <div className="flex items-center -space-x-3 relative z-10">
-                                {stage.avatars.map((src, i) => (
-                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 overflow-hidden ring-1 ring-black/5 hover:scale-110 hover:z-20 transition-transform bg-zinc-200">
-                                        <img src={src} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                ))}
-                                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-xs font-bold text-zinc-500 shadow-sm z-0">
-                                    +{stage.count - stage.avatars.length}
-                                </div>
-                            </div>
-                            
-                            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ChevronRight size={18} className="text-zinc-400" />
-                            </div>
-                         </div>
-                      </div>
-                   ))}
+                       );
+                     })
+                   ) : (
+                     <div className="text-center py-8 text-zinc-400">
+                       <p>Нет данных о стадиях</p>
+                     </div>
+                   )}
                 </div>
             </motion.div>
 
