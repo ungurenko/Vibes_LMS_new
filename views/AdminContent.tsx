@@ -110,6 +110,9 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   const [stages, setStages] = useState<AdminStage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
+  const [editingModuleMode, setEditingModuleMode] = useState(false);
 
   // --- API Functions ---
 
@@ -358,6 +361,28 @@ const AdminContent: React.FC<AdminContentProps> = () => {
     setIsEditorOpen(true);
   };
 
+  // Open editor for module (create or edit)
+  const openModuleEditor = (module: CourseModule | null = null) => {
+    setEditingModuleMode(true);
+    if (!module) {
+      setEditingItem({
+        title: '',
+        description: '',
+        status: 'locked',
+        sortOrder: (modules.length + 1) * 10
+      });
+    } else {
+      setEditingItem({
+        id: module.id,
+        title: module.title,
+        description: module.description || '',
+        status: module.status || 'locked'
+      });
+    }
+    setValidationErrors([]);
+    setIsEditorOpen(true);
+  };
+
   // Generic field updater
   const updateField = (field: string, value: any) => {
     setEditingItem((prev: any) => ({ ...prev, [field]: value }));
@@ -370,6 +395,30 @@ const AdminContent: React.FC<AdminContentProps> = () => {
     try {
       const token = localStorage.getItem('vibes_token');
       const isUpdate = !!editingItem.id;
+
+      // Save module
+      if (editingModuleMode) {
+        if (!editingItem.title?.trim()) {
+          setValidationErrors(['Название модуля обязательно']);
+          return;
+        }
+
+        const response = await fetch('/api/admin?resource=lessons&module=modules', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save module');
+
+        await loadLessons();
+        setEditingModuleMode(false);
+        setIsEditorOpen(false);
+        return;
+      }
 
       if (activeTab === 'lessons') {
         const response = await fetch('/api/admin?resource=lessons', {
@@ -559,7 +608,14 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                         <span className="text-xs font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-white/5">
                         {module.lessons.length} уроков
                         </span>
-                        <button 
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openModuleEditor(module); }}
+                            className="p-1.5 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors"
+                            title="Редактировать модуль"
+                        >
+                            <Edit size={16} />
+                        </button>
+                        <button
                             onClick={() => confirmDelete(module.id, 'modules')}
                             className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Удалить модуль"
@@ -1008,6 +1064,52 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   };
 
   const renderEditorForm = () => {
+    // Module editing form
+    if (editingModuleMode) {
+      return (
+        <div className="space-y-6">
+          {validationErrors.length > 0 && (
+            <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
+              <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400">
+                {validationErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <Input
+            label="Название модуля"
+            placeholder="Например: Прямые эфиры"
+            value={editingItem?.title || ''}
+            onChange={(e) => updateField('title', e.target.value)}
+          />
+
+          <div>
+            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание</label>
+            <textarea
+              rows={3}
+              value={editingItem?.description || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+              placeholder="Краткое описание модуля..."
+            />
+          </div>
+
+          <Select
+            label="Статус"
+            value={editingItem?.status || 'locked'}
+            onChange={(e) => updateField('status', e.target.value)}
+            options={[
+              { value: 'locked', label: 'Заблокирован' },
+              { value: 'available', label: 'Доступен' },
+              { value: 'completed', label: 'Завершён' }
+            ]}
+          />
+        </div>
+      );
+    }
+
     // Dynamic form based on activeTab
     return (
       <div className="space-y-6">
@@ -1492,17 +1594,28 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
        {/* Top Bar */}
-       <PageHeader 
-         title="Управление контентом" 
+       <PageHeader
+         title="Управление контентом"
          description="Редактирование базы знаний платформы."
          action={
-            <button 
-             onClick={() => openEditor()} 
-             className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-zinc-500/10"
-            >
-             <Plus size={18} />
-             <span>Добавить {activeTab === 'lessons' ? 'урок' : activeTab === 'styles' ? 'стиль' : activeTab === 'prompts' ? 'промпт' : activeTab === 'roadmaps' ? 'карту' : activeTab === 'stages' ? 'этап' : activeTab === 'prompt-categories' ? 'категорию' : 'термин'}</span>
-            </button>
+            <div className="flex items-center gap-3">
+               {activeTab === 'lessons' && (
+                  <button
+                     onClick={() => openModuleEditor()}
+                     className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-violet-500/20"
+                  >
+                     <Plus size={18} />
+                     <span>Добавить модуль</span>
+                  </button>
+               )}
+               <button
+                  onClick={() => openEditor()}
+                  className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-zinc-500/10"
+               >
+                  <Plus size={18} />
+                  <span>Добавить {activeTab === 'lessons' ? 'урок' : activeTab === 'styles' ? 'стиль' : activeTab === 'prompts' ? 'промпт' : activeTab === 'roadmaps' ? 'карту' : activeTab === 'stages' ? 'этап' : activeTab === 'prompt-categories' ? 'категорию' : 'термин'}</span>
+               </button>
+            </div>
          }
        />
 
@@ -1550,15 +1663,18 @@ const AdminContent: React.FC<AdminContentProps> = () => {
        </motion.div>
 
        {/* Edit Panel Drawer */}
-       <Drawer 
-         isOpen={isEditorOpen} 
-         onClose={() => setIsEditorOpen(false)}
-         title={`${editingItem?.id ? 'Редактировать' : 'Создать'} ${activeTab === 'lessons' ? 'урок' : 'запись'}`}
+       <Drawer
+         isOpen={isEditorOpen}
+         onClose={() => { setIsEditorOpen(false); setEditingModuleMode(false); }}
+         title={editingModuleMode
+           ? `${editingItem?.id ? 'Редактировать' : 'Создать'} модуль`
+           : `${editingItem?.id ? 'Редактировать' : 'Создать'} ${activeTab === 'lessons' ? 'урок' : 'запись'}`
+         }
          footer={
             <>
-                <button 
-                    type="button" 
-                    onClick={() => setIsEditorOpen(false)}
+                <button
+                    type="button"
+                    onClick={() => { setIsEditorOpen(false); setEditingModuleMode(false); }}
                     className="px-6 py-3 rounded-xl border border-zinc-200 dark:border-white/10 font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
                 >
                     Отмена
