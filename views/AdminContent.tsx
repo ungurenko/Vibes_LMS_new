@@ -569,6 +569,116 @@ const AdminContent: React.FC<AdminContentProps> = () => {
     }
   };
 
+  // --- Material & Task Helpers ---
+
+  const addMaterial = () => {
+    const newMaterial = {
+      id: `temp-${Date.now()}`,
+      title: '',
+      type: 'link' as const,
+      url: '',
+      sortOrder: (editingItem?.materials?.length || 0) + 1
+    };
+    setEditingItem((prev: any) => ({
+      ...prev,
+      materials: [...(prev?.materials || []), newMaterial]
+    }));
+  };
+
+  const updateMaterial = (index: number, field: string, value: string) => {
+    setEditingItem((prev: any) => {
+      const materials = [...(prev?.materials || [])];
+      materials[index] = { ...materials[index], [field]: value };
+      return { ...prev, materials };
+    });
+  };
+
+  const deleteMaterial = (index: number) => {
+    setEditingItem((prev: any) => ({
+      ...prev,
+      materials: (prev?.materials || []).filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const reorderMaterials = (newOrder: any[]) => {
+    setEditingItem((prev: any) => ({
+      ...prev,
+      materials: newOrder.map((m, i) => ({ ...m, sortOrder: i + 1 }))
+    }));
+  };
+
+  const handleMaterialUpload = async (index: number, file: File) => {
+    try {
+      setIsUploadingImage(true); // reuse the same loading state
+
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const base64 = await base64Promise;
+
+      const token = localStorage.getItem('vibes_token');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ base64, filename: `material-${Date.now()}-${file.name}` })
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки файла');
+      }
+
+      const result = await response.json();
+      updateMaterial(index, 'url', result.data.url);
+
+    } catch (error) {
+      console.error('Material upload error:', error);
+      alert('Ошибка при загрузке файла');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const addTask = () => {
+    const newTask = {
+      id: `temp-${Date.now()}`,
+      text: '',
+      sortOrder: (editingItem?.tasks?.length || 0) + 1
+    };
+    setEditingItem((prev: any) => ({
+      ...prev,
+      tasks: [...(prev?.tasks || []), newTask]
+    }));
+  };
+
+  const updateTask = (index: number, text: string) => {
+    setEditingItem((prev: any) => {
+      const tasks = [...(prev?.tasks || [])];
+      tasks[index] = { ...tasks[index], text };
+      return { ...prev, tasks };
+    });
+  };
+
+  const deleteTask = (index: number) => {
+    setEditingItem((prev: any) => ({
+      ...prev,
+      tasks: (prev?.tasks || []).filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const reorderTasks = (newOrder: any[]) => {
+    setEditingItem((prev: any) => ({
+      ...prev,
+      tasks: newOrder.map((t, i) => ({ ...t, sortOrder: i + 1 }))
+    }));
+  };
+
   // --- Render Functions ---
 
   const renderLessonsView = () => {
@@ -1155,12 +1265,151 @@ const AdminContent: React.FC<AdminContentProps> = () => {
 
                <div>
                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание урока</label>
-                   <textarea 
-                        rows={4} 
+                   <textarea
+                        rows={4}
                         value={editingItem?.description || ''}
                         onChange={(e) => updateField('description', e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500" 
+                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
                     />
+               </div>
+
+               {/* Секция материалов урока */}
+               <div className="pt-6 border-t border-zinc-100 dark:border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                     <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <LinkIcon size={16} className="text-violet-500" />
+                        Материалы урока
+                     </label>
+                     <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full">
+                        {editingItem?.materials?.length || 0} шт
+                     </span>
+                  </div>
+
+                  {editingItem?.materials && editingItem.materials.length > 0 ? (
+                     <Reorder.Group axis="y" values={editingItem.materials} onReorder={reorderMaterials} className="space-y-2 mb-4">
+                        {editingItem.materials.map((material: any, index: number) => (
+                           <Reorder.Item key={material.id} value={material}>
+                              <div className="flex gap-2 items-center p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-white/5 group">
+                                 <div className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                    <GripVertical size={16} />
+                                 </div>
+                                 <select
+                                    value={material.type || 'link'}
+                                    onChange={(e) => updateMaterial(index, 'type', e.target.value)}
+                                    className="px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+                                 >
+                                    <option value="link">Ссылка</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="code">Код</option>
+                                    <option value="figma">Figma</option>
+                                    <option value="video">Видео</option>
+                                 </select>
+                                 <input
+                                    type="text"
+                                    placeholder="Название"
+                                    value={material.title || ''}
+                                    onChange={(e) => updateMaterial(index, 'title', e.target.value)}
+                                    className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+                                 />
+                                 <input
+                                    type="text"
+                                    placeholder="URL"
+                                    value={material.url || ''}
+                                    onChange={(e) => updateMaterial(index, 'url', e.target.value)}
+                                    className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+                                 />
+                                 {material.type === 'pdf' && (
+                                    <label className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${isUploadingImage ? 'bg-zinc-200 dark:bg-zinc-600 cursor-not-allowed' : 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/30 cursor-pointer'}`}>
+                                       <Upload size={12} className={isUploadingImage ? 'animate-spin' : ''} />
+                                       {isUploadingImage ? '...' : 'PDF'}
+                                       <input
+                                          type="file"
+                                          className="hidden"
+                                          accept=".pdf,application/pdf"
+                                          disabled={isUploadingImage}
+                                          onChange={(e) => {
+                                             const file = e.target.files?.[0];
+                                             if (file) handleMaterialUpload(index, file);
+                                          }}
+                                       />
+                                    </label>
+                                 )}
+                                 <button
+                                    type="button"
+                                    onClick={() => deleteMaterial(index)}
+                                    className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                                 >
+                                    <Trash2 size={14} />
+                                 </button>
+                              </div>
+                           </Reorder.Item>
+                        ))}
+                     </Reorder.Group>
+                  ) : (
+                     <p className="text-sm text-zinc-400 mb-4">Нет материалов</p>
+                  )}
+
+                  <button
+                     type="button"
+                     onClick={addMaterial}
+                     className="w-full py-2.5 border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-xl text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:border-violet-300 dark:hover:border-violet-500/30 hover:text-violet-600 dark:hover:text-violet-400 transition-colors flex items-center justify-center gap-2"
+                  >
+                     <Plus size={16} /> Добавить материал
+                  </button>
+               </div>
+
+               {/* Секция заданий урока */}
+               <div className="pt-6 border-t border-zinc-100 dark:border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                     <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <CheckCircle2 size={16} className="text-emerald-500" />
+                        Задания (чек-лист)
+                     </label>
+                     <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full">
+                        {editingItem?.tasks?.length || 0} шт
+                     </span>
+                  </div>
+
+                  {editingItem?.tasks && editingItem.tasks.length > 0 ? (
+                     <Reorder.Group axis="y" values={editingItem.tasks} onReorder={reorderTasks} className="space-y-2 mb-4">
+                        {editingItem.tasks.map((task: any, index: number) => (
+                           <Reorder.Item key={task.id} value={task}>
+                              <div className="flex gap-2 items-center p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-white/5 group">
+                                 <div className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                    <GripVertical size={16} />
+                                 </div>
+                                 <div className="w-6 h-6 rounded-full border-2 border-emerald-300 dark:border-emerald-500/50 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-bold text-emerald-500">{index + 1}</span>
+                                 </div>
+                                 <input
+                                    type="text"
+                                    placeholder="Текст задания..."
+                                    value={task.text || ''}
+                                    onChange={(e) => updateTask(index, e.target.value)}
+                                    className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+                                 />
+                                 <button
+                                    type="button"
+                                    onClick={() => deleteTask(index)}
+                                    className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                                 >
+                                    <Trash2 size={14} />
+                                 </button>
+                              </div>
+                           </Reorder.Item>
+                        ))}
+                     </Reorder.Group>
+                  ) : (
+                     <p className="text-sm text-zinc-400 mb-4">Нет заданий</p>
+                  )}
+
+                  <button
+                     type="button"
+                     onClick={addTask}
+                     className="w-full py-2.5 border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-xl text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-center gap-2"
+                  >
+                     <Plus size={16} /> Добавить задание
+                  </button>
                </div>
             </>
          )}

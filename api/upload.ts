@@ -2,9 +2,10 @@
  * Upload API endpoint
  *
  * Handles:
- * - POST /api/upload - загрузка изображений в Vercel Blob
+ * - POST /api/upload - загрузка файлов в Vercel Blob
  *
- * Принимает base64 изображение в JSON и загружает в Blob Storage
+ * Поддерживаемые форматы: изображения (jpeg, png, gif, webp), PDF
+ * Принимает base64 файл в JSON и загружает в Blob Storage
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -16,7 +17,7 @@ import {
 } from './_lib/auth.js';
 
 interface UploadRequest {
-  base64: string; // data:image/jpeg;base64,/9j/4AAQ...
+  base64: string; // data:image/jpeg;base64,/9j/4AAQ... или data:application/pdf;base64,...
   filename?: string;
 }
 
@@ -44,7 +45,7 @@ export default async function handler(
     const { base64, filename } = req.body as UploadRequest;
 
     if (!base64) {
-      return res.status(400).json(errorResponse('base64 изображение обязательно'));
+      return res.status(400).json(errorResponse('base64 файл обязателен'));
     }
 
     // Парсим base64 строку: data:image/jpeg;base64,/9j/4AAQ...
@@ -56,10 +57,13 @@ export default async function handler(
     const mimeType = matches[1];
     const base64Data = matches[2];
 
-    // Валидация типа файла
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+    // Валидация типа файла (изображения + PDF)
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg',
+      'application/pdf'
+    ];
     if (!allowedTypes.includes(mimeType)) {
-      return res.status(400).json(errorResponse('Неподдерживаемый формат изображения'));
+      return res.status(400).json(errorResponse('Неподдерживаемый формат файла. Разрешены: изображения и PDF'));
     }
 
     // Конвертируем base64 в Buffer
@@ -71,8 +75,10 @@ export default async function handler(
     }
 
     // Генерируем уникальное имя файла
-    const ext = mimeType.split('/')[1];
-    const uniqueFilename = filename || `style-${Date.now()}.${ext}`;
+    const isPdf = mimeType === 'application/pdf';
+    const ext = isPdf ? 'pdf' : mimeType.split('/')[1];
+    const prefix = isPdf ? 'material' : 'image';
+    const uniqueFilename = filename || `${prefix}-${Date.now()}.${ext}`;
 
     // Загружаем в Vercel Blob
     const blob = await put(uniqueFilename, buffer, {
