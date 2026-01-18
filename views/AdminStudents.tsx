@@ -257,6 +257,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
     try {
       await fetchWithAuth('/api/admin?resource=students', {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: studentToResetPassword.id,
           newPassword
