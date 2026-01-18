@@ -270,7 +270,7 @@ const Community: React.FC = () => {
                   {/* Fixed Header */}
                   <div className="flex justify-between items-center p-6 border-b border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 shrink-0 z-10">
                      <h3 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Опубликовать проект</h3>
-                     <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 rounded-full p-2 transition-colors">
+                     <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 rounded-full p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                         <X size={20} />
                      </button>
                   </div>

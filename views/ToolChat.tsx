@@ -9,7 +9,7 @@ import {
   Bot,
   User,
   Sparkles,
-  Plus,
+  Trash2,
   Copy,
   Check,
   Terminal,
@@ -152,7 +152,7 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, langua
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md"
+          className="flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-2 rounded-md min-h-[44px]"
         >
           {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
           {copied ? <span className="text-emerald-500">Скопировано</span> : <span>Копировать</span>}
@@ -593,7 +593,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
           {/* Back Button */}
           <button
             onClick={onBack}
-            className="p-2 rounded-xl text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <ArrowLeft size={20} />
           </button>
@@ -616,10 +616,10 @@ const ToolChat: React.FC<ToolChatProps> = ({
 
         <button
           onClick={handleClearChat}
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
-          title="Новый чат"
+          className="p-2.5 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          title="Очистить чат"
         >
-          <Plus size={20} />
+          <Trash2 size={20} />
         </button>
       </header>
 

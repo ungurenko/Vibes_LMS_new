@@ -148,7 +148,7 @@ export const Modal: React.FC<OverlayProps & { maxWidth?: string }> = ({ isOpen, 
                     >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">{title}</h3>
-                            <button onClick={onClose} className="p-2 rounded-full text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
+                            <button onClick={onClose} className="p-2 rounded-full text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                                 <X size={20} />
                             </button>
                         </div>

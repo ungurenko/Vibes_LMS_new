@@ -363,16 +363,16 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {invite.status === 'active' && (
                                                     <>
-                                                        <button 
+                                                        <button
                                                             onClick={() => copyToClipboard(invite.id, invite.token)}
-                                                            className="p-2 rounded-lg bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
+                                                            className="p-2 rounded-lg bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             title="Копировать"
                                                         >
                                                             {copyId === invite.id ? <Check size={16} /> : <Copy size={16} />}
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             onClick={() => onDeactivateInvite(invite.id)}
-                                                            className="p-2 rounded-lg bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                            className="p-2 rounded-lg bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             title="Деактивировать"
                                                         >
                                                             <Ban size={16} />
@@ -380,9 +380,9 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                                     </>
                                                 )}
                                                 {invite.status === 'deactivated' && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => confirmDelete(invite.id)}
-                                                        className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                                                        className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                         title="Удалить"
                                                     >
                                                         <Trash2 size={16} />

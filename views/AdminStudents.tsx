@@ -515,7 +515,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                 <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
                                     {modalMode === 'add' ? 'Добавить студента' : 'Редактировать студента'}
                                 </h3>
-                                <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-white/5 p-2 rounded-full transition-colors">
+                                <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-white/5 p-2 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -645,7 +645,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                     </div>
                     <button
                       onClick={() => setIsResetPasswordModalOpen(false)}
-                      className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-white/5 p-2 rounded-full transition-colors"
+                      className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-white/5 p-2 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                     >
                       <X size={20} />
                     </button>
