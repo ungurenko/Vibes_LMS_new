@@ -51,8 +51,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
           return;
       }
 
-      if (newPassword && newPassword.length < 6) {
-          setError('Пароль должен быть минимум 6 символов');
+      if (newPassword && newPassword.length < 8) {
+          setError('Пароль должен быть минимум 8 символов');
           return;
       }
 
