@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Student, StudentProfile as StudentProfileType } from '../types';
-import { 
-  Search, 
-  ArrowUpDown, 
-  Trash2, 
+import {
+  Search,
+  ArrowUpDown,
+  Trash2,
   ChevronRight,
   Github,
   Globe,
@@ -12,12 +12,16 @@ import {
   X,
   Eye,
   EyeOff,
-  Edit
+  Edit,
+  Key,
+  Copy,
+  Check,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/Shared';
 import { StudentProfile } from '../components/admin/students/StudentProfile';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
 
 // --- Types ---
 type ViewMode = 'list' | 'profile';
@@ -73,6 +77,14 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
   // Deletion State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
+
+  // Password Reset Modal State
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [studentToResetPassword, setStudentToResetPassword] = useState<Student | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
 
   // Form State (Separated First/Last for Admin)
   const [formData, setFormData] = useState({
@@ -216,6 +228,53 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       }
 
       setIsModalOpen(false);
+  };
+
+  // --- Password Reset Functions ---
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  const openResetPasswordModal = (e: React.MouseEvent, student: Student) => {
+    e.stopPropagation();
+    setStudentToResetPassword(student);
+    setNewPassword(generatePassword());
+    setPasswordResetSuccess(false);
+    setCopiedPassword(false);
+    setIsResetPasswordModalOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!studentToResetPassword || newPassword.length < 8) return;
+
+    setIsResettingPassword(true);
+    try {
+      await fetchWithAuth('/api/admin?resource=students', {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: studentToResetPassword.id,
+          newPassword
+        })
+      });
+      setPasswordResetSuccess(true);
+    } catch (error) {
+      console.error('Password reset failed:', error);
+      alert('Ошибка сброса пароля');
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const copyPasswordToClipboard = async () => {
+    await navigator.clipboard.writeText(newPassword);
+    setCopiedPassword(true);
+    setTimeout(() => setCopiedPassword(false), 2000);
   };
 
   // Filter & Sort Data
@@ -362,14 +421,21 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                          </td>
                          <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                               <button 
+                               <button
                                   onClick={(e) => openEditModal(e, student)}
                                   className="p-2 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                                   title="Редактировать"
                                >
                                   <Edit size={16} />
                                </button>
-                               <button 
+                               <button
+                                  onClick={(e) => openResetPasswordModal(e, student)}
+                                  className="p-2 rounded-lg text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                                  title="Сбросить пароль"
+                               >
+                                  <Key size={16} />
+                               </button>
+                               <button
                                   onClick={(e) => {
                                       e.stopPropagation();
                                       confirmDelete(student.id);
@@ -538,12 +604,181 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={executeDelete}
         message="Вы уверены, что хотите удалить этого студента? Все данные и прогресс будут потеряны безвозвратно."
       />
+
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {isResetPasswordModalOpen && studentToResetPassword && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm"
+              aria-hidden="true"
+              onClick={() => setIsResetPasswordModalOpen(false)}
+            />
+            <div className="fixed inset-0 z-[101] overflow-y-auto pointer-events-none">
+              <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6 pointer-events-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-100 dark:border-white/10 text-left overflow-hidden relative"
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-center p-6 border-b border-zinc-100 dark:border-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                        <Key className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
+                        Сброс пароля
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setIsResetPasswordModalOpen(false)}
+                      className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-white/5 p-2 rounded-full transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 space-y-5">
+                    {/* Student Info */}
+                    <div className="flex items-center gap-3 p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl">
+                      <img
+                        src={studentToResetPassword.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentToResetPassword.name)}&background=8b5cf6&color=fff`}
+                        alt=""
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div>
+                        <div className="font-bold text-zinc-900 dark:text-white">
+                          {studentToResetPassword.name}
+                        </div>
+                        <div className="text-sm text-zinc-500">
+                          {studentToResetPassword.email}
+                        </div>
+                      </div>
+                    </div>
+
+                    {passwordResetSuccess ? (
+                      /* Success State */
+                      <div className="text-center py-4">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                          <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h4 className="font-bold text-zinc-900 dark:text-white mb-2">
+                          Пароль успешно изменён
+                        </h4>
+                        <p className="text-sm text-zinc-500 mb-4">
+                          Передайте новый пароль студенту
+                        </p>
+
+                        {/* Show password to copy */}
+                        <div className="flex items-center gap-2 p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl font-mono text-lg">
+                          <span className="flex-1 text-zinc-900 dark:text-white select-all">
+                            {newPassword}
+                          </span>
+                          <button
+                            onClick={copyPasswordToClipboard}
+                            className={`p-2 rounded-lg transition-colors ${
+                              copiedPassword
+                                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'
+                                : 'hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500'
+                            }`}
+                            title="Скопировать"
+                          >
+                            {copiedPassword ? <Check size={18} /> : <Copy size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Edit State */
+                      <>
+                        <div>
+                          <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">
+                            Новый пароль
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 transition-colors font-mono text-lg"
+                              placeholder="Минимум 8 символов"
+                            />
+                            <button
+                              onClick={() => setNewPassword(generatePassword())}
+                              className="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 transition-colors"
+                              title="Сгенерировать новый"
+                            >
+                              <RefreshCw size={20} />
+                            </button>
+                            <button
+                              onClick={copyPasswordToClipboard}
+                              className={`p-3 rounded-xl transition-colors ${
+                                copiedPassword
+                                  ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'
+                                  : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                              }`}
+                              title="Скопировать"
+                            >
+                              {copiedPassword ? <Check size={20} /> : <Copy size={20} />}
+                            </button>
+                          </div>
+                          {newPassword.length > 0 && newPassword.length < 8 && (
+                            <p className="text-sm text-red-500 mt-2">
+                              Пароль должен быть минимум 8 символов
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-6 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-900 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsResetPasswordModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                    >
+                      {passwordResetSuccess ? 'Закрыть' : 'Отмена'}
+                    </button>
+                    {!passwordResetSuccess && (
+                      <button
+                        onClick={handleResetPassword}
+                        disabled={isResettingPassword || newPassword.length < 8}
+                        className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+                      >
+                        {isResettingPassword ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Сохранение...
+                          </>
+                        ) : (
+                          <>
+                            <Key size={18} />
+                            Сбросить пароль
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
