@@ -9,7 +9,7 @@ import {
   Bot,
   User,
   Sparkles,
-  Plus,
+  Trash2,
   Copy,
   Check,
   Terminal,
@@ -616,10 +616,10 @@ const ToolChat: React.FC<ToolChatProps> = ({
 
         <button
           onClick={handleClearChat}
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
-          title="Новый чат"
+          className="p-2.5 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+          title="Очистить чат"
         >
-          <Plus size={20} />
+          <Trash2 size={20} />
         </button>
       </header>
 
