@@ -297,7 +297,7 @@ const QuickPrompts: React.FC<{
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
           onClick={() => onSelect(prompt)}
-          className={`px-4 py-2 text-sm font-medium rounded-full
+          className={`px-4 py-2.5 text-sm font-medium rounded-full min-h-[44px]
             bg-zinc-100 dark:bg-white/5
             border border-zinc-200 dark:border-white/10
             text-zinc-600 dark:text-zinc-400
@@ -306,6 +306,7 @@ const QuickPrompts: React.FC<{
             hover:text-violet-700 dark:hover:text-violet-300
             transition-all duration-200
             hover:scale-105 active:scale-95
+            flex items-center justify-center
           `}
         >
           {prompt}
@@ -720,7 +721,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isTyping}
-                  className={`p-2.5 md:p-3 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                  className={`p-3 rounded-xl transition-all duration-200 flex items-center justify-center min-w-[44px] min-h-[44px] ${
                     inputValue.trim() && !isTyping
                       ? 'bg-zinc-900 dark:bg-white text-white dark:text-black hover:scale-105 active:scale-95 shadow-md'
                       : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'

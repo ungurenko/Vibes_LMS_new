@@ -260,7 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="md:hidden fixed left-0 top-0 bottom-0 w-72 z-50 bg-transparent"
+              className="md:hidden fixed left-0 top-0 bottom-0 w-[85vw] max-w-72 z-50 bg-transparent"
             >
               {sidebarContent}
             </motion.div>
