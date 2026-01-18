@@ -63,7 +63,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className="relative h-[240px] md:h-[220px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-violet-500/30 hover:border-violet-500/40 hover:-translate-y-1">
+      <div className="relative min-h-[200px] h-auto md:h-[220px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-violet-500/30 hover:border-violet-500/40 hover:-translate-y-1">
         {/* Background gradient */}
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
@@ -138,7 +138,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
       onClick={onClick}
       className="group w-full text-left"
     >
-      <div className={`relative h-[380px] md:h-[360px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
+      <div className={`relative min-h-[320px] h-auto md:h-[360px] rounded-3xl bg-zinc-900 border border-white/10 shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 ${colors.border}`}>
         {/* Background gradient */}
         <div className={`absolute inset-0 bg-gradient-to-b ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 

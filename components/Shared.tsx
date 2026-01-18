@@ -93,7 +93,7 @@ export const Drawer: React.FC<OverlayProps> = ({ isOpen, onClose, title, childre
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className={`fixed top-0 right-0 h-full w-full ${width} bg-white dark:bg-zinc-900 z-[101] shadow-2xl flex flex-col`}
+          className={`fixed top-0 right-0 h-full w-full ${width} bg-white dark:bg-zinc-900 z-[101] shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]`}
         >
           {/* Header */}
           <div className="px-8 py-6 border-b border-zinc-100 dark:border-white/5 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02]">

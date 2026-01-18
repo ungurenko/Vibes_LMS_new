@@ -421,17 +421,17 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                             </div>
                          </td>
                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                <button
                                   onClick={(e) => openEditModal(e, student)}
-                                  className="p-2 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                  className="p-2.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                   title="Редактировать"
                                >
                                   <Edit size={16} />
                                </button>
                                <button
                                   onClick={(e) => openResetPasswordModal(e, student)}
-                                  className="p-2 rounded-lg text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                                  className="p-2.5 rounded-lg text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                   title="Сбросить пароль"
                                >
                                   <Key size={16} />
@@ -441,14 +441,14 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                       e.stopPropagation();
                                       confirmDelete(student.id);
                                   }}
-                                  className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                  className="p-2.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                   title="Удалить"
                                >
                                   <Trash2 size={16} />
                                </button>
-                               <button 
+                               <button
                                   onClick={() => openProfile(student)}
-                                  className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10"
+                                  className="p-2.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                >
                                   <ChevronRight size={16} />
                                </button>
@@ -572,7 +572,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                             >
                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
