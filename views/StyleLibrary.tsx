@@ -226,7 +226,7 @@ const StyleLibrary: React.FC = () => {
                 {/* Close Button */}
                 <button
                   onClick={() => setSelectedStyle(null)}
-                  className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40 transition-colors"
+                  className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   <X size={24} />
                 </button>

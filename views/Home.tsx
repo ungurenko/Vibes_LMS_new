@@ -271,7 +271,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                                  }`}
                            >
                               <div className="flex items-start gap-3 relative z-10">
-                                 <div className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-300 flex-shrink-0 ${isDone
+                                 <div className={`mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors duration-300 flex-shrink-0 ${isDone
                                     ? 'bg-violet-600 border-violet-600 text-white'
                                     : 'border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 group-hover:border-violet-400'
                                     }`}>

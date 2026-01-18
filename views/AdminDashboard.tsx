@@ -441,9 +441,9 @@ const AdminDashboard: React.FC = () => {
                                 >
                                     {alert.action}
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => dismissAlert(alert.id)}
-                                    className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 >
                                     <X size={18} />
                                 </button>

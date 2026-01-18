@@ -259,7 +259,7 @@ const PromptBase: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={() => setSelectedPrompt(null)}
-                                        className="p-2 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                        className="p-2 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                     >
                                         <X size={20} />
                                     </button>
