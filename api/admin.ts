@@ -18,6 +18,7 @@ import {
   getUserFromRequest,
   successResponse,
   errorResponse,
+  hashPassword,
 } from './_lib/auth.js';
 
 export default async function handler(
@@ -264,7 +265,7 @@ async function handleStudents(
 
     // PUT - обновить студента
     if (req.method === 'PUT') {
-      const { id, status, notes, progress } = req.body;
+      const { id, status, notes, progress, newPassword } = req.body;
 
       if (!id) {
         return res.status(400).json(errorResponse('ID студента обязателен'));
@@ -289,6 +290,17 @@ async function handleStudents(
       if (progress !== undefined) {
         updates.push(`progress_percent = $${paramIndex}`);
         params.push(progress);
+        paramIndex++;
+      }
+
+      // Сброс пароля
+      if (newPassword !== undefined) {
+        if (newPassword.length < 8) {
+          return res.status(400).json(errorResponse('Пароль должен быть минимум 8 символов'));
+        }
+        const passwordHash = await hashPassword(newPassword);
+        updates.push(`password_hash = $${paramIndex}`);
+        params.push(passwordHash);
         paramIndex++;
       }
 
