@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
    Calendar,
-   CheckCircle2,
-   Play,
-   Palette,
-   Terminal,
-   Book,
-   Wrench,
+   Check,
+   ArrowRight,
    Sparkles,
-   Target,
-   Zap,
    ChevronDown,
-   ChevronUp
+   ChevronUp,
+   Clock
 } from 'lucide-react';
 import { TabId } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
+   userName?: string;
 }
 
 interface UpcomingCall {
@@ -42,7 +38,7 @@ interface DashboardStage {
    tasks: StageTask[];
 }
 
-const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) => {
    const [stages, setStages] = useState<DashboardStage[]>([]);
    const [activeStageId, setActiveStageId] = useState<string | null>(null);
    const [completedTasks, setCompletedTasks] = useState<string[]>([]);
@@ -50,10 +46,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
    const [isLoadingStages, setIsLoadingStages] = useState(true);
 
    const activeStage = stages.find(s => s.id === activeStageId) || (stages.length > 0 ? stages[0] : null);
+   const activeStageIndex = stages.findIndex(s => s.id === activeStageId);
 
    // Компактный режим для задач
    const [isTasksExpanded, setIsTasksExpanded] = useState(false);
-   const MAX_VISIBLE_TASKS = 4;
+   const MAX_VISIBLE_TASKS = 5;
    const tasks = activeStage?.tasks || [];
    const isCompact = tasks.length > MAX_VISIBLE_TASKS;
    const visibleTasks = isTasksExpanded ? tasks : tasks.slice(0, MAX_VISIBLE_TASKS);
@@ -77,12 +74,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             if (result.success && result.data) {
                setStages(result.data);
 
-               // Устанавливаем активную стадию (с флагом isActive, или первую с статусом current, или первую в списке)
                const activeStage = result.data.find((s: any) => s.isActive);
                const currentStage = result.data.find((s: any) => s.status === 'current');
                setActiveStageId(activeStage?.id || currentStage?.id || result.data[0]?.id);
 
-               // Получаем завершённые задачи пользователя
                const completedTaskIds = result.data
                   .flatMap((stage: any) => stage.tasks)
                   .filter((task: any) => task.completed)
@@ -129,10 +124,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       try {
          const token = localStorage.getItem('vibes_token');
-         const userId = localStorage.getItem('vibes_user_id');
 
          if (isCompleted) {
-            // Убрать отметку
             await fetch('/api/stages?action=complete-task', {
                method: 'DELETE',
                headers: {
@@ -143,7 +136,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             });
             setCompletedTasks(prev => prev.filter(id => id !== taskId));
          } else {
-            // Отметить завершённой
             await fetch('/api/stages?action=complete-task', {
                method: 'POST',
                headers: {
@@ -162,153 +154,261 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
    // Calculate Progress
    const totalTasks = activeStage?.tasks.length || 0;
    const completedCount = activeStage?.tasks.filter(t => completedTasks.includes(t.id)).length || 0;
+   const stageProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+
+   // Overall course progress
+   const totalStages = stages.length;
+   const currentStageNumber = activeStageIndex >= 0 ? activeStageIndex + 1 : 1;
+   const overallProgress = totalStages > 0 ? Math.round((currentStageNumber / totalStages) * 100) : 0;
+
+   // Check if call is today
+   const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
 
    // Animation Variants
    const containerVariants = {
       hidden: { opacity: 0 },
       show: {
          opacity: 1,
-         transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+         transition: { staggerChildren: 0.08, delayChildren: 0.1 }
       }
    };
 
    const cardVariants = {
-      hidden: { y: 20, opacity: 0, scale: 0.95 },
+      hidden: { y: 20, opacity: 0 },
       show: {
          y: 0,
          opacity: 1,
-         scale: 1,
-         transition: { type: "spring", stiffness: 100, damping: 20 }
+         transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
       }
    };
+
+   const taskVariants = {
+      hidden: { opacity: 0, x: -8 },
+      show: { opacity: 1, x: 0, transition: { duration: 0.2 } },
+      exit: { opacity: 0, x: 8, transition: { duration: 0.15 } }
+   };
+
+   // Сортировка задач: активные сверху, выполненные снизу
+   const sortedTasks = [...visibleTasks].sort((a, b) => {
+      const aCompleted = completedTasks.includes(a.id);
+      const bCompleted = completedTasks.includes(b.id);
+      if (aCompleted === bCompleted) return 0;
+      return aCompleted ? 1 : -1;
+   });
 
    return (
       <motion.div
          variants={containerVariants}
          initial="hidden"
          animate="show"
-         className="max-w-[1600px] mx-auto px-4 md:px-8 py-6 md:py-10 pb-32"
+         className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-10 pb-32"
       >
-         {/* --- BENTO GRID LAYOUT --- */}
-         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[minmax(180px,auto)]">
-
-            {/* 1. HERO CARD (Focus Mode) - Spans 2 cols, 2 rows */}
-            <motion.div
-               variants={cardVariants}
-               className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-black p-8 flex flex-col justify-between group shadow-2xl shadow-zinc-200/50 dark:shadow-none ring-1 ring-white/10 dark:ring-black/5"
-            >
-               {/* Animated Background */}
-               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
-               <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[150%] bg-gradient-to-br from-violet-600 via-fuchsia-600 to-indigo-600 opacity-80 blur-[100px] animate-blob group-hover:scale-110 transition-transform duration-[2s]" />
-               <div className="absolute bottom-0 right-0 w-64 h-64 bg-black/20 rounded-full blur-3xl" />
-
-               <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-4">
-                     <div className="bg-white/20 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg">
-                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
-                        Текущий фокус
-                     </div>
-                     <div className="text-white/80 font-mono text-sm tracking-wider">{activeStage?.weekLabel || 'WEEK 01'}</div>
-                  </div>
-                  <h2 className="font-display text-3xl md:text-4xl xl:text-5xl font-bold leading-[1.1] mb-4 tracking-tight drop-shadow-md">
-                     {activeStage?.title || 'Загрузка...'}
-                  </h2>
-                  <p className="text-white/80 text-base lg:text-lg max-w-sm leading-relaxed font-light">
-                     {activeStage?.description || activeStage?.subtitle || ''}
+         {/* --- HEADER --- */}
+         <motion.header variants={cardVariants} className="mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+               <div>
+                  <h1 className="font-display text-3xl md:text-4xl font-extrabold text-stone-900 dark:text-stone-50 mb-2 tracking-tight">
+                     Привет, {userName}!
+                  </h1>
+                  <p className="text-stone-500 dark:text-stone-400 text-base">
+                     Этап {currentStageNumber} из {totalStages || '—'}
                   </p>
                </div>
 
-               <div className="relative z-10 mt-8 flex items-center gap-6">
-                  <button
-                     onClick={() => onNavigate('lessons')}
-                     className="pl-6 pr-2 py-2 bg-white dark:bg-black text-black dark:text-white rounded-full font-bold text-base lg:text-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-xl group/btn ring-2 ring-white/50 dark:ring-black/20"
+               {/* Call Badge (если сегодня) */}
+               {isCallToday && upcomingCall && (
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-500/10 dark:to-fuchsia-500/10 border border-violet-200/60 dark:border-violet-500/20 rounded-2xl shadow-sm shadow-violet-100 dark:shadow-none"
                   >
-                     <span>Продолжить</span>
-                     <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover/btn:bg-violet-500 group-hover/btn:text-white transition-colors">
-                        <Play size={20} className="ml-1" fill="currentColor" />
+                     <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
+                        <Clock size={16} className="text-violet-600 dark:text-violet-400" />
                      </div>
-                  </button>
-                  <div className="hidden sm:flex flex-col ml-2">
-                     <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-bold uppercase tracking-wider text-white/60">Прогресс этапа</span>
-                        <span className="text-xs font-bold text-white/80">{totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0}%</span>
+                     <div>
+                        <p className="text-xs font-medium text-violet-600/70 dark:text-violet-400/70 uppercase tracking-wide">Сегодня</p>
+                        <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+                           Созвон в {upcomingCall.time}
+                        </p>
                      </div>
-                     <div className="w-36 h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-                        <div
-                           className="h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-500"
-                           style={{ width: `${totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0}%` }}
-                        />
-                     </div>
-                  </div>
-               </div>
-            </motion.div>
+                  </motion.div>
+               )}
+            </div>
 
-            {/* 2. TASK STACK - Spans 1 col, 2 rows */}
-            <motion.div variants={cardVariants} className="md:col-span-1 md:row-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 flex flex-col relative overflow-hidden shadow-sm hover:shadow-md transition-shadow max-h-[420px]">
-               <div className="flex items-center justify-between mb-4 lg:mb-6">
-                  <h3 className="font-display text-lg lg:text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                     <Target className="text-red-500" /> Задачи
-                  </h3>
-                  <span className="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg text-zinc-500 border border-zinc-200 dark:border-white/5">
-                     {completedCount}/{totalTasks}
+            {/* Overall Progress Bar */}
+            <div className="flex items-center gap-4">
+               <div className="flex-1 h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                  <motion.div
+                     initial={{ width: 0 }}
+                     animate={{ width: `${overallProgress}%` }}
+                     transition={{ duration: 0.6, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)]"
+                  />
+               </div>
+               <span className="text-sm font-bold text-stone-600 dark:text-stone-300 tabular-nums min-w-[3ch]">
+                  {overallProgress}%
+               </span>
+            </div>
+         </motion.header>
+
+         {/* --- MAIN GRID --- */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* 1. CURRENT STAGE CARD */}
+            <motion.div
+               variants={cardVariants}
+               className="group relative bg-white dark:bg-stone-900 rounded-3xl p-7 border border-stone-200/80 dark:border-stone-800 shadow-sm hover:shadow-md hover:shadow-stone-200/50 dark:hover:shadow-none transition-shadow duration-300 flex flex-col overflow-hidden"
+            >
+               {/* Subtle gradient overlay */}
+               <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.02] to-transparent dark:from-violet-500/[0.03] pointer-events-none" />
+
+               {/* Week Label */}
+               <div className="relative flex items-center gap-2 mb-5">
+                  <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 rounded-lg">
+                     {activeStage?.weekLabel || 'WEEK 01'}
+                  </span>
+                  <span className="text-stone-300 dark:text-stone-700">·</span>
+                  <span className="text-xs font-medium text-stone-400 dark:text-stone-500">
+                     {activeStage?.subtitle || 'Загрузка...'}
                   </span>
                </div>
 
-               {/* Celebration State ИЛИ список задач */}
+               {/* Stage Title */}
+               <h2 className="relative font-display text-2xl md:text-[1.75rem] font-bold text-stone-900 dark:text-stone-50 mb-3 leading-tight tracking-tight">
+                  {activeStage?.title || 'Загрузка...'}
+               </h2>
+
+               {/* Description */}
+               {activeStage?.description && (
+                  <p className="relative text-stone-500 dark:text-stone-400 text-[15px] leading-relaxed mb-6 flex-1">
+                     {activeStage.description}
+                  </p>
+               )}
+
+               {/* Stage Progress */}
+               <div className="relative mt-auto">
+                  <div className="flex items-center justify-between mb-2.5">
+                     <span className="text-xs font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wide">
+                        Прогресс
+                     </span>
+                     <span className="text-sm font-bold text-stone-700 dark:text-stone-200 tabular-nums">
+                        {stageProgress}%
+                     </span>
+                  </div>
+                  <div className="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden mb-6">
+                     <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stageProgress}%` }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                     />
+                  </div>
+
+                  {/* CTA Button */}
+                  <button
+                     onClick={() => onNavigate('lessons')}
+                     className="w-full py-3.5 px-5 bg-stone-900 dark:bg-stone-50 text-white dark:text-stone-900 rounded-2xl font-semibold text-[15px] transition-all duration-200 flex items-center justify-center gap-2 group/btn hover:bg-stone-800 dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                     <span>Продолжить обучение</span>
+                     <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
+               </div>
+            </motion.div>
+
+            {/* 2. TASKS CARD */}
+            <motion.div
+               variants={cardVariants}
+               className="bg-white dark:bg-stone-900 rounded-3xl p-7 border border-stone-200/80 dark:border-stone-800 shadow-sm flex flex-col"
+            >
+               {/* Header */}
+               <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-3">
+                     <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
+                     Задачи
+                  </h3>
+                  <div className="flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800 px-3 py-1.5 rounded-xl">
+                     <span className="text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums">{completedCount}</span>
+                     <span className="text-stone-300 dark:text-stone-600">/</span>
+                     <span className="text-sm font-medium text-stone-400 dark:text-stone-500 tabular-nums">{totalTasks}</span>
+                  </div>
+               </div>
+
+               {/* Celebration State или список задач */}
                {completedCount === totalTasks && totalTasks > 0 ? (
                   <motion.div
-                     initial={{ opacity: 0, scale: 0.8 }}
+                     initial={{ opacity: 0, scale: 0.9 }}
                      animate={{ opacity: 1, scale: 1 }}
-                     className="flex-1 flex flex-col items-center justify-center text-center p-6"
+                     className="flex-1 flex flex-col items-center justify-center text-center py-8"
                   >
-                     <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 text-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-500/5">
-                        <Sparkles size={32} />
+                     <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-100 dark:shadow-none">
+                        <Sparkles size={32} className="text-emerald-500" />
                      </div>
-                     <p className="text-lg font-bold text-zinc-900 dark:text-white mb-1">Все задачи выполнены!</p>
-                     <p className="text-sm text-zinc-500">Отдохни или переходи к следующему этапу</p>
+                     <p className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-2">
+                        Всё готово!
+                     </p>
+                     <p className="text-stone-500 dark:text-stone-400 text-sm max-w-[200px]">
+                        Отдохни или переходи к следующему этапу
+                     </p>
                   </motion.div>
                ) : (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                     <div className={`flex-1 overflow-y-auto pr-1 scrollbar-none ${isCompact ? 'space-y-2' : 'space-y-3'}`}>
-                        {visibleTasks.map((task) => {
-                           const isDone = completedTasks.includes(task.id);
-                           return (
-                              <div
-                                 key={task.id}
-                                 onClick={() => handleTaskToggle(task.id)}
-                                 className={`group rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
-                                    isCompact ? 'p-3 min-h-[44px]' : 'p-5 min-h-[56px]'
-                                 } ${isDone
-                                    ? 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-100 dark:border-white/5 opacity-80'
-                                    : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/5'
+                  <div className="flex-1 flex flex-col">
+                     <div className="flex-1 space-y-2.5 overflow-y-auto scrollbar-none">
+                        <AnimatePresence mode="popLayout">
+                           {sortedTasks.map((task) => {
+                              const isDone = completedTasks.includes(task.id);
+                              return (
+                                 <motion.div
+                                    key={task.id}
+                                    layout
+                                    variants={taskVariants}
+                                    initial="hidden"
+                                    animate="show"
+                                    exit="exit"
+                                    onClick={() => handleTaskToggle(task.id)}
+                                    className={`group rounded-2xl border cursor-pointer p-4 transition-all duration-200 ${
+                                       isDone
+                                          ? 'bg-stone-50 dark:bg-stone-800/30 border-stone-100 dark:border-stone-800'
+                                          : 'bg-white dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-sm'
                                     }`}
-                              >
-                                 <div className="flex items-start gap-3 relative z-10">
-                                    <div className={`mt-0.5 rounded-full border-2 flex items-center justify-center transition-colors duration-300 flex-shrink-0 ${
-                                       isCompact ? 'w-5 h-5' : 'w-7 h-7'
-                                    } ${isDone
-                                       ? 'bg-violet-600 border-violet-600 text-white'
-                                       : 'border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 group-hover:border-violet-400'
+                                 >
+                                    <div className="flex items-start gap-3.5">
+                                       <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                          isDone
+                                             ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 border-transparent shadow-[0_0_8px_rgba(139,92,246,0.3)]'
+                                             : 'border-stone-300 dark:border-stone-600 group-hover:border-violet-400 dark:group-hover:border-violet-500 group-hover:shadow-sm'
                                        }`}>
-                                       {isDone && <CheckCircle2 size={isCompact ? 10 : 14} />}
+                                          <AnimatePresence>
+                                             {isDone && (
+                                                <motion.div
+                                                   initial={{ scale: 0 }}
+                                                   animate={{ scale: 1 }}
+                                                   exit={{ scale: 0 }}
+                                                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                >
+                                                   <Check size={12} className="text-white" strokeWidth={3} />
+                                                </motion.div>
+                                             )}
+                                          </AnimatePresence>
+                                       </div>
+                                       <span className={`text-[15px] leading-relaxed transition-colors ${
+                                          isDone
+                                             ? 'text-stone-400 dark:text-stone-500 line-through decoration-stone-300 dark:decoration-stone-600'
+                                             : 'text-stone-700 dark:text-stone-200'
+                                       }`}>
+                                          {task.title}
+                                       </span>
                                     </div>
-                                    <span className={`font-medium leading-relaxed transition-colors ${
-                                       isCompact ? 'text-sm' : 'text-base'
-                                    } ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'
-                                       }`}>
-                                       {task.title}
-                                    </span>
-                                 </div>
-                              </div>
-                           )
-                        })}
+                                 </motion.div>
+                              );
+                           })}
+                        </AnimatePresence>
                      </div>
 
-                     {/* Кнопка "Ещё N задач" / "Свернуть" */}
+                     {/* Expand/Collapse Button */}
                      {isCompact && hiddenCount > 0 && (
                         <button
                            onClick={() => setIsTasksExpanded(!isTasksExpanded)}
-                           className="mt-3 w-full py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-sm font-medium text-zinc-600 dark:text-zinc-300 flex items-center justify-center gap-2"
+                           className="mt-4 w-full py-3 rounded-2xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm font-semibold text-stone-600 dark:text-stone-300 flex items-center justify-center gap-2"
                         >
                            {isTasksExpanded ? (
                               <>
@@ -327,70 +427,28 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                )}
             </motion.div>
 
-            {/* 3. QUICK ACTIONS WIDGET - Spans 1 col, 1 row */}
-            <motion.div variants={cardVariants} className="md:col-span-1 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-zinc-200 dark:border-white/5 flex flex-col justify-center">
-               <h3 className="text-xs lg:text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3 lg:mb-4 px-1 flex items-center gap-2">
-                  <Zap size={14} className="text-violet-500" />
-                  Инструменты
-               </h3>
-               <div className="grid grid-cols-2 gap-4">
-                  {[
-                     { id: 'styles', icon: Palette, color: 'text-fuchsia-500', label: 'Стили', bg: 'bg-fuchsia-50 dark:bg-fuchsia-500/10' },
-                     { id: 'prompts', icon: Terminal, color: 'text-emerald-500', label: 'Промпты', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                     { id: 'glossary', icon: Book, color: 'text-amber-500', label: 'Термины', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                     { id: 'tools', icon: Wrench, color: 'text-cyan-500', label: 'Инструменты', bg: 'bg-cyan-50 dark:bg-cyan-500/10' },
-                  ].map(item => (
-                     <button
-                        key={item.id}
-                        onClick={() => onNavigate(item.id as TabId)}
-                        className="flex flex-col items-center justify-center p-3 lg:p-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 group border border-transparent hover:border-zinc-200 dark:hover:border-white/10 min-h-[70px] lg:min-h-[80px]"
-                     >
-                        <div className={`p-2.5 rounded-xl mb-2 ${item.bg} transition-colors group-hover:scale-110 duration-300`}>
-                           <item.icon size={22} className={item.color} />
-                        </div>
-                        <span className="text-sm font-bold text-zinc-600 dark:text-zinc-300">{item.label}</span>
-                     </button>
-                  ))}
-               </div>
-            </motion.div>
-
-            {/* 4. EVENT WIDGET - Spans 1 col, 1 row */}
-            {upcomingCall ? (
-               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-lg shadow-emerald-500/20">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/30 transition-colors" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl translate-y-1/3 -translate-x-1/3" />
-
-                  <div className="relative z-10 flex flex-col h-full">
-                     <div className="flex items-center gap-3 mb-auto">
-                        <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
-                           <Calendar size={20} />
-                        </div>
-                        <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider shadow-sm">
-                           {upcomingCall.relativeDate}
-                        </div>
-                     </div>
-
-                     <div className="mt-6">
-                        <div className="flex items-baseline gap-2 mb-2">
-                           <span className="text-2xl lg:text-3xl xl:text-4xl font-display font-bold">{upcomingCall.time}</span>
-                           <span className="text-emerald-100 font-medium text-sm">МСК</span>
-                        </div>
-
-                        <div className="h-px w-full bg-gradient-to-r from-white/40 to-transparent mb-4" />
-
-                        <div className="text-xs font-bold text-emerald-100 uppercase tracking-widest mb-1.5 opacity-90 flex items-center gap-2">
-                           <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                           Созвон
-                        </div>
-                        <h3 className="text-lg font-bold leading-tight text-white/95">{upcomingCall.topic}</h3>
-                     </div>
+            {/* 3. UPCOMING CALL (если НЕ сегодня — показываем карточку) */}
+            {upcomingCall && !isCallToday && (
+               <motion.div
+                  variants={cardVariants}
+                  className="md:col-span-2 bg-gradient-to-r from-white to-stone-50/50 dark:from-stone-900 dark:to-stone-900/80 rounded-3xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm flex items-center gap-5"
+               >
+                  <div className="w-14 h-14 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/10 dark:to-fuchsia-500/10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-100 dark:shadow-none">
+                     <Calendar size={24} className="text-violet-600 dark:text-violet-400" />
                   </div>
-               </motion.div>
-            ) : (
-               <motion.div variants={cardVariants} className="md:col-span-1 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 rounded-3xl p-6 relative overflow-hidden border border-zinc-200 dark:border-white/5">
-                  <div className="relative z-10 flex flex-col h-full items-center justify-center text-center">
-                     <Calendar size={32} className="text-zinc-400 dark:text-zinc-600 mb-3" />
-                     <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400">Пока нет запланированных созвонов</p>
+                  <div className="flex-1 min-w-0">
+                     <div className="flex items-center gap-2.5 mb-1">
+                        <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                           {upcomingCall.relativeDate}
+                        </span>
+                        <span className="text-stone-300 dark:text-stone-700">·</span>
+                        <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+                           {upcomingCall.time} МСК
+                        </span>
+                     </div>
+                     <p className="text-[15px] text-stone-500 dark:text-stone-400 truncate">
+                        {upcomingCall.topic}
+                     </p>
                   </div>
                </motion.div>
             )}

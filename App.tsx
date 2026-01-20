@@ -482,7 +482,7 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} />;
+            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
             // Update Lessons to receive modules prop
             case 'lessons': return <Lessons />;
             case 'roadmaps': return <Roadmaps />;
@@ -501,7 +501,7 @@ const AppContent: React.FC = () => {
                     );
                 }
                 return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} />;
+            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
 
             // Admin Views
             case 'admin-students': return <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />;
@@ -511,7 +511,7 @@ const AppContent: React.FC = () => {
             case 'admin-tools': return <AdminAssistant />;
             case 'admin-settings': return <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />;
 
-            default: return mode === 'admin' ? <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} /> : <Home onNavigate={setActiveTab} />;
+            default: return mode === 'admin' ? <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
         }
     };
 

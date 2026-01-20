@@ -40,8 +40,8 @@
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Оставляем Inter и JetBrains Mono как fallback для Windows/Android -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet">
+    <!-- Plus Jakarta Sans для заголовков, Inter как fallback -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap&subset=cyrillic" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script>
       tailwind.config = {
@@ -49,11 +49,11 @@
         theme: {
           extend: {
             fontFamily: {
-              // Приоритет системных шрифтов macOS (SF Pro Text/Display)
-              sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-              display: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-              // Приоритет системных моноширинных шрифтов macOS (SF Mono)
-              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'JetBrains Mono', 'monospace'],
+              // Plus Jakarta Sans для заголовков, Inter для body
+              sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+              display: ['Plus Jakarta Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+              // Моноширинные шрифты
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
             },
             colors: {
               vibe: {
@@ -148,10 +148,10 @@
       }
       
       h1, h2, h3, h4, h5, h6 {
-        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        /* Apple-style tight tracking for display text */
-        letter-spacing: -0.025em;
-        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        /* Tight tracking for display text */
+        letter-spacing: -0.02em;
+        font-weight: 700;
       }
       
       /* Noise Overlay - Optimized */
