@@ -8,12 +8,13 @@ import {
     Search,
     X,
     Layers,
-    ArrowRight
+    ArrowRight,
+    Heart
 } from 'lucide-react';
 import { PromptCategory, PromptItem, PromptCategoryItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 import { GridSkeleton, PromptCardSkeleton } from '../components/SkeletonLoader';
 import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
@@ -41,18 +42,25 @@ const PromptBase: React.FC = () => {
     const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Favorites state
+    const [favorites, setFavorites] = useState<Set<string>>(new Set());
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+    const [favoriteToast, setFavoriteToast] = useState<{ action: 'added' | 'removed' } | null>(null);
+
     // Загрузка данных
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Проверяем кэш для промптов
+                // Проверяем кэш для промптов и избранного
                 const cachedPrompts = getCached<PromptItem[]>(CACHE_KEYS.PROMPTS, CACHE_TTL.PROMPTS);
-                
+                const cachedFavorites = getCached<string[]>(CACHE_KEYS.FAVORITES, CACHE_TTL.FAVORITES);
+
                 setIsLoading(!cachedPrompts);
 
-                const [promptsData, categoriesData] = await Promise.all([
+                const [promptsData, categoriesData, favoritesData] = await Promise.all([
                     cachedPrompts ? Promise.resolve(cachedPrompts) : fetchWithAuthGet<PromptItem[]>('/api/content/prompts'),
-                    fetchWithAuthGet<PromptCategoryItem[]>('/api/content/categories')
+                    fetchWithAuthGet<PromptCategoryItem[]>('/api/content/categories'),
+                    cachedFavorites ? Promise.resolve(cachedFavorites) : fetchWithAuthGet<string[]>('/api/content/favorites')
                 ]);
 
                 // Всегда устанавливаем промпты в state
@@ -63,6 +71,12 @@ const PromptBase: React.FC = () => {
                     setCache(CACHE_KEYS.PROMPTS, promptsData);
                 }
                 setCategories(categoriesData);
+
+                // Устанавливаем избранное
+                setFavorites(new Set(favoritesData));
+                if (!cachedFavorites) {
+                    setCache(CACHE_KEYS.FAVORITES, favoritesData);
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
                 // Fallback for prompts if error
@@ -84,15 +98,64 @@ const PromptBase: React.FC = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
+    // Toggle favorite with optimistic update
+    const handleToggleFavorite = async (promptId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        playSound('click');
+
+        const isFavorite = favorites.has(promptId);
+
+        // Оптимистичное обновление
+        setFavorites(prev => {
+            const next = new Set(prev);
+            isFavorite ? next.delete(promptId) : next.add(promptId);
+            return next;
+        });
+
+        // Toast
+        setFavoriteToast({ action: isFavorite ? 'removed' : 'added' });
+        setTimeout(() => setFavoriteToast(null), 2000);
+
+        // Обновляем кэш
+        const newFavorites = isFavorite
+            ? [...favorites].filter(id => id !== promptId)
+            : [...favorites, promptId];
+        setCache(CACHE_KEYS.FAVORITES, newFavorites);
+
+        // API запрос
+        try {
+            const token = localStorage.getItem('vibes_token');
+            if (isFavorite) {
+                await fetch(`/api/content/favorites?promptId=${promptId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } else {
+                await fetchWithAuthPost('/api/content/favorites', { promptId });
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            // Revert on error
+            setFavorites(prev => {
+                const next = new Set(prev);
+                isFavorite ? next.add(promptId) : next.delete(promptId);
+                return next;
+            });
+        }
+    };
+
     const filteredPrompts = useMemo(() => {
         return prompts.filter(prompt => {
+            // Фильтр по избранному
+            if (showFavoritesOnly && !favorites.has(prompt.id)) return false;
+
             const matchesSearch = prompt.title.toLowerCase().includes(search.toLowerCase()) ||
                 prompt.description.toLowerCase().includes(search.toLowerCase()) ||
                 prompt.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));
             const matchesCategory = activeCategory === 'Все' || prompt.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [search, activeCategory, prompts]);
+    }, [search, activeCategory, prompts, showFavoritesOnly, favorites]);
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
@@ -114,15 +177,36 @@ const PromptBase: React.FC = () => {
             >
                 {/* Search & Filters */}
                 <div className="mb-8 space-y-6">
-                    <div className="relative max-w-2xl">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Найти промпт (например: 'dashboard' или 'landing')..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-violet-500 transition-colors shadow-sm focus:ring-4 focus:ring-violet-500/10"
-                        />
+                    <div className="flex gap-3 items-center max-w-2xl">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Найти промпт (например: 'dashboard' или 'landing')..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-violet-500 transition-colors shadow-sm focus:ring-4 focus:ring-violet-500/10"
+                            />
+                        </div>
+                        {/* Favorites Button */}
+                        <button
+                            onClick={() => { playSound('click'); setShowFavoritesOnly(!showFavoritesOnly); }}
+                            className={`flex items-center gap-2 px-4 py-4 rounded-2xl text-sm font-bold transition-all border whitespace-nowrap ${showFavoritesOnly
+                                ? 'bg-pink-50 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/30 text-pink-600 dark:text-pink-400'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                            }`}
+                        >
+                            <Heart size={18} className={showFavoritesOnly ? 'fill-current' : ''} />
+                            <span className="hidden sm:inline">Избранное</span>
+                            {favorites.size > 0 && (
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${showFavoritesOnly
+                                    ? 'bg-pink-200 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300'
+                                    : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400'
+                                }`}>
+                                    {favorites.size}
+                                </span>
+                            )}
+                        </button>
                     </div>
 
                     <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2">
@@ -177,17 +261,29 @@ const PromptBase: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {!isStack && (
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 group-hover:translate-x-0 duration-300">
+                                        <div className="flex gap-2">
+                                            {/* Favorite Heart Button */}
+                                            <button
+                                                onClick={(e) => handleToggleFavorite(prompt.id, e)}
+                                                className={`p-2 rounded-full transition-all ${favorites.has(prompt.id)
+                                                    ? 'bg-pink-50 dark:bg-pink-500/10 text-pink-500'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100'
+                                                }`}
+                                                title={favorites.has(prompt.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                                            >
+                                                <Heart size={16} className={favorites.has(prompt.id) ? 'fill-current' : ''} />
+                                            </button>
+
+                                            {!isStack && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); if (prompt.content) handleCopy(prompt.id, prompt.content); }}
-                                                    className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 transition-colors"
+                                                    className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 transition-all opacity-0 group-hover:opacity-100"
                                                     title="Быстрое копирование"
                                                 >
                                                     {copiedId === prompt.id ? <Check size={16} /> : <Copy size={16} />}
                                                 </button>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
 
                                     <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
@@ -385,7 +481,7 @@ const PromptBase: React.FC = () => {
                 document.body
             )}
 
-            {/* Floating Toast */}
+            {/* Floating Toast - Copy */}
             <AnimatePresence>
                 {copiedId && !selectedPrompt && (
                     <motion.div
@@ -400,6 +496,33 @@ const PromptBase: React.FC = () => {
                         <div className="flex flex-col">
                             <span className="font-bold text-base">Скопировано</span>
                             <span className="text-xs text-zinc-500 dark:text-zinc-400">Готово к вставке в AI</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Floating Toast - Favorites */}
+            <AnimatePresence>
+                {favoriteToast && !selectedPrompt && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-4 px-6 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl shadow-2xl border border-zinc-700 dark:border-zinc-200"
+                    >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${favoriteToast.action === 'added'
+                            ? 'bg-pink-500 text-white'
+                            : 'bg-zinc-500 text-white'
+                        }`}>
+                            <Heart size={20} strokeWidth={3} className={favoriteToast.action === 'added' ? 'fill-current' : ''} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-base">
+                                {favoriteToast.action === 'added' ? 'Добавлено в избранное' : 'Удалено из избранного'}
+                            </span>
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {favoriteToast.action === 'added' ? 'Промпт сохранён' : 'Промпт убран'}
+                            </span>
                         </div>
                     </motion.div>
                 )}

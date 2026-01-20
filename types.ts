@@ -111,6 +111,7 @@ export interface PromptItem {
   categoryId?: string;
   colorTheme?: string;
   tags: string[];
+  isFavorite?: boolean; // New: Favorite status
   // Admin specific
   copyCount?: number;
   status?: 'published' | 'draft';

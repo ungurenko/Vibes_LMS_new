@@ -25,7 +25,13 @@ export default async function handler(
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
+  // Извлекаем content type из URL заранее для проверки метода
+  const urlForMethod = new URL(req.url || '', `http://${req.headers.host}`);
+  const pathPartsForMethod = urlForMethod.pathname.split('/').filter(Boolean);
+  const contentTypeForMethod = pathPartsForMethod[pathPartsForMethod.length - 1];
+
+  // Разрешаем POST/DELETE только для favorites
+  if (req.method !== 'GET' && contentTypeForMethod !== 'favorites') {
     return res.status(405).json(errorResponse('Method not allowed'));
   }
 
@@ -53,6 +59,11 @@ export default async function handler(
       return getRoadmaps(req, res, tokenData);
     case 'quick-questions':
       return getQuickQuestionsPublic(req, res);
+    case 'favorites':
+      if (req.method === 'GET') return getFavorites(req, res, tokenData);
+      if (req.method === 'POST') return addFavorite(req, res, tokenData);
+      if (req.method === 'DELETE') return removeFavorite(req, res, tokenData);
+      return res.status(405).json(errorResponse('Method not allowed'));
     case 'content':
       return res.status(400).json(errorResponse('Content type required'));
     default:
@@ -358,6 +369,69 @@ async function getQuickQuestionsPublic(req: VercelRequest, res: VercelResponse) 
     return res.status(200).json(successResponse(questions));
   } catch (error) {
     console.error('Get quick questions error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== FAVORITES ====================
+
+// GET — Получить ID избранных промптов
+async function getFavorites(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const { rows } = await query(
+      'SELECT prompt_id FROM user_favorite_prompts WHERE user_id = $1',
+      [tokenData.userId]
+    );
+
+    // Кэширование не нужно — персональные данные
+    res.setHeader('Cache-Control', 'private, no-cache');
+
+    return res.status(200).json(successResponse(rows.map((r: any) => r.prompt_id)));
+  } catch (error) {
+    console.error('Get favorites error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// POST — Добавить в избранное
+async function addFavorite(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const { promptId } = req.body;
+
+    if (!promptId) {
+      return res.status(400).json(errorResponse('promptId обязателен'));
+    }
+
+    await query(
+      `INSERT INTO user_favorite_prompts (user_id, prompt_id)
+       VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [tokenData.userId, promptId]
+    );
+
+    return res.status(200).json(successResponse({ added: true }));
+  } catch (error) {
+    console.error('Add favorite error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// DELETE — Удалить из избранного
+async function removeFavorite(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const { promptId } = req.query;
+
+    if (!promptId) {
+      return res.status(400).json(errorResponse('promptId обязателен'));
+    }
+
+    await query(
+      'DELETE FROM user_favorite_prompts WHERE user_id = $1 AND prompt_id = $2',
+      [tokenData.userId, promptId]
+    );
+
+    return res.status(200).json(successResponse({ removed: true }));
+  } catch (error) {
+    console.error('Remove favorite error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }
