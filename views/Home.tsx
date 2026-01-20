@@ -50,7 +50,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
 
    // Компактный режим для задач
    const [isTasksExpanded, setIsTasksExpanded] = useState(false);
-   const MAX_VISIBLE_TASKS = 5;
+   const MAX_VISIBLE_TASKS = 4;
    const tasks = activeStage?.tasks || [];
    const isCompact = tasks.length > MAX_VISIBLE_TASKS;
    const visibleTasks = isTasksExpanded ? tasks : tasks.slice(0, MAX_VISIBLE_TASKS);
@@ -201,13 +201,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
          variants={containerVariants}
          initial="hidden"
          animate="show"
-         className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-10 pb-32"
+         className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-24"
       >
          {/* --- HEADER --- */}
-         <motion.header variants={cardVariants} className="mb-10">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+         <motion.header variants={cardVariants} className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                <div>
-                  <h1 className="font-display text-3xl md:text-4xl font-extrabold text-stone-900 dark:text-stone-50 mb-2 tracking-tight">
+                  <h1 className="font-display text-2xl md:text-3xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight">
                      Привет, {userName}!
                   </h1>
                   <p className="text-stone-500 dark:text-stone-400 text-base">
@@ -252,18 +252,18 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
          </motion.header>
 
          {/* --- MAIN GRID --- */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* 1. CURRENT STAGE CARD */}
             <motion.div
                variants={cardVariants}
-               className="group relative bg-white dark:bg-stone-900 rounded-3xl p-7 border border-stone-200/80 dark:border-stone-800 shadow-sm hover:shadow-md hover:shadow-stone-200/50 dark:hover:shadow-none transition-shadow duration-300 flex flex-col overflow-hidden"
+               className="group relative bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm hover:shadow-md hover:shadow-stone-200/50 dark:hover:shadow-none transition-shadow duration-300 flex flex-col overflow-hidden"
             >
                {/* Subtle gradient overlay */}
                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.02] to-transparent dark:from-violet-500/[0.03] pointer-events-none" />
 
                {/* Week Label */}
-               <div className="relative flex items-center gap-2 mb-5">
+               <div className="relative flex items-center gap-2 mb-3">
                   <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 rounded-lg">
                      {activeStage?.weekLabel || 'WEEK 01'}
                   </span>
@@ -274,13 +274,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                </div>
 
                {/* Stage Title */}
-               <h2 className="relative font-display text-2xl md:text-[1.75rem] font-bold text-stone-900 dark:text-stone-50 mb-3 leading-tight tracking-tight">
+               <h2 className="relative font-display text-2xl md:text-[1.75rem] font-bold text-stone-900 dark:text-stone-50 mb-2 leading-tight tracking-tight">
                   {activeStage?.title || 'Загрузка...'}
                </h2>
 
                {/* Description */}
                {activeStage?.description && (
-                  <p className="relative text-stone-500 dark:text-stone-400 text-[15px] leading-relaxed mb-6 flex-1">
+                  <p className="relative text-stone-500 dark:text-stone-400 text-[15px] leading-relaxed mb-4 flex-1">
                      {activeStage.description}
                   </p>
                )}
@@ -295,7 +295,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                         {stageProgress}%
                      </span>
                   </div>
-                  <div className="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden mb-6">
+                  <div className="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden mb-4">
                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${stageProgress}%` }}
@@ -307,7 +307,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                   {/* CTA Button */}
                   <button
                      onClick={() => onNavigate('lessons')}
-                     className="w-full py-3.5 px-5 bg-stone-900 dark:bg-stone-50 text-white dark:text-stone-900 rounded-2xl font-semibold text-[15px] transition-all duration-200 flex items-center justify-center gap-2 group/btn hover:bg-stone-800 dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
+                     className="w-full py-3 px-5 bg-stone-900 dark:bg-stone-50 text-white dark:text-stone-900 rounded-2xl font-semibold text-[15px] transition-all duration-200 flex items-center justify-center gap-2 group/btn hover:bg-stone-800 dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
                   >
                      <span>Продолжить обучение</span>
                      <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
@@ -318,10 +318,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
             {/* 2. TASKS CARD */}
             <motion.div
                variants={cardVariants}
-               className="bg-white dark:bg-stone-900 rounded-3xl p-7 border border-stone-200/80 dark:border-stone-800 shadow-sm flex flex-col"
+               className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm flex flex-col"
             >
                {/* Header */}
-               <div className="flex items-center justify-between mb-6">
+               <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-3">
                      <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
                      Задачи
@@ -352,7 +352,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                   </motion.div>
                ) : (
                   <div className="flex-1 flex flex-col">
-                     <div className="flex-1 space-y-2.5 overflow-y-auto scrollbar-none">
+                     <div className="flex-1 space-y-2 overflow-y-auto scrollbar-none">
                         <AnimatePresence mode="popLayout">
                            {sortedTasks.map((task) => {
                               const isDone = completedTasks.includes(task.id);
@@ -365,7 +365,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                                     animate="show"
                                     exit="exit"
                                     onClick={() => handleTaskToggle(task.id)}
-                                    className={`group rounded-2xl border cursor-pointer p-4 transition-all duration-200 ${
+                                    className={`group rounded-2xl border cursor-pointer p-3 transition-all duration-200 ${
                                        isDone
                                           ? 'bg-stone-50 dark:bg-stone-800/30 border-stone-100 dark:border-stone-800'
                                           : 'bg-white dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-sm'
@@ -431,9 +431,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
             {upcomingCall && !isCallToday && (
                <motion.div
                   variants={cardVariants}
-                  className="md:col-span-2 bg-gradient-to-r from-white to-stone-50/50 dark:from-stone-900 dark:to-stone-900/80 rounded-3xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm flex items-center gap-5"
+                  className="md:col-span-2 bg-gradient-to-r from-white to-stone-50/50 dark:from-stone-900 dark:to-stone-900/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-sm flex items-center gap-4"
                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/10 dark:to-fuchsia-500/10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-100 dark:shadow-none">
+                  <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/10 dark:to-fuchsia-500/10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-100 dark:shadow-none">
                      <Calendar size={24} className="text-violet-600 dark:text-violet-400" />
                   </div>
                   <div className="flex-1 min-w-0">
