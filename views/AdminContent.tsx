@@ -352,6 +352,30 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                 moduleId: modules[0]?.id || '',
                 videoUrl: ''
             });
+        } else if (activeTab === 'prompts') {
+            setEditingItem({
+                title: '',
+                description: '',
+                content: '',
+                usage: '',
+                categoryId: promptCategories.length > 0 ? promptCategories[0].id : '',
+                tags: []
+            });
+        } else if (activeTab === 'styles') {
+            setEditingItem({
+                title: '',
+                description: '',
+                category: 'Анимации',
+                imageUrl: '',
+                previewUrl: ''
+            });
+        } else if (activeTab === 'glossary') {
+            setEditingItem({
+                term: '',
+                definition: '',
+                synonyms: [],
+                relatedTerms: []
+            });
         } else {
             setEditingItem({});
         }
