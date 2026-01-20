@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Copy,
     Check,
@@ -221,165 +222,168 @@ const PromptBase: React.FC = () => {
                 )}
             </motion.div>
 
-            {/* Modal for Library Items */}
-            <AnimatePresence>
-                {selectedPrompt && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSelectedPrompt(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
-                        >
-                            {/* Header */}
-                            <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
-                                <div className="flex justify-between items-start gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${CATEGORY_COLORS[selectedPrompt.category]}`}>
-                                                {selectedPrompt.category}
-                                            </span>
-                                            {selectedPrompt.steps && (
-                                                <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-violet-200 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:border-violet-500/30 dark:text-violet-300 flex items-center gap-1">
-                                                    <Layers size={12} />
-                                                    Цепочка промптов
+            {/* Modal for Library Items - Portal to escape stacking context */}
+            {createPortal(
+                <AnimatePresence>
+                    {selectedPrompt && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setSelectedPrompt(null)}
+                                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                            >
+                                {/* Header */}
+                                <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${CATEGORY_COLORS[selectedPrompt.category]}`}>
+                                                    {selectedPrompt.category}
                                                 </span>
-                                            )}
-                                        </div>
-                                        <h3 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-                                            {selectedPrompt.title}
-                                        </h3>
-                                        <p className="text-zinc-500 dark:text-zinc-400">
-                                            {selectedPrompt.description}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => setSelectedPrompt(null)}
-                                        className="p-2 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Body */}
-                            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
-                                {/* Usage */}
-                                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 flex gap-4">
-                                    <div className="shrink-0 pt-1 text-amber-600 dark:text-amber-400">
-                                        <Layers size={24} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-amber-900 dark:text-amber-200 text-sm mb-1">Как использовать</h4>
-                                        <p className="text-sm text-amber-800 dark:text-amber-300/80 leading-relaxed">
-                                            {selectedPrompt.usage}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Content Logic: Stack vs Single */}
-                                {selectedPrompt.steps ? (
-                                    /* --- STACK VIEW --- */
-                                    <div className="space-y-8 relative">
-                                        {/* Vertical Line */}
-                                        <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-zinc-100 dark:bg-zinc-800" />
-
-                                        {selectedPrompt.steps.map((step, idx) => (
-                                            <div key={idx} className="relative pl-14">
-                                                {/* Step Number Bubble */}
-                                                <div className={`absolute left-0 top-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold z-10 transition-colors bg-white dark:bg-zinc-900 ${copiedId === `${selectedPrompt.id}-step-${idx}`
-                                                        ? 'border-emerald-500 text-emerald-500'
-                                                        : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
-                                                    }`}>
-                                                    {copiedId === `${selectedPrompt.id}-step-${idx}` ? <Check size={16} /> : idx + 1}
-                                                </div>
-
-                                                {/* Step Content */}
-                                                <div className="mb-2">
-                                                    <h4 className="font-bold text-lg text-zinc-900 dark:text-white mb-1">{step.title}</h4>
-                                                    {step.description && <p className="text-sm text-zinc-500 mb-3">{step.description}</p>}
-                                                </div>
-
-                                                <div className="relative group">
-                                                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => handleCopy(`${selectedPrompt.id}-step-${idx}`, step.content)}
-                                                            className="p-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 shadow-lg border border-white/10 flex items-center gap-2 text-xs font-bold"
-                                                        >
-                                                            {copiedId === `${selectedPrompt.id}-step-${idx}` ? (
-                                                                <>
-                                                                    <Check size={14} />
-                                                                    <span>Скопировано</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Copy size={14} />
-                                                                    <span>Копировать</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                    <div className="bg-[#1e1e1e] text-zinc-300 p-5 rounded-2xl overflow-x-auto text-sm font-mono leading-relaxed border border-zinc-800 shadow-inner">
-                                                        <pre>{step.content}</pre>
-                                                    </div>
-                                                </div>
-
-                                                {/* Arrow Connector (if not last) */}
-                                                {idx < (selectedPrompt.steps?.length || 0) - 1 && (
-                                                    <div className="flex justify-center mt-6 mb-2">
-                                                        <ArrowRight size={20} className="text-zinc-300 dark:text-zinc-700 rotate-90" />
-                                                    </div>
+                                                {selectedPrompt.steps && (
+                                                    <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-violet-200 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:border-violet-500/30 dark:text-violet-300 flex items-center gap-1">
+                                                        <Layers size={12} />
+                                                        Цепочка промптов
+                                                    </span>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    /* --- SINGLE PROMPT VIEW --- */
-                                    <>
-                                        <div className="relative group">
-                                            <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => selectedPrompt.content && handleCopy(selectedPrompt.id, selectedPrompt.content)}
-                                                    className="p-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 shadow-lg border border-white/10"
-                                                >
-                                                    {copiedId === selectedPrompt.id ? <Check size={16} /> : <Copy size={16} />}
-                                                </button>
-                                            </div>
-                                            <div className="bg-[#1e1e1e] text-zinc-300 p-6 rounded-2xl overflow-x-auto text-sm font-mono leading-relaxed border border-zinc-800 shadow-inner">
-                                                <pre>{selectedPrompt.content}</pre>
-                                            </div>
+                                            <h3 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+                                                {selectedPrompt.title}
+                                            </h3>
+                                            <p className="text-zinc-500 dark:text-zinc-400">
+                                                {selectedPrompt.description}
+                                            </p>
                                         </div>
-
                                         <button
-                                            onClick={() => selectedPrompt.content && handleCopy(selectedPrompt.id, selectedPrompt.content)}
-                                            className="w-full py-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-3"
+                                            onClick={() => setSelectedPrompt(null)}
+                                            className="p-2 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                         >
-                                            {copiedId === selectedPrompt.id ? (
-                                                <>
-                                                    <Check size={20} />
-                                                    <span>Скопировано!</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Copy size={20} />
-                                                    <span>Скопировать промпт</span>
-                                                </>
-                                            )}
+                                            <X size={20} />
                                         </button>
-                                    </>
-                                )}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
+                                    {/* Usage */}
+                                    <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl p-5 flex gap-4">
+                                        <div className="shrink-0 pt-1 text-amber-600 dark:text-amber-400">
+                                            <Layers size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-amber-900 dark:text-amber-200 text-sm mb-1">Как использовать</h4>
+                                            <p className="text-sm text-amber-800 dark:text-amber-300/80 leading-relaxed">
+                                                {selectedPrompt.usage}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Content Logic: Stack vs Single */}
+                                    {selectedPrompt.steps ? (
+                                        /* --- STACK VIEW --- */
+                                        <div className="space-y-8 relative">
+                                            {/* Vertical Line */}
+                                            <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-zinc-100 dark:bg-zinc-800" />
+
+                                            {selectedPrompt.steps.map((step, idx) => (
+                                                <div key={idx} className="relative pl-14">
+                                                    {/* Step Number Bubble */}
+                                                    <div className={`absolute left-0 top-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold z-10 transition-colors bg-white dark:bg-zinc-900 ${copiedId === `${selectedPrompt.id}-step-${idx}`
+                                                            ? 'border-emerald-500 text-emerald-500'
+                                                            : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
+                                                        }`}>
+                                                        {copiedId === `${selectedPrompt.id}-step-${idx}` ? <Check size={16} /> : idx + 1}
+                                                    </div>
+
+                                                    {/* Step Content */}
+                                                    <div className="mb-2">
+                                                        <h4 className="font-bold text-lg text-zinc-900 dark:text-white mb-1">{step.title}</h4>
+                                                        {step.description && <p className="text-sm text-zinc-500 mb-3">{step.description}</p>}
+                                                    </div>
+
+                                                    <div className="relative group">
+                                                        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => handleCopy(`${selectedPrompt.id}-step-${idx}`, step.content)}
+                                                                className="p-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 shadow-lg border border-white/10 flex items-center gap-2 text-xs font-bold"
+                                                            >
+                                                                {copiedId === `${selectedPrompt.id}-step-${idx}` ? (
+                                                                    <>
+                                                                        <Check size={14} />
+                                                                        <span>Скопировано</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Copy size={14} />
+                                                                        <span>Копировать</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                        <div className="bg-[#1e1e1e] text-zinc-300 p-5 rounded-2xl overflow-x-auto text-sm font-mono leading-relaxed border border-zinc-800 shadow-inner">
+                                                            <pre>{step.content}</pre>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Arrow Connector (if not last) */}
+                                                    {idx < (selectedPrompt.steps?.length || 0) - 1 && (
+                                                        <div className="flex justify-center mt-6 mb-2">
+                                                            <ArrowRight size={20} className="text-zinc-300 dark:text-zinc-700 rotate-90" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        /* --- SINGLE PROMPT VIEW --- */
+                                        <>
+                                            <div className="relative group">
+                                                <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => selectedPrompt.content && handleCopy(selectedPrompt.id, selectedPrompt.content)}
+                                                        className="p-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 shadow-lg border border-white/10"
+                                                    >
+                                                        {copiedId === selectedPrompt.id ? <Check size={16} /> : <Copy size={16} />}
+                                                    </button>
+                                                </div>
+                                                <div className="bg-[#1e1e1e] text-zinc-300 p-6 rounded-2xl overflow-x-auto text-sm font-mono leading-relaxed border border-zinc-800 shadow-inner">
+                                                    <pre>{selectedPrompt.content}</pre>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => selectedPrompt.content && handleCopy(selectedPrompt.id, selectedPrompt.content)}
+                                                className="w-full py-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-3"
+                                            >
+                                                {copiedId === selectedPrompt.id ? (
+                                                    <>
+                                                        <Check size={20} />
+                                                        <span>Скопировано!</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy size={20} />
+                                                        <span>Скопировать промпт</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
 
             {/* Floating Toast */}
             <AnimatePresence>
