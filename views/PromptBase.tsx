@@ -54,8 +54,11 @@ const PromptBase: React.FC = () => {
                     fetchWithAuthGet<PromptCategoryItem[]>('/api/content/categories')
                 ]);
 
+                // Всегда устанавливаем промпты в state
+                setPrompts(promptsData);
+
+                // Кэшируем только если это свежие данные с сервера
                 if (!cachedPrompts) {
-                    setPrompts(promptsData);
                     setCache(CACHE_KEYS.PROMPTS, promptsData);
                 }
                 setCategories(categoriesData);
