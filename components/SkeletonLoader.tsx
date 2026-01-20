@@ -1,7 +1,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-// === Base Skeleton Element ===
+// === Shimmer Animation Styles (injected once) ===
+const shimmerStyles = `
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+`;
+
+// Inject styles once
+if (typeof document !== 'undefined') {
+  const styleId = 'skeleton-shimmer-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = shimmerStyles;
+    document.head.appendChild(style);
+  }
+}
+
+// === Base Skeleton Element with Shimmer ===
 interface SkeletonProps {
   className?: string;
   variant?: 'rectangular' | 'circular' | 'text';
@@ -26,13 +45,23 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   return (
     <div
       className={`
+        relative overflow-hidden
         bg-zinc-200 dark:bg-zinc-800
-        ${animate ? 'animate-pulse' : ''}
         ${variantClasses[variant]}
         ${className}
       `}
       style={{ width, height }}
-    />
+    >
+      {animate && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+            animation: 'shimmer 1.5s infinite'
+          }}
+        />
+      )}
+    </div>
   );
 };
 

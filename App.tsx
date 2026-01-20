@@ -19,6 +19,7 @@ import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
 import Onboarding from './views/Onboarding';
+import SplashScreen from './components/SplashScreen';
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
@@ -26,6 +27,7 @@ import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
 import { fetchWithAuth } from './lib/fetchWithAuth';
+import { setCache, CACHE_KEYS } from './lib/cache';
 
 
 
@@ -34,6 +36,7 @@ const AppContent: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<Student | null>(null);
     const [inviteCodeFromUrl, setInviteCodeFromUrl] = useState<string | null>(null);
     const [view, setView] = useState<'login' | 'register' | 'app' | 'reset-password' | 'onboarding'>('login');
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     // --- App Data State (The "Database") ---
     const [students, setStudents] = useState<Student[]>([]);
@@ -66,6 +69,7 @@ const AppContent: React.FC = () => {
 
         if (inviteParam) {
             setInviteCodeFromUrl(inviteParam);
+            setIsAuthLoading(false);
             setView('register');
         } else if (savedToken) {
             // Проверяем токен через API
@@ -102,19 +106,25 @@ const AppContent: React.FC = () => {
 
                             if (!user.onboardingCompleted) {
                                 setView('onboarding');
+                                setIsAuthLoading(false);
+                                return;
                             }
                         }
+                        setIsAuthLoading(false);
                         setView('app');
                     } else {
                         // Токен невалидный - удаляем и показываем логин
                         localStorage.removeItem('vibes_token');
+                        setIsAuthLoading(false);
                         setView('login');
                     }
                 })
                 .catch(() => {
+                    setIsAuthLoading(false);
                     setView('login');
                 });
         } else {
+            setIsAuthLoading(false);
             setView('login');
         }
 
@@ -180,6 +190,38 @@ const AppContent: React.FC = () => {
                 setNavConfig(null);
             });
     }, [currentUser]); // Зависимость от currentUser - перезагружаем при смене пользователя
+
+    // 5. Prefetch critical data after successful auth
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        // Prefetch in background without blocking UI
+        const prefetchData = async () => {
+            try {
+                const headers = { 'Authorization': `Bearer ${token}` };
+
+                // Parallel fetch all content
+                const [stylesRes, promptsRes, glossaryRes] = await Promise.all([
+                    fetch('/api/content/styles', { headers }).then(r => r.json()),
+                    fetch('/api/content/prompts', { headers }).then(r => r.json()),
+                    fetch('/api/content/glossary', { headers }).then(r => r.json())
+                ]);
+
+                // Cache successful responses
+                if (stylesRes.success) setCache(CACHE_KEYS.STYLES, stylesRes.data);
+                if (promptsRes.success) setCache(CACHE_KEYS.PROMPTS, promptsRes.data);
+                if (glossaryRes.success) setCache(CACHE_KEYS.GLOSSARY, glossaryRes.data);
+            } catch (error) {
+                // Silent fail - prefetch is not critical
+                console.log('Prefetch failed (non-critical):', error);
+            }
+        };
+
+        prefetchData();
+    }, [currentUser]);
 
     // --- Actions ---
 
@@ -474,6 +516,9 @@ const AppContent: React.FC = () => {
     };
 
     // --- Render Views ---
+
+    // Show splash screen while checking auth
+    if (isAuthLoading) return <SplashScreen />;
 
     if (view === 'login') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} onSimulateResetLink={() => setView('reset-password')} />;
     if (view === 'reset-password') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} initialView="reset" onSimulateResetLink={() => { }} onResetComplete={() => setView('login')} />;
