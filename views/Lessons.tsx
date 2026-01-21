@@ -456,7 +456,7 @@ const Lessons: React.FC = () => {
 
                                     <div className="relative space-y-1">
                                         {/* Timeline Line */}
-                                        <div className="absolute left-[19px] top-3 bottom-3 w-[2px] bg-zinc-100 dark:bg-zinc-800" />
+                                        <div className="absolute left-[31px] top-3 bottom-3 w-[2px] bg-zinc-100 dark:bg-zinc-800" />
 
                                         {module.lessons.map((lesson, lIdx) => {
                                             const isActive = activeLessonId === lesson.id;
