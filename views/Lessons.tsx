@@ -504,6 +504,12 @@ const Lessons: React.FC = () => {
                                                             {!isLocked && <PlayCircle size={10} />}
                                                             {lesson.duration}
                                                         </div>
+                                                        {/* New Badge */}
+                                                        {!isLocked && !isCompleted && (
+                                                            <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 dark:bg-red-500/10 rounded-full">
+                                                                Новый
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </button>
                                             );
