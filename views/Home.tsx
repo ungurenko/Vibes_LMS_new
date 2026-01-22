@@ -16,6 +16,30 @@ interface HomeProps {
    userName?: string;
 }
 
+// Animation Variants (вынесены за компонент для предотвращения пересоздания)
+const containerVariants = {
+   hidden: { opacity: 0 },
+   show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+   }
+};
+
+const cardVariants = {
+   hidden: { y: 20, opacity: 0 },
+   show: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
+   }
+};
+
+const taskVariants = {
+   hidden: { opacity: 0, x: -8 },
+   show: { opacity: 1, x: 0, transition: { duration: 0.2 } },
+   exit: { opacity: 0, x: 8, transition: { duration: 0.15 } }
+};
+
 interface UpcomingCall {
    id: string;
    topic: string;
@@ -163,30 +187,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
 
    // Check if call is today
    const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
-
-   // Animation Variants
-   const containerVariants = {
-      hidden: { opacity: 0 },
-      show: {
-         opacity: 1,
-         transition: { staggerChildren: 0.08, delayChildren: 0.1 }
-      }
-   };
-
-   const cardVariants = {
-      hidden: { y: 20, opacity: 0 },
-      show: {
-         y: 0,
-         opacity: 1,
-         transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
-      }
-   };
-
-   const taskVariants = {
-      hidden: { opacity: 0, x: -8 },
-      show: { opacity: 1, x: 0, transition: { duration: 0.2 } },
-      exit: { opacity: 0, x: 8, transition: { duration: 0.15 } }
-   };
 
    // Сортировка задач: активные сверху, выполненные снизу
    const sortedTasks = [...visibleTasks].sort((a, b) => {

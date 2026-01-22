@@ -1,11 +1,120 @@
-/* Базовые стили для сброса и предотвращения ошибок загрузки */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Custom Theme Configuration */
+@theme {
+  /* Font families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Vibe color palette */
+  --color-vibe-50: #f5f3ff;
+  --color-vibe-100: #ede9fe;
+  --color-vibe-200: #ddd6fe;
+  --color-vibe-300: #c4b5fd;
+  --color-vibe-400: #a78bfa;
+  --color-vibe-500: #8b5cf6;
+  --color-vibe-600: #7c3aed;
+  --color-vibe-700: #6d28d9;
+  --color-vibe-800: #5b21b6;
+  --color-vibe-900: #4c1d95;
+  --color-vibe-950: #2e1065;
+
+  /* Dark theme colors */
+  --color-dark-bg: #09090b;
+  --color-dark-card: #18181b;
+  --color-dark-border: rgba(255, 255, 255, 0.08);
+
+  /* Custom animations */
+  --animate-blob: blob 10s infinite;
+  --animate-wave: wave 2.5s infinite;
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+
+  @keyframes wave {
+    0% { transform: rotate(0.0deg); }
+    10% { transform: rotate(14.0deg); }
+    20% { transform: rotate(-8.0deg); }
+    30% { transform: rotate(14.0deg); }
+    40% { transform: rotate(-4.0deg); }
+    50% { transform: rotate(10.0deg); }
+    60% { transform: rotate(0.0deg); }
+    100% { transform: rotate(0.0deg); }
+  }
+}
+
+/* Dark mode configuration */
+@variant dark (&:where(.dark, .dark *));
+
+/* CSS Variables */
+:root {
+  --bg-primary: #f8fafc;
+  --text-primary: #18181b;
+  --scrollbar-thumb: #d4d4d8;
+  --scrollbar-thumb-hover: #a1a1aa;
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
+.dark {
+  --bg-primary: #09090b;
+  --text-primary: #e4e4e7;
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-thumb-hover: #52525b;
+}
+
+/* Base styles */
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
-/* Стили для кастомного скроллбара (дубликат из index.html для надежности) */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Noise Overlay */
+.bg-noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 50;
+  transform: translateZ(0);
+  will-change: opacity;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -14,6 +123,72 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: transparent;
   border-radius: 10px;
+  transition: background 0.3s;
+}
+:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Utilities */
+.mask-linear {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Text Selection */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: inherit;
+}
+
+.dark ::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: #fff;
+}
+
+/* Performance Utilities */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Input Zoom Fix for iOS */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 414px) {
+  .blur-\[120px\], .blur-\[100px\], .blur-\[80px\] {
+    filter: blur(40px) !important;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* iOS Smooth Scrolling */
+.overflow-y-auto, .overflow-x-auto, .overflow-auto {
+  -webkit-overflow-scrolling: touch;
 }
