@@ -329,6 +329,7 @@ export default async function handler(
         model: config.modelId,
         messages: apiMessages,
         stream: true,
+        max_tokens: 8192,
       });
 
       let fullResponse = '';
