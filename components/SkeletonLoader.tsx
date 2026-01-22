@@ -180,3 +180,17 @@ export const GridSkeleton: React.FC<GridSkeletonProps> = ({
     </div>
   );
 };
+
+// === View Skeleton (for lazy-loaded views) ===
+export const ViewSkeleton: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[400px] w-full">
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" />
+        <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+        <div className="w-2 h-2 bg-violet-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+      </div>
+      <span className="text-sm text-zinc-400">Загрузка...</span>
+    </div>
+  </div>
+);

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { 
   Heart, 
   ExternalLink, 
@@ -167,9 +167,10 @@ const Community: React.FC = () => {
                >
                   {/* Image Area */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                     <img 
-                       src={project.imageUrl} 
-                       alt={project.title} 
+                     <img
+                       src={project.imageUrl}
+                       alt={project.title}
+                       loading="lazy"
                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                      />
                      
@@ -208,7 +209,7 @@ const Community: React.FC = () => {
                      <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-white/5 mt-4">
                         {/* Author */}
                         <div className="flex items-center gap-2">
-                           <img src={project.author.avatar} alt="" className="w-6 h-6 rounded-full bg-zinc-200 ring-2 ring-white dark:ring-zinc-800" />
+                           <img src={project.author.avatar} alt="" loading="lazy" className="w-6 h-6 rounded-full bg-zinc-200 ring-2 ring-white dark:ring-zinc-800" />
                            <div className="flex flex-col">
                               <span className="text-xs font-bold text-zinc-900 dark:text-white leading-none">{project.author.name}</span>
                               <span className="text-xs text-zinc-400">{project.author.level}</span>
@@ -327,4 +328,4 @@ const Community: React.FC = () => {
   );
 };
 
-export default Community;
+export default memo(Community);

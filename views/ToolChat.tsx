@@ -3,7 +3,7 @@
  * Поддерживает маркеры [ТЗ_START]/[ТЗ_END] и [IDEA_START]/[IDEA_END]
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import {
   Send,
   User,
@@ -130,7 +130,7 @@ const parseMarkers = (text: string): {
 
 // --- Components ---
 
-const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language = 'text' }) => {
+const CodeBlock = memo(function CodeBlock({ code, language = 'text' }: { code: string; language?: string }) {
   const { playSound } = useSound();
   const [copied, setCopied] = useState(false);
 
@@ -163,9 +163,9 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, langua
       </div>
     </div>
   );
-};
+});
 
-const FormattedText: React.FC<{ text: string }> = ({ text }) => {
+const FormattedText = memo(function FormattedText({ text }: { text: string }) {
   return (
     <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.6] prose-p:mb-3 prose-pre:m-0 prose-pre:p-0 prose-pre:bg-transparent text-[13px] md:text-[15px] break-words">
       <ReactMarkdown
@@ -211,10 +211,10 @@ const FormattedText: React.FC<{ text: string }> = ({ text }) => {
       </ReactMarkdown>
     </div>
   );
-};
+});
 
 // Компонент для копируемого контента (ТЗ)
-const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
+const CopyableContent = memo(function CopyableContent({ content }: { content: string }) {
   const { playSound } = useSound();
   const [copied, setCopied] = useState(false);
 
@@ -252,10 +252,10 @@ const CopyableContent: React.FC<{ content: string }> = ({ content }) => {
       </button>
     </div>
   );
-};
+});
 
 // Компонент для идеи с кнопкой перехода
-const IdeaContent: React.FC<{ content: string; onTransfer: () => void }> = ({ content, onTransfer }) => {
+const IdeaContent = memo(function IdeaContent({ content, onTransfer }: { content: string; onTransfer: () => void }) {
   return (
     <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
       <div className="mb-2.5">
@@ -271,14 +271,14 @@ const IdeaContent: React.FC<{ content: string; onTransfer: () => void }> = ({ co
       </button>
     </div>
   );
-};
+});
 
 // Компонент быстрых подсказок для пустого чата
-const QuickPrompts: React.FC<{
+const QuickPrompts = memo(function QuickPrompts({ toolType, onSelect, gradient }: {
   toolType: ToolType;
   onSelect: (prompt: string) => void;
   gradient: string;
-}> = ({ toolType, onSelect, gradient }) => {
+}) {
   const prompts = QUICK_PROMPTS[toolType];
 
   return (
@@ -312,7 +312,7 @@ const QuickPrompts: React.FC<{
       ))}
     </motion.div>
   );
-};
+});
 
 // --- Main Component ---
 

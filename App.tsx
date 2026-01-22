@@ -1,25 +1,28 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Home from './views/Home';
 import StyleLibrary from './views/StyleLibrary';
 import Glossary from './views/Glossary';
 import ToolsView from './views/ToolsView';
-import ToolChat from './views/ToolChat';
 import Lessons from './views/Lessons';
 import PromptBase from './views/PromptBase';
 import Roadmaps from './views/Roadmaps';
-import AdminStudents from './views/AdminStudents';
-import AdminContent from './views/AdminContent';
-import AdminCalls from './views/AdminCalls';
-import AdminAssistant from './views/AdminAssistant';
-import AdminSettings from './views/AdminSettings';
 import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
 import Onboarding from './views/Onboarding';
 import SplashScreen from './components/SplashScreen';
+import { ViewSkeleton } from './components/SkeletonLoader';
+
+// Lazy loaded heavy components (code splitting)
+const ToolChat = lazy(() => import('./views/ToolChat'));
+const AdminStudents = lazy(() => import('./views/AdminStudents'));
+const AdminContent = lazy(() => import('./views/AdminContent'));
+const AdminCalls = lazy(() => import('./views/AdminCalls'));
+const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
+const AdminSettings = lazy(() => import('./views/AdminSettings'));
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
@@ -97,9 +100,8 @@ const AppContent: React.FC = () => {
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
-                            // Загрузить инвайты и студентов для админ-панели
-                            loadInvites();
-                            loadStudents();
+                            // Загрузить инвайты и студентов для админ-панели (параллельно)
+                            Promise.all([loadInvites(), loadStudents()]);
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
@@ -277,11 +279,8 @@ const AppContent: React.FC = () => {
                 if (user.role === 'admin') {
                     setMode('admin');
                     setActiveTab('admin-students');
-                    // Загружаем данные для админки сразу после входа
-                    setTimeout(() => {
-                        loadInvites();
-                        loadStudents();
-                    }, 0);
+                    // Загружаем данные для админки сразу после входа (параллельно)
+                    Promise.all([loadInvites(), loadStudents()]);
                 } else {
                     setMode('student');
                     setActiveTab('dashboard');
@@ -537,26 +536,51 @@ const AppContent: React.FC = () => {
             case 'tools':
                 if (selectedTool) {
                     return (
-                        <ToolChat
-                            toolType={selectedTool}
-                            onBack={handleBackFromTool}
-                            onTransferToTZ={selectedTool === 'ideas' ? handleTransferToTZ : undefined}
-                            initialMessage={toolInitialMessage}
-                        />
+                        <Suspense fallback={<ViewSkeleton />}>
+                            <ToolChat
+                                toolType={selectedTool}
+                                onBack={handleBackFromTool}
+                                onTransferToTZ={selectedTool === 'ideas' ? handleTransferToTZ : undefined}
+                                initialMessage={toolInitialMessage}
+                            />
+                        </Suspense>
                     );
                 }
                 return <ToolsView onSelectTool={handleSelectTool} />;
             case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
 
-            // Admin Views
-            case 'admin-students': return <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />;
-            // Update AdminContent to receive modules and updater
-            case 'admin-content': return <AdminContent />;
-            case 'admin-calls': return <AdminCalls />;
-            case 'admin-tools': return <AdminAssistant />;
-            case 'admin-settings': return <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />;
+            // Admin Views (lazy-loaded with Suspense)
+            case 'admin-students': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                </Suspense>
+            );
+            case 'admin-content': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminContent />
+                </Suspense>
+            );
+            case 'admin-calls': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminCalls />
+                </Suspense>
+            );
+            case 'admin-tools': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminAssistant />
+                </Suspense>
+            );
+            case 'admin-settings': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />
+                </Suspense>
+            );
 
-            default: return mode === 'admin' ? <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            default: return mode === 'admin' ? (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                </Suspense>
+            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
         }
     };
 

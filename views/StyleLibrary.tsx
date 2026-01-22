@@ -131,12 +131,13 @@ const StyleLibrary: React.FC = () => {
             {filteredStyles.map((style) => (
             <motion.div
               layout
-              initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 0.8, filter: "blur(10px)", transition: { duration: 0.2 } }}
+              layoutDependency={activeCategory}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
               transition={{
-                layout: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.4 }
+                layout: { type: "spring", stiffness: 350, damping: 30 },
+                opacity: { duration: 0.25 }
               }}
               key={style.id}
               className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px]"
