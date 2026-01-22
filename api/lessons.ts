@@ -118,8 +118,10 @@ export default async function handler(
             [userId]
         );
 
-        // Отключаем кэширование, так как данные персонализированы и меняются динамически
-        res.setHeader('Cache-Control', 'no-store, max-age=0');
+        // Кэширование на 30 сек для ускорения повторных загрузок
+        // private — кэш только для конкретного пользователя
+        // stale-while-revalidate — показывать устаревшие данные пока идёт обновление
+        res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
 
         // Группируем результат в иерархическую структуру
         const modulesMap = new Map<string, any>();

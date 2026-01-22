@@ -117,6 +117,7 @@ export const CACHE_KEYS = {
   PROMPTS: 'prompts',
   GLOSSARY: 'glossary',
   FAVORITES: 'favorites',
+  LESSONS: 'lessons',
 } as const;
 
 // TTL для разных типов данных (в миллисекундах)
@@ -125,4 +126,5 @@ export const CACHE_TTL = {
   PROMPTS: 10 * 60 * 1000,   // 10 минут
   GLOSSARY: 15 * 60 * 1000,  // 15 минут - словарь статичен
   FAVORITES: 5 * 60 * 1000,  // 5 минут - избранное
+  LESSONS: 5 * 60 * 1000,    // 5 минут - уроки с прогрессом
 } as const;

@@ -14,7 +14,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production'
     ? { rejectUnauthorized: false } // Для Timeweb Cloud и других облачных БД
     : false,
-  max: 3, // Позволяет параллельные запросы в рамках одного вызова
+  max: 10, // Увеличено для параллельных запросов (было 3)
   min: 0, // Не держать idle соединения в serverless
   idleTimeoutMillis: 10000, // Быстрее освобождать соединения
   connectionTimeoutMillis: 5000, // Быстрее фейлить при проблемах

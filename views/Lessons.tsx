@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { CourseModule, LessonStatus } from '../types';
 import { LessonItemSkeleton } from '../components/SkeletonLoader';
+import { getCached, setCache, removeCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
 const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
@@ -48,11 +49,25 @@ const Lessons: React.FC = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'materials'>('overview');
 
-    // Load modules from API
+    // Load modules from API with caching
     useEffect(() => {
         const fetchModules = async () => {
             try {
-                setIsLoading(true);
+                // Check cache first for instant display
+                const cachedData = getCached<CourseModule[]>(CACHE_KEYS.LESSONS, CACHE_TTL.LESSONS);
+                if (cachedData) {
+                    setModules(cachedData);
+                    setIsLoading(false);
+                    // Set first available lesson as active
+                    if (cachedData.length > 0 && cachedData[0].lessons?.length > 0) {
+                        setActiveModuleId(cachedData[0].id);
+                        setActiveLessonId(cachedData[0].lessons[0].id);
+                    }
+                    // Continue to fetch fresh data in background
+                } else {
+                    setIsLoading(true);
+                }
+
                 const token = localStorage.getItem('vibes_token');
                 const response = await fetch('/api/lessons', {
                     headers: {
@@ -65,9 +80,11 @@ const Lessons: React.FC = () => {
                 const result = await response.json();
                 if (result.success && result.data) {
                     setModules(result.data);
+                    // Save to cache
+                    setCache(CACHE_KEYS.LESSONS, result.data);
 
-                    // Set first available lesson as active
-                    if (result.data.length > 0 && result.data[0].lessons?.length > 0) {
+                    // Set first available lesson as active (only if not already set)
+                    if (!cachedData && result.data.length > 0 && result.data[0].lessons?.length > 0) {
                         setActiveModuleId(result.data[0].id);
                         setActiveLessonId(result.data[0].lessons[0].id);
                     }
@@ -146,6 +163,8 @@ const Lessons: React.FC = () => {
             })
         }));
         setModules(updatedModules);
+        // Update cache with new state
+        setCache(CACHE_KEYS.LESSONS, updatedModules);
 
         try {
             const token = localStorage.getItem('vibes_token');
@@ -163,10 +182,13 @@ const Lessons: React.FC = () => {
 
             if (!response.ok) {
                 console.error('Failed to update lesson status');
-                // Optional: Revert state here if needed
+                // Revert cache on error
+                removeCache(CACHE_KEYS.LESSONS);
             }
         } catch (error) {
             console.error('Error updating lesson status:', error);
+            // Revert cache on error
+            removeCache(CACHE_KEYS.LESSONS);
         }
     };
 
