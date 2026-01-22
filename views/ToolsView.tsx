@@ -4,9 +4,15 @@
  * v2: CSS-фикс по фидбеку дизайнера
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Sparkles } from 'lucide-react';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+
+interface ToolModelInfo {
+  modelId: string;
+  modelName: string;
+}
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas';
 
@@ -54,7 +60,7 @@ const tools: ToolCardData[] = [
   }
 ];
 
-const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ tool, onClick }) => {
+const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelName?: string }> = ({ tool, onClick, modelName }) => {
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
@@ -89,6 +95,14 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
             <p className="text-sm text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
+            {modelName && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  {modelName}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Illustration - на вылет */}
@@ -112,7 +126,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void }> = ({ 
   );
 };
 
-const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index: number }> = ({ tool, onClick, index }) => {
+const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index: number; modelName?: string }> = ({ tool, onClick, index, modelName }) => {
   const glowColors = {
     emerald: {
       glow: 'bg-emerald-500/30 group-hover:bg-emerald-500/50',
@@ -174,6 +188,14 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
           <p className="text-sm text-zinc-200 leading-relaxed group-hover:text-white transition-colors">
             {tool.description}
           </p>
+          {modelName && (
+            <div className="mt-2">
+              <span className="text-xs text-zinc-500 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60" />
+                {modelName}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </motion.button>
@@ -181,6 +203,14 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
 };
 
 const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
+  const [models, setModels] = useState<Record<ToolType, ToolModelInfo> | null>(null);
+
+  useEffect(() => {
+    fetchWithAuthGet<Record<ToolType, ToolModelInfo>>('/api/tools/models')
+      .then(setModels)
+      .catch(err => console.error('Failed to load tool models:', err));
+  }, []);
+
   const largeTool = tools.find(t => t.size === 'large')!;
   const mediumTools = tools.filter(t => t.size === 'medium');
 
@@ -219,6 +249,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
           <LargeToolCard
             tool={largeTool}
             onClick={() => onSelectTool(largeTool.type)}
+            modelName={models?.[largeTool.type]?.modelName}
           />
 
           {/* Medium Cards Grid */}
@@ -229,6 +260,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
                 tool={tool}
                 onClick={() => onSelectTool(tool.type)}
                 index={index}
+                modelName={models?.[tool.type]?.modelName}
               />
             ))}
           </div>

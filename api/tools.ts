@@ -2,6 +2,7 @@
  * /api/tools - API для инструментов (Ассистент, Помощник по ТЗ, Идеи)
  *
  * Эндпоинты:
+ * GET  /api/tools/models                        - Получить модели всех инструментов
  * GET  /api/tools/chats?tool_type=assistant     - Получить чат
  * GET  /api/tools/messages?tool_type=assistant  - История сообщений
  * POST /api/tools/messages                      - Отправить сообщение
@@ -32,6 +33,31 @@ const DEFAULT_PROMPTS: Record<ToolType, string> = {
   tz_helper: '',  // Будет загружен из БД
   ideas: ''       // Будет загружен из БД
 };
+
+// Человекочитаемые названия моделей
+const MODEL_LABELS: Record<string, string> = {
+  'google/gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
+  'google/gemini-2.0-flash-001': 'Gemini 2.0 Flash',
+  'anthropic/claude-3.5-sonnet': 'Claude 3.5 Sonnet',
+  'anthropic/claude-3-haiku': 'Claude 3 Haiku',
+  'openai/gpt-4o-mini': 'GPT-4o Mini',
+  'openai/gpt-4o': 'GPT-4o',
+  'z-ai/glm-4.7': 'GLM-4.7',
+  'xiaomi/mimo-v2-flash:free': 'MiMo V2 Flash',
+  'meta-llama/llama-3.3-70b-instruct': 'Llama 3.3 70B',
+};
+
+// Получить человекочитаемое название модели
+function getModelLabel(modelId: string): string {
+  if (MODEL_LABELS[modelId]) return MODEL_LABELS[modelId];
+  // Автоформатирование: "google/gemini-2.5-pro" -> "Gemini 2.5 Pro"
+  const parts = modelId.split('/');
+  return parts[parts.length - 1]
+    .replace(/:free$/, '')
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 // Получить или создать чат
 async function getOrCreateChat(userId: string, toolType: ToolType): Promise<string> {
@@ -108,6 +134,23 @@ export default async function handler(
   const userId = tokenData.userId;
 
   try {
+    // ========== GET /api/tools/models ==========
+    // Возвращает текущие модели для всех инструментов
+    if (req.method === 'GET' && endpoint === 'models') {
+      const toolTypes: ToolType[] = ['assistant', 'tz_helper', 'ideas'];
+      const models: Record<string, { modelId: string; modelName: string }> = {};
+
+      for (const toolType of toolTypes) {
+        const config = await getToolConfig(toolType);
+        models[toolType] = {
+          modelId: config.modelId,
+          modelName: getModelLabel(config.modelId),
+        };
+      }
+
+      return res.status(200).json(successResponse(models));
+    }
+
     // ========== GET /api/tools/chats ==========
     if (req.method === 'GET' && endpoint === 'chats') {
       const toolType = (req.query.tool_type as ToolType) || 'assistant';
