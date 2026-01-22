@@ -6,7 +6,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Send,
-  Bot,
   User,
   Sparkles,
   Trash2,
@@ -15,7 +14,6 @@ import {
   Terminal,
   ArrowLeft,
   FileText,
-  Lightbulb,
   ArrowRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -58,28 +56,28 @@ const QUICK_PROMPTS: Record<ToolType, string[]> = {
 const TOOL_CONFIG: Record<ToolType, {
   title: string;
   subtitle: string;
-  icon: React.ReactNode;
+  emoji: string;
   gradient: string;
   welcomeMessage: string;
 }> = {
   assistant: {
     title: 'Ассистент',
     subtitle: 'Помощник по вайб-кодингу',
-    icon: <Bot size={20} />,
+    emoji: '🧑‍💻',
     gradient: 'from-violet-600 to-indigo-600',
     welcomeMessage: 'Привет! Я твой ИИ-ментор по вайб-кодингу. Готов помочь с кодом, ошибками или объяснить сложные штуки простыми словами. **С чего начнем?**'
   },
   tz_helper: {
     title: 'Помощник по ТЗ',
     subtitle: 'Создание технического задания',
-    icon: <FileText size={20} />,
+    emoji: '📋',
     gradient: 'from-emerald-500 to-teal-600',
     welcomeMessage: 'Привет! Я помогу тебе создать техническое задание для нейросети. **Опиши свою идею проекта** — что ты хочешь создать?'
   },
   ideas: {
     title: 'Идеи для проектов',
     subtitle: 'Генерация идей для проектов',
-    icon: <Lightbulb size={20} />,
+    emoji: '💡',
     gradient: 'from-amber-500 to-orange-600',
     welcomeMessage: 'Привет! Я помогу найти идею проекта, которая подойдёт именно тебе. **В какой сфере ты работаешь или чем увлекаешься?**'
   }
@@ -623,7 +621,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
 
           {/* Icon */}
           <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${config.gradient} flex items-center justify-center shadow-lg`}>
-            {config.icon}
+            <span className="text-xl">{config.emoji}</span>
           </div>
 
           {/* Title */}

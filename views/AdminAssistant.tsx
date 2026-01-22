@@ -5,9 +5,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Bot,
-  FileText,
-  Lightbulb,
   Save,
   Loader,
   Check,
@@ -17,8 +14,6 @@ import {
   User,
   Clock,
   Filter,
-  Eye,
-  X,
   ChevronRight,
   Download
 } from 'lucide-react';
@@ -39,7 +34,7 @@ interface ToolCardData {
   type: ToolType;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  emoji: string;
   iconBg: string;
   gradient: string;
 }
@@ -97,7 +92,7 @@ const toolsData: ToolCardData[] = [
     type: 'assistant',
     title: 'Ассистент',
     description: 'Универсальный помощник по вайб-кодингу',
-    icon: <Bot size={24} />,
+    emoji: '🧑‍💻',
     iconBg: 'bg-violet-500',
     gradient: 'from-violet-500 to-indigo-600'
   },
@@ -105,7 +100,7 @@ const toolsData: ToolCardData[] = [
     type: 'tz_helper',
     title: 'Помощник по ТЗ',
     description: 'Создание технического задания для проекта',
-    icon: <FileText size={24} />,
+    emoji: '📋',
     iconBg: 'bg-emerald-500',
     gradient: 'from-emerald-500 to-teal-600'
   },
@@ -113,7 +108,7 @@ const toolsData: ToolCardData[] = [
     type: 'ideas',
     title: 'Идеи для проектов',
     description: 'Генерация персонализированных идей',
-    icon: <Lightbulb size={24} />,
+    emoji: '💡',
     iconBg: 'bg-amber-500',
     gradient: 'from-amber-500 to-orange-600'
   }
@@ -202,8 +197,8 @@ const ToolConfigCard: React.FC<{
         className="w-full p-6 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors"
       >
         <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl ${tool.iconBg} flex items-center justify-center text-white shadow-lg`}>
-            {tool.icon}
+          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shadow-lg`}>
+            <span className="text-2xl">{tool.emoji}</span>
           </div>
           <div className="text-left">
             <h3 className="font-bold text-zinc-900 dark:text-white text-lg">{tool.title}</h3>
