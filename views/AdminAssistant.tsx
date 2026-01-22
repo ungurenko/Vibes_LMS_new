@@ -19,7 +19,8 @@ import {
   Filter,
   Eye,
   X,
-  ChevronRight
+  ChevronRight,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, Drawer } from '../components/Shared';
@@ -349,6 +350,7 @@ const ChatsTab: React.FC = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [chatDetail, setChatDetail] = useState<ChatDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Load chats and stats
   const loadChats = useCallback(async () => {
@@ -414,6 +416,48 @@ const ChatsTab: React.FC = () => {
     setChatDetail(null);
   };
 
+  // Экспорт чатов в Markdown
+  const handleExport = async () => {
+    if (filter === 'all') {
+      alert('Выберите конкретный инструмент для экспорта');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('vibes_token');
+      const res = await fetch(`/api/admin?resource=ai-chats&export=true&tool_type=${filter}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        throw new Error('Ошибка экспорта');
+      }
+
+      const result = await res.json();
+      if (!result.success || !result.data?.markdown) {
+        throw new Error('Нет данных для экспорта');
+      }
+
+      // Создаём и скачиваем файл
+      const blob = new Blob([result.data.markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `vibes-chats-${filter}-${date}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Ошибка экспорта чатов');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -447,28 +491,49 @@ const ChatsTab: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-          <Filter size={14} /> Фильтр:
-        </span>
-        {(['all', 'assistant', 'tz_helper', 'ideas'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => { setFilter(f); setLoading(true); }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filter === f
-                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-            }`}
-          >
-            {f === 'all' ? 'Все' : toolTypeLabels[f]}
-            {stats && f !== 'all' && (
-              <span className="ml-1 opacity-60">
-                ({f === 'assistant' ? stats.assistantChats : f === 'tz_helper' ? stats.tzHelperChats : stats.ideasChats})
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 flex-wrap justify-between">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+            <Filter size={14} /> Фильтр:
+          </span>
+          {(['all', 'assistant', 'tz_helper', 'ideas'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => { setFilter(f); setLoading(true); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === f
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-black'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {f === 'all' ? 'Все' : toolTypeLabels[f]}
+              {stats && f !== 'all' && (
+                <span className="ml-1 opacity-60">
+                  ({f === 'assistant' ? stats.assistantChats : f === 'tz_helper' ? stats.tzHelperChats : stats.ideasChats})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Export Button */}
+        <button
+          onClick={handleExport}
+          disabled={exporting || filter === 'all'}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+            filter === 'all'
+              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
+              : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+          }`}
+          title={filter === 'all' ? 'Выберите инструмент для экспорта' : `Экспорт чатов: ${toolTypeLabels[filter]}`}
+        >
+          {exporting ? (
+            <Loader size={16} className="animate-spin" />
+          ) : (
+            <Download size={16} />
+          )}
+          Экспорт
+        </button>
       </div>
 
       {/* Chats List */}

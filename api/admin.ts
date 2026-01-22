@@ -1991,6 +1991,68 @@ async function handleDashboardStats(
 
 // ===== AI CHATS =====
 
+const toolTypeLabelsRu: Record<string, string> = {
+  assistant: 'Ассистент',
+  tz_helper: 'Помощник по ТЗ',
+  ideas: 'Идеи для проектов',
+};
+
+/**
+ * Генерирует Markdown для экспорта чатов
+ */
+function generateChatsMarkdown(
+  chats: Array<{
+    user: { name: string; email: string };
+    messages: Array<{ role: string; content: string; createdAt: string }>;
+    lastMessageAt: string | null;
+  }>,
+  toolType: string
+): string {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const toolLabel = toolTypeLabelsRu[toolType] || toolType;
+  const totalMessages = chats.reduce((sum, c) => sum + c.messages.length, 0);
+
+  let md = `# Экспорт чатов: ${toolLabel}\n`;
+  md += `Дата экспорта: ${dateStr}\n`;
+  md += `Всего диалогов: ${chats.length} | Всего сообщений: ${totalMessages}\n\n`;
+  md += `---\n\n`;
+
+  for (const chat of chats) {
+    const lastActive = chat.lastMessageAt
+      ? new Date(chat.lastMessageAt).toLocaleDateString('ru-RU')
+      : 'Нет сообщений';
+
+    md += `## Студент: ${chat.user.name || 'Без имени'} (${chat.user.email})\n`;
+    md += `Сообщений: ${chat.messages.length} | Последняя активность: ${lastActive}\n\n`;
+
+    for (const msg of chat.messages) {
+      const msgDate = new Date(msg.createdAt);
+      const msgDateStr = msgDate.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      const msgTimeStr = msgDate.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      md += `### ${msgDateStr} ${msgTimeStr}\n`;
+      md += `**${msg.role === 'user' ? 'Студент' : 'AI'}:** ${msg.content}\n\n`;
+    }
+
+    md += `---\n\n`;
+  }
+
+  return md;
+}
+
 async function handleAiChats(
   req: VercelRequest,
   res: VercelResponse,
@@ -2001,7 +2063,7 @@ async function handleAiChats(
   }
 
   try {
-    const { chat_id, tool_type, stats: getStats } = req.query;
+    const { chat_id, tool_type, stats: getStats, export: doExport } = req.query;
 
     // Если запрошена только статистика
     if (getStats === 'true') {
@@ -2027,6 +2089,62 @@ async function handleAiChats(
         ideasChats: parseInt(rows[0].ideas_chats) || 0,
         messagesThisWeek: parseInt(rows[0].messages_this_week) || 0,
       }));
+    }
+
+    // Экспорт чатов в Markdown
+    if (doExport === 'true') {
+      if (!tool_type || !['assistant', 'tz_helper', 'ideas'].includes(tool_type as string)) {
+        return res.status(400).json(errorResponse('Укажите tool_type для экспорта (assistant, tz_helper, ideas)'));
+      }
+
+      // Получаем все чаты с сообщениями для выбранного инструмента
+      const { rows: chatRows } = await query(`
+        SELECT
+          tc.id,
+          tc.tool_type,
+          u.first_name,
+          u.last_name,
+          u.email,
+          MAX(tm.created_at) as last_message_at
+        FROM tool_chats tc
+        JOIN users u ON u.id = tc.user_id
+        LEFT JOIN tool_messages tm ON tm.chat_id = tc.id
+        WHERE tc.tool_type = $1 AND u.deleted_at IS NULL
+        GROUP BY tc.id, u.id
+        ORDER BY MAX(tm.created_at) DESC NULLS LAST
+      `, [tool_type]);
+
+      // Получаем сообщения для каждого чата
+      const chatsWithMessages = await Promise.all(
+        chatRows.map(async (chat: any) => {
+          const { rows: messageRows } = await query(`
+            SELECT role, content, created_at
+            FROM tool_messages
+            WHERE chat_id = $1
+            ORDER BY created_at ASC
+          `, [chat.id]);
+
+          return {
+            user: {
+              name: [chat.first_name, chat.last_name].filter(Boolean).join(' '),
+              email: chat.email,
+            },
+            lastMessageAt: chat.last_message_at,
+            messages: messageRows.map((m: any) => ({
+              role: m.role,
+              content: m.content,
+              createdAt: m.created_at,
+            })),
+          };
+        })
+      );
+
+      // Фильтруем чаты без сообщений
+      const nonEmptyChats = chatsWithMessages.filter(c => c.messages.length > 0);
+
+      const markdown = generateChatsMarkdown(nonEmptyChats, tool_type as string);
+
+      return res.status(200).json(successResponse({ markdown }));
     }
 
     // Если запрошен конкретный чат — возвращаем его сообщения
