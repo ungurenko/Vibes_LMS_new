@@ -6,14 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VIBES is a full-stack educational platform for teaching "vibe coding" (AI-assisted web development). Built with React 19, TypeScript, and PostgreSQL, deployed on Vercel with serverless functions.
 
+**Production URL:** https://vibes-navy.vercel.app/
+
 ## Development Workflow
 
-**ВАЖНО:** Проект НЕ запускается локально. После любых изменений:
+Проект деплоится на Vercel автоматически при push в main:
+
 1. Сделать коммит и push на GitHub
 2. Vercel автоматически деплоит изменения
-3. Тестирование происходит на production (Vercel)
+3. Тестирование происходит на production
 
-Не нужно запускать `npm run dev` или проверять локально — всё тестируется сразу на Vercel.
+**Локальная разработка** (`npm run dev`) доступна для отладки API и UI, но финальное тестирование всегда на Vercel.
 
 ## Commands
 
@@ -45,7 +48,7 @@ Required in `.env.local`:
 ### Tech Stack
 - **Frontend:** React 19 + TypeScript 5.8 + Vite 6 + Framer Motion + Tailwind CSS (CDN)
 - **Backend:** Vercel serverless functions (Node.js)
-- **Database:** PostgreSQL 15+ (30 tables)
+- **Database:** PostgreSQL 15+ (30+ tables)
 - **Auth:** JWT (7-day expiry) + bcryptjs password hashing
 - **AI:** OpenRouter API (multiple models per tool)
 
@@ -56,7 +59,8 @@ Required in `.env.local`:
 | `/api` | Vercel serverless API endpoints |
 | `/api/_lib` | Shared utilities (db.ts, auth.ts) |
 | `/components` | Reusable React components |
-| `/views` | Page/screen components |
+| `/components/admin` | Admin-specific components |
+| `/views` | Page/screen components (20 views) |
 | `/database` | PostgreSQL schema and seed data |
 | `/docs/plans` | Design documents and implementation plans |
 
@@ -65,26 +69,84 @@ Required in `.env.local`:
 - `types.ts` - TypeScript interfaces
 - `data.ts` - Hardcoded content library
 - `SoundContext.tsx` - Audio effects provider
-- `components/SkeletonLoader.tsx` - Reusable skeleton loaders for all views
+- `components/Shared.tsx` - Reusable UI components (Modal, Drawer, Input, Select, PageHeader)
+- `components/SkeletonLoader.tsx` - Loading skeletons for all views
 - `api/_lib/db.ts` - PostgreSQL connection pool (max 3, serverless optimized)
 - `api/_lib/auth.ts` - JWT + bcrypt helpers
 
-### Key Views
-- `views/ToolsView.tsx` - Главная страница инструментов (карточки)
-- `views/ToolChat.tsx` - Универсальный чат для всех AI инструментов
-- `views/AdminSettings.tsx` - Управление AI промптами и моделями
-- `views/Home.tsx` - Дашборд студента с этапами обучения
-- `views/Lessons.tsx` - Каталог уроков с модулями
+### Views
+
+**Student Views (10):**
+| View | File | Purpose |
+|------|------|---------|
+| Dashboard | `Home.tsx` | Main screen with learning stages and tasks |
+| Lessons | `Lessons.tsx` | Course lessons with modules |
+| Roadmaps | `Roadmaps.tsx` | Project roadmaps (landing, web-service) |
+| Styles | `StyleLibrary.tsx` | CSS style library with categories |
+| Prompts | `PromptBase.tsx` | AI prompts library with 3-level navigation |
+| Glossary | `Glossary.tsx` | Terms dictionary |
+| Tools | `ToolsView.tsx` | AI tools cards (3 instruments) |
+| Tool Chat | `ToolChat.tsx` | Universal chat for AI tools with SSE streaming |
+| Profile | `UserProfile.tsx` | User profile |
+| Community | `Community.tsx` | Student projects gallery |
+
+**Admin Views (5):**
+| View | File | Purpose |
+|------|------|---------|
+| Students | `AdminStudents.tsx` | Student management with filters |
+| Content | `AdminContent.tsx` | Content editing (lessons, styles, prompts) |
+| Calls | `AdminCalls.tsx` | Live calls management |
+| AI Tools | `AdminAssistant.tsx` | AI tools and models configuration |
+| Settings | `AdminSettings.tsx` | Invites and platform settings |
 
 ### API Endpoints Structure
 
 Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issues):
-- `/api/auth` - handles `/api/auth/login`, `/api/auth/register`, `/api/auth/me` via URL parsing
-- `/api/content` - handles `/api/content/glossary`, `/api/content/styles`, `/api/content/prompts`
-- `/api/admin.ts` - students, stats, invites, ai-instruction
-- `/api/lessons.ts` - course lessons with stages
-- `/api/showcase.ts` - community projects
-- `/api/tools.ts` - AI instruments (assistant, tz_helper, ideas)
+
+**Authentication (`/api/auth`):**
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - Registration with invite code
+- `GET /api/auth/me` - Get current user
+- `PATCH /api/auth/me` - Update profile
+
+**Admin API (`/api/admin?resource=`):**
+- `students` - Student management (list, update)
+- `student-activity` - User activity history
+- `stats`, `dashboard-stats` - Platform statistics
+- `ai-instruction` - AI tools configuration
+- `invites` - Invite links CRUD
+- `calls` - Admin calls CRUD
+- `lessons` - Lessons/modules CRUD (use `?module=modules`)
+- `stages` - Dashboard stages CRUD (use `?task=tasks`)
+- `quick-questions` - Quick questions CRUD
+- `ai-chats` - Student AI chats (list, export, stats)
+- `navigation` - Navigation visibility config
+
+**Admin Content (`/api/admin-content?type=`):**
+- `styles` - Style cards CRUD
+- `glossary` - Glossary terms CRUD
+- `prompts` - Prompts CRUD
+- `categories` - Prompt categories CRUD
+- `roadmaps` - Roadmaps CRUD (use `?step=steps`)
+
+**Public Content (`/api/content`):**
+- `/api/content/styles` - Get styles
+- `/api/content/prompts` - Get prompts with filters
+- `/api/content/wizard` - Recommended prompts (5)
+- `/api/content/categories` - Prompt categories
+- `/api/content/glossary` - Glossary terms
+- `/api/content/roadmaps` - Roadmaps with user progress
+- `/api/content/quick-questions` - Quick questions
+- `/api/content/favorites` - User favorite prompts (GET/POST/DELETE)
+
+**Other Endpoints:**
+- `/api/lessons` - GET lessons with progress, POST mark complete
+- `/api/stages` - GET stages with tasks, POST/DELETE complete task
+- `/api/progress` - GET/POST roadmap step progress
+- `/api/showcase` - GET published projects
+- `/api/tools/*` - AI tools (see below)
+- `/api/upload` - POST file upload to Vercel Blob (max 10MB)
+- `/api/chat` - **DEPRECATED**, use `/api/tools`
 
 ### AI Tools System (`/api/tools`)
 
@@ -96,9 +158,10 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 | `tz_helper` | Помощник по ТЗ | z-ai/glm-4.7 |
 | `ideas` | Генератор идей | xiaomi/mimo-v2-flash:free |
 
-**Эндпоинты:**
+**Endpoints:**
+- `GET /api/tools/models` - Текущие модели всех инструментов
 - `GET /api/tools/chats?tool_type=X` - Получить/создать чат
-- `GET /api/tools/messages?tool_type=X` - История сообщений
+- `GET /api/tools/messages?tool_type=X` - История сообщений (до 100)
 - `POST /api/tools/messages` - Отправить сообщение (SSE streaming)
 - `POST /api/tools/transfer` - Перенести идею в другой инструмент
 - `DELETE /api/tools/chats?tool_type=X` - Очистить историю
@@ -111,10 +174,11 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 - **Users:** `users`, `invite_links`
 - **Content:** `course_modules`, `lessons`, `lesson_materials`, `lesson_tasks`
 - **Progress:** `user_lesson_progress`, `user_stage_progress`, `user_roadmap_progress`
-- **Libraries:** `style_cards`, `glossary_terms`, `prompts`, `roadmaps`
+- **Libraries:** `style_cards`, `glossary_terms`, `prompts`, `prompt_categories`, `prompt_steps`
+- **Favorites:** `user_prompt_favorites`
 - **Community:** `showcase_projects`, `project_likes`
 - **AI Tools:** `tool_chats`, `tool_messages`, `ai_system_instructions`
-- **Admin:** `activity_log`
+- **Admin:** `activity_log`, `platform_settings`
 
 ### Database Patterns
 - **Soft delete:** Tables use `deleted_at` column (filter with `WHERE deleted_at IS NULL`)
@@ -124,15 +188,15 @@ Uses catch-all pattern with URL parsing (avoids Vercel+Vite bracket-syntax issue
 - **Transactions:** Use `getClient()` from db.ts for multi-query transactions
 
 ### Navigation (TabId types)
-Student views: `dashboard`, `lessons`, `roadmaps`, `styles`, `prompts`, `glossary`, `tools`, `practice`
+Student views: `dashboard`, `lessons`, `roadmaps`, `styles`, `prompts`, `glossary`, `tools`, `community`, `profile`, `practice`
 Admin views: `admin-students`, `admin-content`, `admin-calls`, `admin-tools`, `admin-settings`
 Auth views: `login`, `register`, `onboarding`
 
 ## TypeScript Configuration
 
 - Path alias: `@/*` maps to project root
-- Strict mode enabled
 - Target: ES2022, Module: ESNext
+- JSX: react-jsx
 
 ## Deployment
 
@@ -165,12 +229,11 @@ async function run() {
 run().catch(console.error);
 ```
 
-### Pending Migrations
+### AI Tools Tables (уже созданы в БД)
 
-Таблицы `tool_chats` и `tool_messages` уже созданы в БД, но schema.sql ещё не обновлён. Если нужно пересоздать БД:
+Таблицы `tool_chats` и `tool_messages` созданы в production. SQL для пересоздания:
 
 ```sql
--- Tool Chats (для AI инструментов)
 CREATE TABLE IF NOT EXISTS tool_chats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -190,10 +253,6 @@ CREATE TABLE IF NOT EXISTS tool_messages (
 );
 
 CREATE INDEX idx_tool_messages_chat_id ON tool_messages(chat_id);
-
--- Добавить поля в ai_system_instructions (если не существуют)
-ALTER TABLE ai_system_instructions ADD COLUMN IF NOT EXISTS tool_type VARCHAR(20);
-ALTER TABLE ai_system_instructions ADD COLUMN IF NOT EXISTS model_id VARCHAR(100);
 ```
 
 ## Правило: Интеграция с внешними сервисами (Vercel Blob, Storage и др.)
@@ -248,7 +307,6 @@ try {
   const blob = await put(filename, buffer, { access: 'public' });
   return res.json(successResponse({ url: blob.url }));
 } catch (error) {
-  // ✅ ПРАВИЛЬНО - логируем полную ошибку
   console.error('Vercel Blob upload error:', {
     filename,
     size: buffer.length,
@@ -285,16 +343,6 @@ try {
 
 ## Database Connection
 
-Прямое подключение к PostgreSQL для миграций и отладки:
+Для подключения к PostgreSQL используй `DATABASE_URL` из `.env.local`.
 
-```bash
-export PGSSLROOTCERT=$HOME/.cloud-certs/root.crt
-psql 'postgresql://gen_user:MkKoNHutAX2Y%40E@5536e7cf4e31035978aa2f37.twc1.net:5432/vibes_platform?sslmode=verify-full'
-```
-
-**Важно:** Используй это подключение для:
-- Миграций схемы БД
-- Отладки данных
-- Ручных SQL-запросов
-
-Для кода приложения используй `DATABASE_URL` из `.env.local`.
+Для миграций и отладки можно использовать psql или Node.js скрипт (см. раздел Database Migrations).
