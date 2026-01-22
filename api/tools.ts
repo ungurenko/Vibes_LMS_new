@@ -80,6 +80,49 @@ async function getOrCreateChat(userId: string, toolType: ToolType): Promise<stri
   return newChat[0].id;
 }
 
+// Получить справочник промптов для ассистента
+async function getPromptsReference(): Promise<string> {
+  try {
+    const { rows } = await query(`
+      SELECT p.title, p.description, pc.name as category
+      FROM prompts p
+      JOIN prompt_categories pc ON p.category_id = pc.id
+      WHERE p.status = 'published' AND p.deleted_at IS NULL AND pc.deleted_at IS NULL
+      ORDER BY pc.sort_order, p.sort_order, p.title
+    `);
+
+    if (rows.length === 0) {
+      return '';
+    }
+
+    // Группировка по категориям
+    const grouped: Record<string, string[]> = {};
+    for (const p of rows) {
+      if (!grouped[p.category]) grouped[p.category] = [];
+      const desc = p.description ? ` — ${p.description.slice(0, 80)}` : '';
+      grouped[p.category].push(`• ${p.title}${desc}`);
+    }
+
+    // Форматирование
+    let reference = '\n\n---\n## Библиотека промптов\n';
+    reference += 'Рекомендуй ученикам промпты из раздела "Промпты" когда они:\n';
+    reference += '- Спрашивают как улучшить дизайн/код/структуру\n';
+    reference += '- Хотят исправить ошибки или баги\n';
+    reference += '- Не знают с чего начать\n\n';
+
+    for (const [category, prompts] of Object.entries(grouped)) {
+      reference += `### ${category}\n${prompts.join('\n')}\n\n`;
+    }
+
+    reference += 'Направляй учеников в раздел "Промпты" в меню платформы.';
+
+    return reference;
+  } catch (error) {
+    console.error('[TOOLS API] Failed to fetch prompts reference:', error);
+    return '';
+  }
+}
+
 // Получить конфигурацию инструмента (промпт + модель)
 async function getToolConfig(toolType: ToolType): Promise<{ systemPrompt: string; modelId: string }> {
   try {
@@ -244,6 +287,12 @@ export default async function handler(
 
       // Получаем конфигурацию инструмента
       const config = await getToolConfig(toolType);
+
+      // Для ассистента добавляем справочник промптов
+      if (toolType === 'assistant') {
+        const promptsRef = await getPromptsReference();
+        config.systemPrompt += promptsRef;
+      }
 
       // Проверяем API ключ
       if (!process.env.OPENROUTER_API_KEY) {
