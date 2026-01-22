@@ -9,9 +9,15 @@ import {
     X,
     Layers,
     ArrowRight,
-    Heart
+    Heart,
+    Compass,
+    Wrench,
+    Zap,
+    Palette,
+    Bug,
+    Rocket
 } from 'lucide-react';
-import { PromptCategory, PromptItem, PromptCategoryItem } from '../types';
+import { PromptCategory, PromptItem, PromptCategoryItem, WorkStage, TaskType } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
@@ -23,11 +29,50 @@ import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 const CATEGORY_COLORS: Record<string, string> = {
     'Лендинг': 'text-violet-500 bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20',
     'Веб-сервис': 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
+    'Базовые': 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
     'Дизайн': 'text-pink-500 bg-pink-50 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/20',
     'Фиксы': 'text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
     'Функции': 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
     'API': 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
     'Оптимизация': 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20',
+};
+
+// Конфигурация фильтров по этапу работы
+const WORK_STAGE_CONFIG: Record<WorkStage, { label: string; icon: React.ReactNode; color: string }> = {
+    structure: {
+        label: 'Структура',
+        icon: <Wrench size={14} />,
+        color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20'
+    },
+    design: {
+        label: 'Дизайн',
+        icon: <Palette size={14} />,
+        color: 'text-violet-500 bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20'
+    },
+    functionality: {
+        label: 'Функционал',
+        icon: <Zap size={14} />,
+        color: 'text-green-500 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+    }
+};
+
+// Конфигурация фильтров по типу задачи
+const TASK_TYPE_CONFIG: Record<TaskType, { label: string; icon: React.ReactNode; color: string }> = {
+    modify: {
+        label: 'Изменить',
+        icon: <Wrench size={14} />,
+        color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20'
+    },
+    fix: {
+        label: 'Исправить',
+        icon: <Bug size={14} />,
+        color: 'text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'
+    },
+    optimize: {
+        label: 'Оптимизировать',
+        icon: <Rocket size={14} />,
+        color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20'
+    }
 };
 
 // --- Components ---
@@ -46,6 +91,18 @@ const PromptBase: React.FC = () => {
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
     const [favoriteToast, setFavoriteToast] = useState<{ action: 'added' | 'removed' } | null>(null);
+
+    // Navigation filters
+    const [activeWorkStage, setActiveWorkStage] = useState<WorkStage | 'all'>('all');
+    const [activeTaskType, setActiveTaskType] = useState<TaskType | 'all'>('all');
+
+    // Wizard state
+    const [showWizard, setShowWizard] = useState(false);
+    const [wizardStep, setWizardStep] = useState(1);
+    const [wizardWorkStage, setWizardWorkStage] = useState<WorkStage | 'unsure' | null>(null);
+    const [wizardTaskType, setWizardTaskType] = useState<TaskType | 'unsure' | null>(null);
+    const [wizardResults, setWizardResults] = useState<PromptItem[]>([]);
+    const [wizardLoading, setWizardLoading] = useState(false);
 
     // Загрузка данных
     useEffect(() => {
@@ -153,9 +210,65 @@ const PromptBase: React.FC = () => {
                 prompt.description.toLowerCase().includes(search.toLowerCase()) ||
                 prompt.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));
             const matchesCategory = activeCategory === 'Все' || prompt.category === activeCategory;
-            return matchesSearch && matchesCategory;
+            const matchesWorkStage = activeWorkStage === 'all' || prompt.workStage === activeWorkStage;
+            const matchesTaskType = activeTaskType === 'all' || prompt.taskType === activeTaskType;
+            return matchesSearch && matchesCategory && matchesWorkStage && matchesTaskType;
         });
-    }, [search, activeCategory, prompts, showFavoritesOnly, favorites]);
+    }, [search, activeCategory, prompts, showFavoritesOnly, favorites, activeWorkStage, activeTaskType]);
+
+    // Wizard handlers
+    const handleWizardStart = () => {
+        playSound('click');
+        setShowWizard(true);
+        setWizardStep(1);
+        setWizardWorkStage(null);
+        setWizardTaskType(null);
+        setWizardResults([]);
+    };
+
+    const handleWizardSelectStage = (stage: WorkStage | 'unsure') => {
+        playSound('click');
+        setWizardWorkStage(stage);
+        setWizardStep(2);
+    };
+
+    const handleWizardSelectTask = async (task: TaskType | 'unsure') => {
+        playSound('click');
+        setWizardTaskType(task);
+        setWizardLoading(true);
+
+        try {
+            const params = new URLSearchParams();
+            if (wizardWorkStage && wizardWorkStage !== 'unsure') params.append('workStage', wizardWorkStage);
+            if (task && task !== 'unsure') params.append('taskType', task);
+
+            const results = await fetchWithAuthGet<PromptItem[]>(`/api/content/wizard?${params.toString()}`);
+            setWizardResults(results);
+            setWizardStep(3);
+        } catch (error) {
+            console.error('Wizard error:', error);
+        } finally {
+            setWizardLoading(false);
+        }
+    };
+
+    const handleWizardClose = () => {
+        setShowWizard(false);
+        setWizardStep(1);
+        setWizardWorkStage(null);
+        setWizardTaskType(null);
+        setWizardResults([]);
+    };
+
+    const handleWizardSelectPrompt = (prompt: PromptItem) => {
+        playSound('click');
+        handleWizardClose();
+        // Найти полный промпт в основном списке
+        const fullPrompt = prompts.find(p => p.id === prompt.id);
+        if (fullPrompt) {
+            setSelectedPrompt(fullPrompt);
+        }
+    };
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
@@ -176,13 +289,22 @@ const PromptBase: React.FC = () => {
                 transition={{ duration: 0.3 }}
             >
                 {/* Search & Filters */}
-                <div className="mb-8 space-y-6">
-                    <div className="flex gap-3 items-center max-w-2xl">
-                        <div className="relative flex-1">
+                <div className="mb-8 space-y-4">
+                    <div className="flex gap-3 items-center flex-wrap">
+                        {/* Wizard Button */}
+                        <button
+                            onClick={handleWizardStart}
+                            className="flex items-center gap-2 px-5 py-4 rounded-2xl text-sm font-bold transition-all border bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white border-transparent shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            <Compass size={18} />
+                            <span>Помоги выбрать</span>
+                        </button>
+
+                        <div className="relative flex-1 min-w-[200px]">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
                             <input
                                 type="text"
-                                placeholder="Найти промпт (например: 'dashboard' или 'landing')..."
+                                placeholder="Найти промпт..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-violet-500 transition-colors shadow-sm focus:ring-4 focus:ring-violet-500/10"
@@ -209,19 +331,84 @@ const PromptBase: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2">
-                        {[{ name: 'Все', id: 'all' }, ...categories].map((cat) => (
-                            <button
-                                key={cat.id || cat.name}
-                                onClick={() => { playSound('click'); setActiveCategory(cat.name); }}
-                                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all border whitespace-nowrap ${activeCategory === cat.name
-                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent shadow-md'
-                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                    {/* Filter Rows */}
+                    <div className="space-y-3">
+                        {/* Work Stage Filter */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider w-20 shrink-0">Этап:</span>
+                            <div className="flex gap-2 flex-wrap">
+                                <button
+                                    onClick={() => { playSound('click'); setActiveWorkStage('all'); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${activeWorkStage === 'all'
+                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent'
+                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
                                     }`}
-                            >
-                                {cat.name}
-                            </button>
-                        ))}
+                                >
+                                    Все
+                                </button>
+                                {(Object.entries(WORK_STAGE_CONFIG) as [WorkStage, typeof WORK_STAGE_CONFIG[WorkStage]][]).map(([key, config]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => { playSound('click'); setActiveWorkStage(key); }}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${activeWorkStage === key
+                                            ? config.color + ' border-current'
+                                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                                        }`}
+                                    >
+                                        {config.icon}
+                                        {config.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Task Type Filter */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider w-20 shrink-0">Задача:</span>
+                            <div className="flex gap-2 flex-wrap">
+                                <button
+                                    onClick={() => { playSound('click'); setActiveTaskType('all'); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${activeTaskType === 'all'
+                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent'
+                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                                    }`}
+                                >
+                                    Все
+                                </button>
+                                {(Object.entries(TASK_TYPE_CONFIG) as [TaskType, typeof TASK_TYPE_CONFIG[TaskType]][]).map(([key, config]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => { playSound('click'); setActiveTaskType(key); }}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${activeTaskType === key
+                                            ? config.color + ' border-current'
+                                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                                        }`}
+                                    >
+                                        {config.icon}
+                                        {config.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Category Filter */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider w-20 shrink-0">Проект:</span>
+                            <div className="flex overflow-x-auto scrollbar-none gap-2 pb-1">
+                                {[{ name: 'Все', id: 'all' }, ...categories].map((cat) => (
+                                    <button
+                                        key={cat.id || cat.name}
+                                        onClick={() => { playSound('click'); setActiveCategory(cat.name); }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap ${activeCategory === cat.name
+                                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent'
+                                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {cat.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -237,6 +424,8 @@ const PromptBase: React.FC = () => {
                         {filteredPrompts.map((prompt) => {
                         const colorClass = CATEGORY_COLORS[prompt.category] || 'text-zinc-500 bg-zinc-50 border-zinc-200';
                         const isStack = !!prompt.steps;
+                        const stageConfig = prompt.workStage ? WORK_STAGE_CONFIG[prompt.workStage] : null;
+                        const taskConfig = prompt.taskType ? TASK_TYPE_CONFIG[prompt.taskType] : null;
 
                         return (
                             <div
@@ -248,8 +437,34 @@ const PromptBase: React.FC = () => {
                                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-violet-500/0 group-hover:from-violet-500/5 group-hover:to-fuchsia-500/5 transition-colors duration-500" />
 
                                 <div className="relative z-10">
+                                    {/* Navigation badges row */}
+                                    {(stageConfig || taskConfig) && (
+                                        <div className="flex gap-1.5 mb-3">
+                                            {stageConfig && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); playSound('click'); setActiveWorkStage(prompt.workStage!); }}
+                                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${stageConfig.color} hover:opacity-80 transition-opacity`}
+                                                    title={`Фильтр: ${stageConfig.label}`}
+                                                >
+                                                    {stageConfig.icon}
+                                                    {stageConfig.label}
+                                                </button>
+                                            )}
+                                            {taskConfig && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); playSound('click'); setActiveTaskType(prompt.taskType!); }}
+                                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${taskConfig.color} hover:opacity-80 transition-opacity`}
+                                                    title={`Фильтр: ${taskConfig.label}`}
+                                                >
+                                                    {taskConfig.icon}
+                                                    {taskConfig.label}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 flex-wrap">
                                             <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${colorClass}`}>
                                                 {prompt.category}
                                             </span>
@@ -527,6 +742,197 @@ const PromptBase: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Wizard Modal */}
+            {createPortal(
+                <AnimatePresence>
+                    {showWizard && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={handleWizardClose}
+                                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl"
+                            >
+                                {/* Header */}
+                                <div className="p-6 border-b border-zinc-100 dark:border-white/5 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center text-white">
+                                                <Compass size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
+                                                    Помоги выбрать
+                                                </h3>
+                                                <p className="text-sm text-zinc-500">
+                                                    Шаг {wizardStep} из 3
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleWizardClose}
+                                            className="p-2 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="p-6">
+                                    <AnimatePresence mode="wait">
+                                        {/* Step 1: Work Stage */}
+                                        {wizardStep === 1 && (
+                                            <motion.div
+                                                key="step1"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="space-y-4"
+                                            >
+                                                <h4 className="font-bold text-lg text-zinc-900 dark:text-white mb-4">
+                                                    Что ты сейчас делаешь?
+                                                </h4>
+                                                <div className="space-y-3">
+                                                    {(Object.entries(WORK_STAGE_CONFIG) as [WorkStage, typeof WORK_STAGE_CONFIG[WorkStage]][]).map(([key, config]) => (
+                                                        <button
+                                                            key={key}
+                                                            onClick={() => handleWizardSelectStage(key)}
+                                                            className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all hover:scale-[1.02] ${config.color} hover:shadow-lg`}
+                                                        >
+                                                            <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-black/20 flex items-center justify-center">
+                                                                {config.icon}
+                                                            </div>
+                                                            <span className="font-bold">{config.label}</span>
+                                                        </button>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => handleWizardSelectStage('unsure')}
+                                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-white/5 transition-all"
+                                                    >
+                                                        <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/10 flex items-center justify-center">
+                                                            ?
+                                                        </div>
+                                                        <span className="font-bold">Не уверен</span>
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Step 2: Task Type */}
+                                        {wizardStep === 2 && (
+                                            <motion.div
+                                                key="step2"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="space-y-4"
+                                            >
+                                                <h4 className="font-bold text-lg text-zinc-900 dark:text-white mb-4">
+                                                    Какая у тебя задача?
+                                                </h4>
+                                                <div className="space-y-3">
+                                                    {(Object.entries(TASK_TYPE_CONFIG) as [TaskType, typeof TASK_TYPE_CONFIG[TaskType]][]).map(([key, config]) => (
+                                                        <button
+                                                            key={key}
+                                                            onClick={() => handleWizardSelectTask(key)}
+                                                            className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all hover:scale-[1.02] ${config.color} hover:shadow-lg`}
+                                                        >
+                                                            <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-black/20 flex items-center justify-center">
+                                                                {config.icon}
+                                                            </div>
+                                                            <span className="font-bold">{config.label}</span>
+                                                        </button>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => handleWizardSelectTask('unsure')}
+                                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-white/5 transition-all"
+                                                    >
+                                                        <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/10 flex items-center justify-center">
+                                                            ?
+                                                        </div>
+                                                        <span className="font-bold">Не уверен</span>
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={() => { playSound('click'); setWizardStep(1); }}
+                                                    className="mt-4 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                                >
+                                                    ← Назад
+                                                </button>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Step 3: Results */}
+                                        {wizardStep === 3 && (
+                                            <motion.div
+                                                key="step3"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="space-y-4"
+                                            >
+                                                <h4 className="font-bold text-lg text-zinc-900 dark:text-white mb-4">
+                                                    Рекомендуемые промпты
+                                                </h4>
+                                                {wizardLoading ? (
+                                                    <div className="flex justify-center py-8">
+                                                        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                                                    </div>
+                                                ) : wizardResults.length > 0 ? (
+                                                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                                                        {wizardResults.map((prompt) => (
+                                                            <button
+                                                                key={prompt.id}
+                                                                onClick={() => handleWizardSelectPrompt(prompt)}
+                                                                className="w-full text-left p-4 rounded-2xl border border-zinc-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/30 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all"
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className={`shrink-0 px-2 py-1 rounded text-[10px] font-bold border ${CATEGORY_COLORS[prompt.category] || 'text-zinc-500 bg-zinc-50 border-zinc-200'}`}>
+                                                                        {prompt.category}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <h5 className="font-bold text-zinc-900 dark:text-white truncate">
+                                                                            {prompt.title}
+                                                                        </h5>
+                                                                        <p className="text-xs text-zinc-500 line-clamp-2 mt-1">
+                                                                            {prompt.description}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-8 text-zinc-500">
+                                                        <p>Промпты не найдены</p>
+                                                        <p className="text-sm mt-1">Попробуй выбрать другие критерии</p>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onClick={() => { playSound('click'); setWizardStep(2); }}
+                                                    className="mt-4 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                                >
+                                                    ← Назад
+                                                </button>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };

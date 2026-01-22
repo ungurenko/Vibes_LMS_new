@@ -46,6 +46,12 @@ CREATE TYPE glossary_category AS ENUM ('Базовые', 'Код', 'Инстру
 -- Категория промпта
 CREATE TYPE prompt_category AS ENUM ('Лендинг', 'Веб-сервис', 'Дизайн', 'Фиксы', 'Функции', 'API', 'Оптимизация');
 
+-- Этап работы над проектом (для навигации промптов)
+CREATE TYPE work_stage_type AS ENUM ('structure', 'design', 'functionality');
+
+-- Тип задачи (для навигации промптов)
+CREATE TYPE task_type_type AS ENUM ('modify', 'fix', 'optimize');
+
 -- Категория дорожной карты
 CREATE TYPE roadmap_category AS ENUM ('Подготовка', 'Лендинг', 'Веб-сервис', 'Полезное');
 
@@ -415,6 +421,10 @@ CREATE TABLE prompts (
     category prompt_category NOT NULL,
     tags TEXT[],
 
+    -- Навигация (для фильтрации и wizard)
+    work_stage work_stage_type,  -- Этап работы: structure, design, functionality
+    task_type task_type_type,    -- Тип задачи: modify, fix, optimize
+
     -- Статистика
     copy_count INTEGER DEFAULT 0,
 
@@ -428,6 +438,9 @@ CREATE TABLE prompts (
 
 CREATE INDEX idx_prompts_category ON prompts(category) WHERE deleted_at IS NULL;
 CREATE INDEX idx_prompts_status ON prompts(status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_prompts_work_stage ON prompts(work_stage) WHERE deleted_at IS NULL;
+CREATE INDEX idx_prompts_task_type ON prompts(task_type) WHERE deleted_at IS NULL;
+CREATE INDEX idx_prompts_stage_type ON prompts(work_stage, task_type) WHERE deleted_at IS NULL;
 
 COMMENT ON TABLE prompts IS 'База промптов для генерации кода';
 

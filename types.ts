@@ -100,6 +100,12 @@ export interface PromptStep {
   content: string;
 }
 
+// Этап работы над проектом
+export type WorkStage = 'structure' | 'design' | 'functionality';
+
+// Тип задачи
+export type TaskType = 'modify' | 'fix' | 'optimize';
+
 export interface PromptItem {
   id: string;
   title: string;
@@ -112,6 +118,9 @@ export interface PromptItem {
   colorTheme?: string;
   tags: string[];
   isFavorite?: boolean; // New: Favorite status
+  // Navigation fields
+  workStage?: WorkStage;
+  taskType?: TaskType;
   // Admin specific
   copyCount?: number;
   status?: 'published' | 'draft';

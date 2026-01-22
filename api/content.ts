@@ -51,6 +51,8 @@ export default async function handler(
       return getStyles(req, res);
     case 'prompts':
       return getPrompts(req, res, tokenData);
+    case 'wizard':
+      return getPromptsWizard(req, res);
     case 'categories':
       return getPromptCategories(req, res);
     case 'glossary':
@@ -139,26 +141,44 @@ async function getPromptCategories(req: VercelRequest, res: VercelResponse) {
 
 async function getPrompts(req: VercelRequest, res: VercelResponse, tokenData: any) {
   try {
-    const { category, categoryId } = req.query;
+    const { category, categoryId, workStage, taskType } = req.query;
 
     let sql = `
       SELECT
         p.id, p.title, p.description, p.content, p.usage_instruction,
         pc.name as category, pc.id as category_id, pc.color_theme,
-        p.tags, p.copy_count, p.status, p.sort_order
+        p.tags, p.copy_count, p.status, p.sort_order,
+        p.work_stage, p.task_type
       FROM prompts p
       LEFT JOIN prompt_categories pc ON p.category_id = pc.id
       WHERE p.deleted_at IS NULL AND p.status = 'published'
     `;
     const params: any[] = [];
+    let paramIndex = 1;
 
     // Поддержка фильтрации и по ID, и по названию
     if (categoryId) {
-      sql += ` AND p.category_id = $1`;
+      sql += ` AND p.category_id = $${paramIndex}`;
       params.push(categoryId);
+      paramIndex++;
     } else if (category && category !== 'Все') {
-      sql += ` AND pc.name = $1`;
+      sql += ` AND pc.name = $${paramIndex}`;
       params.push(category);
+      paramIndex++;
+    }
+
+    // Фильтрация по этапу работы
+    if (workStage && workStage !== 'all') {
+      sql += ` AND p.work_stage = $${paramIndex}`;
+      params.push(workStage);
+      paramIndex++;
+    }
+
+    // Фильтрация по типу задачи
+    if (taskType && taskType !== 'all') {
+      sql += ` AND p.task_type = $${paramIndex}`;
+      params.push(taskType);
+      paramIndex++;
     }
 
     sql += ` ORDER BY p.sort_order`;
@@ -211,12 +231,103 @@ async function getPrompts(req: VercelRequest, res: VercelResponse, tokenData: an
         colorTheme: p.color_theme,
         tags: p.tags || [],
         steps: promptSteps || undefined,
+        workStage: p.work_stage,
+        taskType: p.task_type,
       };
     });
 
     return res.status(200).json(successResponse(result));
   } catch (error) {
     console.error('Get prompts error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== WIZARD ====================
+
+// Wizard endpoint — возвращает релевантные промпты по критериям
+async function getPromptsWizard(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { workStage, taskType, category } = req.query;
+
+    let sql = `
+      SELECT
+        p.id, p.title, p.description,
+        pc.name as category, pc.color_theme,
+        p.work_stage, p.task_type
+      FROM prompts p
+      LEFT JOIN prompt_categories pc ON p.category_id = pc.id
+      WHERE p.deleted_at IS NULL AND p.status = 'published'
+    `;
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    // Фильтрация по этапу работы
+    if (workStage && workStage !== 'unsure') {
+      sql += ` AND p.work_stage = $${paramIndex}`;
+      params.push(workStage);
+      paramIndex++;
+    }
+
+    // Фильтрация по типу задачи
+    if (taskType && taskType !== 'unsure') {
+      sql += ` AND p.task_type = $${paramIndex}`;
+      params.push(taskType);
+      paramIndex++;
+    }
+
+    // Фильтрация по категории проекта
+    if (category && category !== 'any') {
+      sql += ` AND pc.name = $${paramIndex}`;
+      params.push(category);
+      paramIndex++;
+    }
+
+    sql += ` ORDER BY p.copy_count DESC, p.sort_order LIMIT 5`;
+
+    const { rows } = await query(sql, params);
+
+    // Описания для объяснения "почему этот промпт"
+    const stageLabels: Record<string, string> = {
+      structure: 'работа со структурой',
+      design: 'работа с дизайном',
+      functionality: 'работа с функционалом',
+    };
+
+    const taskLabels: Record<string, string> = {
+      modify: 'изменение и улучшение',
+      fix: 'исправление проблем',
+      optimize: 'оптимизация',
+    };
+
+    // HTTP кэширование
+    res.setHeader('Cache-Control', 'public, max-age=1800');
+
+    // Форматируем ответ с объяснениями
+    const result = rows.map((p: any) => {
+      const reasons: string[] = [];
+      if (p.work_stage && stageLabels[p.work_stage]) {
+        reasons.push(stageLabels[p.work_stage]);
+      }
+      if (p.task_type && taskLabels[p.task_type]) {
+        reasons.push(taskLabels[p.task_type]);
+      }
+
+      return {
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        category: p.category,
+        colorTheme: p.color_theme,
+        workStage: p.work_stage,
+        taskType: p.task_type,
+        reason: reasons.length > 0 ? `Подходит для: ${reasons.join(', ')}` : undefined,
+      };
+    });
+
+    return res.status(200).json(successResponse(result));
+  } catch (error) {
+    console.error('Get prompts wizard error:', error);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }
