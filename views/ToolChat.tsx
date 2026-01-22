@@ -331,6 +331,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [modelName, setModelName] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -377,6 +378,27 @@ const ToolChat: React.FC<ToolChatProps> = ({
     };
 
     loadHistory();
+  }, [toolType]);
+
+  // Load Model Name
+  useEffect(() => {
+    const fetchModel = async () => {
+      try {
+        const token = localStorage.getItem('vibes_token');
+        const response = await fetch('/api/tools/models', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data?.[toolType]?.modelName) {
+            setModelName(data.data[toolType].modelName);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load model:', err);
+      }
+    };
+    fetchModel();
   }, [toolType]);
 
   // Handle Initial Message (from Ideas transfer)
@@ -609,9 +631,12 @@ const ToolChat: React.FC<ToolChatProps> = ({
             <h1 className="font-display text-base md:text-lg font-bold text-zinc-900 dark:text-white leading-tight">
               {config.title}
             </h1>
-            <p className="text-xs text-zinc-600 dark:text-zinc-300">
-              {config.subtitle}
-            </p>
+            {modelName && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {modelName}
+              </p>
+            )}
           </div>
         </div>
 

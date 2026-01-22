@@ -80,10 +80,16 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelNa
         <div className="relative z-10 h-full flex flex-col md:flex-row">
           {/* Text content */}
           <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="px-3 py-1 text-xs font-semibold bg-violet-500/20 text-violet-300 rounded-full border border-violet-500/30">
                 AI Ментор
               </span>
+              {modelName && (
+                <span className="text-xs text-zinc-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  {modelName}
+                </span>
+              )}
             </div>
             <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display flex items-center gap-3">
               {tool.title}
@@ -95,14 +101,6 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelNa
             <p className="text-sm text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
               {tool.description}
             </p>
-            {modelName && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  {modelName}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Illustration - на вылет */}
@@ -173,10 +171,16 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
 
         {/* Content */}
         <div className="relative z-10 p-6">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`px-3 py-1 text-xs font-semibold ${colors.badge} rounded-full border`}>
               {tool.type === 'tz_helper' ? 'Генератор' : 'Креатив'}
             </span>
+            {modelName && (
+              <span className="text-xs text-zinc-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {modelName}
+              </span>
+            )}
           </div>
           <h3 className="text-xl md:text-2xl font-bold text-white mb-2 font-display flex items-center gap-2">
             {tool.title}
@@ -188,14 +192,6 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
           <p className="text-sm text-zinc-200 leading-relaxed group-hover:text-white transition-colors">
             {tool.description}
           </p>
-          {modelName && (
-            <div className="mt-2">
-              <span className="text-xs text-zinc-500 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60" />
-                {modelName}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </motion.button>
