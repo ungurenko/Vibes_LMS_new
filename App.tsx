@@ -95,6 +95,7 @@ const AppContent: React.FC = () => {
                             lastActive: 'Сейчас',
                             joinedDate: user.createdAt || new Date().toISOString(),
                             projects: {},
+                            niche: user.niche || undefined,
                             onboardingCompleted: user.onboardingCompleted
                         });
                         if (user.role === 'admin') {
@@ -273,6 +274,7 @@ const AppContent: React.FC = () => {
                     lastActive: 'Сейчас',
                     joinedDate: user.createdAt || new Date().toISOString(),
                     projects: {},
+                    niche: user.niche || undefined,
                     onboardingCompleted: user.onboardingCompleted
                 });
 
@@ -324,17 +326,20 @@ const AppContent: React.FC = () => {
         setView('onboarding');
     };
 
-    const completeOnboarding = async () => {
+    const completeOnboarding = async (niche?: string) => {
         if (currentUser?.id) {
             try {
                 await fetchWithAuth('/api/auth/me', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ onboardingCompleted: true })
+                    body: JSON.stringify({
+                        onboardingCompleted: true,
+                        ...(niche ? { niche } : {})
+                    })
                 });
-                
+
                 // Update local state
-                setCurrentUser(prev => prev ? { ...prev, onboardingCompleted: true } : null);
+                setCurrentUser(prev => prev ? { ...prev, onboardingCompleted: true, niche } : null);
                 setView('app');
             } catch (error) {
                 console.error('Failed to update onboarding status', error);
@@ -526,7 +531,7 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
             // Update Lessons to receive modules prop
             case 'lessons': return <Lessons />;
             case 'roadmaps': return <Roadmaps />;
@@ -547,7 +552,7 @@ const AppContent: React.FC = () => {
                     );
                 }
                 return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
 
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
@@ -580,7 +585,7 @@ const AppContent: React.FC = () => {
                 <Suspense fallback={<ViewSkeleton />}>
                     <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
                 </Suspense>
-            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
         }
     };
 

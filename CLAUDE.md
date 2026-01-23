@@ -22,7 +22,7 @@ VIBES is a full-stack educational platform for teaching "vibe coding" (AI-assist
 
 ```bash
 # Development (runs two servers in parallel)
-npm run dev          # Vite on :5173 + API server on :3001
+npm run dev          # Vite on :3000 + API server on :3001
 
 # Production
 npm run build        # Build to dist/
@@ -46,11 +46,19 @@ Required in `.env.local`:
 ## Architecture
 
 ### Tech Stack
-- **Frontend:** React 19 + TypeScript 5.8 + Vite 6 + Framer Motion + Tailwind CSS (CDN)
+- **Frontend:** React 19 + TypeScript 5.8 + Vite 6 + Framer Motion + Tailwind CSS v4 (@tailwindcss/vite)
 - **Backend:** Vercel serverless functions (Node.js)
 - **Database:** PostgreSQL 15+ (30+ tables)
 - **Auth:** JWT (7-day expiry) + bcryptjs password hashing
 - **AI:** OpenRouter API (multiple models per tool)
+
+### Performance Optimizations
+- **Code Splitting:** Admin views и ToolChat загружаются через React.lazy
+- **Bundle Chunks:** vendor, motion, markdown выделены в отдельные chunks (vite manualChunks)
+- **Client Caching:** `lib/cache.ts` — TTL-based кэш для styles, glossary, prompts
+- **HTTP Caching:** `/api/content/styles` — `max-age=3600, stale-while-revalidate`
+- **Lazy Images:** `loading="lazy"` на изображениях в Community
+- **GPU Animations:** exit анимации используют только transform/opacity (без blur)
 
 ### Directory Structure
 
@@ -58,6 +66,7 @@ Required in `.env.local`:
 |-----------|---------|
 | `/api` | Vercel serverless API endpoints |
 | `/api/_lib` | Shared utilities (db.ts, auth.ts) |
+| `/lib` | Client-side utilities (cache.ts, fetchWithAuth.ts) |
 | `/components` | Reusable React components |
 | `/components/admin` | Admin-specific components |
 | `/views` | Page/screen components (20 views) |
@@ -65,12 +74,14 @@ Required in `.env.local`:
 | `/docs/plans` | Design documents and implementation plans |
 
 ### Key Files
-- `App.tsx` - Main router and state management
+- `App.tsx` - Main router and state management (includes React.lazy imports)
 - `types.ts` - TypeScript interfaces
 - `data.ts` - Hardcoded content library
 - `SoundContext.tsx` - Audio effects provider
+- `lib/cache.ts` - Client-side TTL cache for API responses
+- `lib/fetchWithAuth.ts` - Fetch wrapper with JWT auth
 - `components/Shared.tsx` - Reusable UI components (Modal, Drawer, Input, Select, PageHeader)
-- `components/SkeletonLoader.tsx` - Loading skeletons for all views
+- `components/SkeletonLoader.tsx` - Loading skeletons for all views (ViewSkeleton for lazy components)
 - `api/_lib/db.ts` - PostgreSQL connection pool (max 3, serverless optimized)
 - `api/_lib/auth.ts` - JWT + bcrypt helpers
 

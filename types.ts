@@ -185,6 +185,7 @@ export interface Student {
   joinedDate: string; // ISO Date string
   projects: StudentProjects;
   notes?: string;
+  niche?: string;
   onboardingCompleted?: boolean;
 }
 

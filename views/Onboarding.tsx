@@ -6,12 +6,13 @@ import { STYLES_DATA } from '../data';
 
 interface OnboardingProps {
   userName: string;
-  onComplete: () => void;
+  onComplete: (niche?: string) => void;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ userName, onComplete }) => {
   const [step, setStep] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [niche, setNiche] = useState('');
 
   const nextStep = () => setStep((prev) => prev + 1);
 
@@ -125,7 +126,44 @@ const Onboarding: React.FC<OnboardingProps> = ({ userName, onComplete }) => {
     </div>
   );
 
-  // ЭКРАН 4: ВЫБОР СТИЛЯ (Интерактив)
+  // ЭКРАН 4: НИША
+  const ScreenNiche = () => (
+    <div className="text-center max-w-lg mx-auto">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="w-20 h-20 sm:w-24 sm:h-24 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 text-3xl sm:text-4xl"
+      >
+        💼
+      </motion.div>
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-zinc-900 dark:text-white mb-3 sm:mb-4">
+        Чем ты занимаешься?
+      </h2>
+      <p className="text-base sm:text-lg text-zinc-500 dark:text-zinc-400 mb-6 sm:mb-8 leading-relaxed">
+        Укажи свою нишу — AI-ассистент будет давать примеры и идеи, релевантные именно тебе.
+      </p>
+      <div className="mb-6 sm:mb-8">
+        <input
+          type="text"
+          value={niche}
+          onChange={(e) => setNiche(e.target.value)}
+          maxLength={150}
+          placeholder="Например: фитнес-тренер, дизайнер, владелец кофейни"
+          className="w-full px-5 py-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl text-base sm:text-lg text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+        />
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <button
+          onClick={nextStep}
+          className="px-6 sm:px-8 py-3 sm:py-4 bg-violet-600 text-white rounded-2xl font-bold text-base sm:text-lg hover:bg-violet-500 transition-colors"
+        >
+          {niche.trim() ? 'Продолжить' : 'Пропустить'}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ЭКРАН 5: ВЫБОР СТИЛЯ (Интерактив)
   const Screen4 = () => (
     <div className="max-w-5xl mx-auto text-center">
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-zinc-900 dark:text-white mb-3 sm:mb-4">
@@ -197,7 +235,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ userName, onComplete }) => {
          <p className="mt-3 sm:mt-4 font-bold text-right text-zinc-900 dark:text-white">— Александр</p>
       </div>
 
-      <button onClick={onComplete} className="w-full py-3 sm:py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold text-base sm:text-lg hover:scale-105 active:scale-95 transition-all shadow-xl">
+      <button onClick={() => onComplete(niche.trim() || undefined)} className="w-full py-3 sm:py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold text-base sm:text-lg hover:scale-105 active:scale-95 transition-all shadow-xl">
         Начать обучение
       </button>
     </div>
@@ -224,15 +262,16 @@ const Onboarding: React.FC<OnboardingProps> = ({ userName, onComplete }) => {
             {step === 0 && <Screen1 />}
             {step === 1 && <Screen2 />}
             {step === 2 && <Screen3 />}
-            {step === 3 && <Screen4 />}
-            {step === 4 && <Screen5 />}
+            {step === 3 && <ScreenNiche />}
+            {step === 4 && <Screen4 />}
+            {step === 5 && <Screen5 />}
           </motion.div>
         </motion.div>
       </div>
 
       {/* Progress Dots - fixed to viewport */}
       <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 flex gap-3 z-50">
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
             className={`h-2 rounded-full transition-all duration-300 ${

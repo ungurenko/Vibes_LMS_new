@@ -6,7 +6,8 @@ import {
    Sparkles,
    ChevronDown,
    ChevronUp,
-   Clock
+   Clock,
+   X
 } from 'lucide-react';
 import { TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
    userName?: string;
+   userNiche?: string;
 }
 
 // Animation Variants (вынесены за компонент для предотвращения пересоздания)
@@ -62,8 +64,9 @@ interface DashboardStage {
    tasks: StageTask[];
 }
 
-const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) => {
+const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', userNiche }) => {
    const [stages, setStages] = useState<DashboardStage[]>([]);
+   const [isNicheBannerDismissed, setIsNicheBannerDismissed] = useState(false);
    const [activeStageId, setActiveStageId] = useState<string | null>(null);
    const [completedTasks, setCompletedTasks] = useState<string[]>([]);
    const [upcomingCall, setUpcomingCall] = useState<UpcomingCall | null>(null);
@@ -250,6 +253,40 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                </span>
             </div>
          </motion.header>
+
+         {/* Niche Banner */}
+         {!userNiche && !isNicheBannerDismissed && (
+            <motion.div
+               initial={{ opacity: 0, y: -10 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -10 }}
+               transition={{ duration: 0.3 }}
+               className="relative bg-gradient-to-r from-amber-50 via-violet-50 to-fuchsia-50 dark:from-amber-950/30 dark:via-violet-950/30 dark:to-fuchsia-950/30 rounded-2xl p-4 border border-amber-200/60 dark:border-violet-800/40 shadow-sm"
+            >
+               <button
+                  onClick={() => setIsNicheBannerDismissed(true)}
+                  className="absolute top-3 right-3 p-1 text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors"
+               >
+                  <X size={16} />
+               </button>
+               <div className="flex items-center gap-3 pr-6">
+                  <div className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-violet-500 flex items-center justify-center shadow-sm">
+                     <Sparkles size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <p className="text-sm font-medium text-stone-700 dark:text-stone-200">
+                        Укажи свою нишу — AI-ассистент будет давать персональные советы
+                     </p>
+                  </div>
+                  <button
+                     onClick={() => onNavigate('profile')}
+                     className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-white/80 dark:bg-white/10 px-3.5 py-1.5 rounded-lg border border-violet-200 dark:border-violet-700/50 hover:border-violet-300 dark:hover:border-violet-600 transition-colors"
+                  >
+                     Заполнить
+                  </button>
+               </div>
+            </motion.div>
+         )}
 
          {/* --- MAIN GRID --- */}
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

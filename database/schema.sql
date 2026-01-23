@@ -104,6 +104,9 @@ CREATE TABLE users (
     -- Заметки администратора
     admin_notes TEXT,
 
+    -- Персонализация
+    niche VARCHAR(150),
+
     -- Метаданные
     email_verified BOOLEAN DEFAULT FALSE,
     onboarding_completed BOOLEAN DEFAULT FALSE,
