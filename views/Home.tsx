@@ -261,8 +261,19 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
                transition={{ duration: 0.3 }}
-               className="relative bg-gradient-to-r from-amber-50 via-violet-50 to-fuchsia-50 dark:from-amber-950/30 dark:via-violet-950/30 dark:to-fuchsia-950/30 rounded-2xl p-4 border border-amber-200/60 dark:border-violet-800/40 shadow-sm"
+               className="relative mb-2 bg-gradient-to-r from-amber-50 via-violet-50 to-fuchsia-50 dark:from-amber-950/30 dark:via-violet-950/30 dark:to-fuchsia-950/30 rounded-2xl p-4 border border-amber-200/60 dark:border-violet-800/40 shadow-sm"
             >
+               {/* Shimmer effect */}
+               <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+                  <div
+                     className="absolute inset-0 -translate-x-full"
+                     style={{
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                        animation: 'banner-shimmer 4s ease-in-out infinite',
+                        animationDelay: '2s',
+                     }}
+                  />
+               </div>
                <button
                   onClick={() => setIsNicheBannerDismissed(true)}
                   className="absolute top-3 right-3 p-1 text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors"
@@ -270,9 +281,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                   <X size={16} />
                </button>
                <div className="flex items-center gap-3 pr-6">
-                  <div className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-violet-500 flex items-center justify-center shadow-sm">
+                  <motion.div
+                     animate={{ scale: [1, 1.1, 1] }}
+                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                     className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-violet-500 flex items-center justify-center shadow-sm"
+                  >
                      <Sparkles size={18} className="text-white" />
-                  </div>
+                  </motion.div>
                   <div className="flex-1 min-w-0">
                      <p className="text-sm font-medium text-stone-700 dark:text-stone-200">
                         Укажи свою нишу — AI-ассистент будет давать персональные советы
