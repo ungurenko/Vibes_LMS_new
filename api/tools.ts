@@ -329,6 +329,7 @@ export default async function handler(
         model: config.modelId,
         messages: apiMessages,
         stream: true,
+        ...(toolType === 'tz_helper' && { max_tokens: 8192 }),
       });
 
       let fullResponse = '';

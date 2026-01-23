@@ -35,6 +35,7 @@ const CATEGORY_COLORS: Record<string, string> = {
     'Функции': 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
     'API': 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
     'Оптимизация': 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20',
+    'Системные настройки': 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20',
 };
 
 // Конфигурация фильтров по этапу работы
