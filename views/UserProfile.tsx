@@ -10,7 +10,8 @@ import {
   Lock,
   X,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Briefcase
 } from 'lucide-react';
 import { Student } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +33,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
   const [firstName, setFirstName] = useState(user.name.split(' ')[0] || '');
   const [lastName, setLastName] = useState(user.name.split(' ').slice(1).join(' ') || '');
   const [email, setEmail] = useState(user.email);
+  const [niche, setNiche] = useState(user.niche || '');
 
   // Password state
   const [newPassword, setNewPassword] = useState('');
@@ -102,6 +104,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                   firstName: firstName.trim(),
                   lastName: lastName.trim(),
                   avatarUrl: finalAvatarUrl,
+                  niche: niche.trim(),
                   ...(newPassword ? { newPassword } : {})
               })
           });
@@ -144,6 +147,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
       setAvatarBase64(null);
       setFirstName(user.name.split(' ')[0] || '');
       setLastName(user.name.split(' ').slice(1).join(' ') || '');
+      setNiche(user.niche || '');
       setNewPassword('');
       setConfirmPassword('');
   };
@@ -262,7 +266,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                               />
                           </div>
 
-                          <Input 
+                          <Input
                               label="Email"
                               type="email"
                               value={email}
@@ -270,6 +274,20 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                               icon={Mail}
                               // Assuming email change might require more logic, strictly simplistic here
                           />
+
+                          <div>
+                              <Input
+                                  label="Моя ниша"
+                                  value={niche}
+                                  onChange={(e) => setNiche(e.target.value)}
+                                  placeholder="Например: фитнес-тренер, дизайнер, владелец кофейни"
+                                  maxLength={150}
+                                  icon={Briefcase}
+                              />
+                              <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500">
+                                  AI-ассистент будет учитывать вашу нишу при генерации ответов
+                              </p>
+                          </div>
 
                           <div className="pt-6 border-t border-zinc-100 dark:border-white/5">
                               <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
@@ -351,6 +369,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                               <div className="text-lg font-medium text-zinc-900 dark:text-white flex items-center gap-2">
                                   <Mail size={16} className="text-zinc-400" />
                                   {email}
+                              </div>
+                          </div>
+                          <div className="md:col-span-2">
+                              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Моя ниша</label>
+                              <div className="text-lg font-medium text-zinc-900 dark:text-white flex items-center gap-2">
+                                  <Briefcase size={16} className="text-zinc-400" />
+                                  {niche || <span className="text-zinc-400 italic">Не указана</span>}
                               </div>
                           </div>
                           <div className="md:col-span-2">

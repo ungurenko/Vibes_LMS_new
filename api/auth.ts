@@ -38,6 +38,7 @@ interface UpdateProfileRequest {
   lastName?: string;
   avatarUrl?: string;
   newPassword?: string;
+  niche?: string;
   onboardingCompleted?: boolean;
   preferences?: Record<string, any>;
 }
@@ -66,6 +67,7 @@ interface UserData {
   landing_url: string | null;
   service_url: string | null;
   github_url: string | null;
+  niche: string | null;
   onboarding_completed: boolean;
   preferences: Record<string, any>;
   current_stage_title: string | null;
@@ -324,6 +326,7 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
         u.landing_url,
         u.service_url,
         u.github_url,
+        u.niche,
         u.onboarding_completed,
         u.preferences,
         ds.title as current_stage_title
@@ -360,6 +363,7 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
           service: user.service_url,
           github: user.github_url,
         },
+        niche: user.niche,
         onboardingCompleted: user.onboarding_completed,
         preferences: user.preferences,
         currentStage: user.current_stage_title,
@@ -379,10 +383,10 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    const { firstName, lastName, avatarUrl, newPassword, onboardingCompleted, preferences } = req.body as UpdateProfileRequest;
+    const { firstName, lastName, avatarUrl, newPassword, niche, onboardingCompleted, preferences } = req.body as UpdateProfileRequest;
 
     // Проверяем, что есть что обновлять
-    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && onboardingCompleted === undefined && !preferences) {
+    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && niche === undefined && onboardingCompleted === undefined && !preferences) {
       return res.status(400).json(errorResponse('Нет данных для обновления'));
     }
 
@@ -411,6 +415,12 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
     if (avatarUrl) {
       updates.push(`avatar_url = $${paramIndex}`);
       params.push(avatarUrl);
+      paramIndex++;
+    }
+
+    if (niche !== undefined) {
+      updates.push(`niche = $${paramIndex}`);
+      params.push(niche || null);
       paramIndex++;
     }
 
@@ -459,6 +469,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
         u.landing_url,
         u.service_url,
         u.github_url,
+        u.niche,
         u.onboarding_completed,
         u.preferences,
         ds.title as current_stage_title
@@ -490,6 +501,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
           service: user.service_url,
           github: user.github_url,
         },
+        niche: user.niche,
         onboardingCompleted: user.onboarding_completed,
         preferences: user.preferences,
         currentStage: user.current_stage_title,

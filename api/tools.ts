@@ -294,6 +294,20 @@ export default async function handler(
         config.systemPrompt += promptsRef;
       }
 
+      // Подгружаем имя и нишу ученика для персонализации
+      const { rows: userRows } = await query(
+        'SELECT first_name, niche FROM users WHERE id = $1',
+        [userId]
+      );
+      if (userRows.length > 0) {
+        const { first_name, niche } = userRows[0];
+        let personalization = `\n\nИнформация об ученике:\n- Имя: ${first_name}. Обращайся к ученику по имени.`;
+        if (niche) {
+          personalization += `\n- Ниша/сфера: «${niche}». Учитывай это при ответах: давай примеры, идеи и советы, релевантные его нише.`;
+        }
+        config.systemPrompt += personalization;
+      }
+
       // Проверяем API ключ
       if (!process.env.OPENROUTER_API_KEY) {
         console.error('[TOOLS API] OPENROUTER_API_KEY not found');
