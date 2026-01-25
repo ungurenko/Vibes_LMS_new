@@ -8,6 +8,7 @@ import { useSound } from '../SoundContext';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GridSkeleton, StyleCardSkeleton } from '../components/SkeletonLoader';
 import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { copyToClipboard } from '../lib/clipboard';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
@@ -48,11 +49,13 @@ const StyleLibrary: React.FC = () => {
     fetchStyles();
   }, []);
 
-  const handleCopy = (id: string, prompt: string) => {
+  const handleCopy = async (id: string, prompt: string) => {
     playSound('copy');
-    navigator.clipboard.writeText(prompt);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 3000);
+    const success = await copyToClipboard(prompt);
+    if (success) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 3000);
+    }
   };
 
   const filteredStyles = useMemo(() => {
@@ -190,12 +193,41 @@ const StyleLibrary: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {style.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs uppercase font-bold tracking-wider">
-                      {tag}
-                    </span>
-                  ))}
+                {/* Tags + Mobile Actions Row */}
+                <div className="flex items-end justify-between gap-3">
+                  <div className="flex flex-wrap gap-2 flex-1">
+                    {style.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs uppercase font-bold tracking-wider">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Mobile-only action buttons - 44px minimum touch target */}
+                  <div className="flex gap-2 lg:hidden shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playSound('click');
+                        setSelectedStyle(style);
+                        setIsDescriptionExpanded(false);
+                      }}
+                      className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center active:scale-95 transition-transform"
+                      title="Посмотреть"
+                    >
+                      <Eye size={20} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(style.id, style.prompt);
+                      }}
+                      className="w-11 h-11 rounded-xl bg-violet-600 text-white flex items-center justify-center active:scale-95 transition-transform"
+                      title="Скопировать промпт"
+                    >
+                      {copiedId === style.id ? <Check size={20} /> : <Copy size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
