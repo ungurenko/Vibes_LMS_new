@@ -157,7 +157,7 @@ const StyleLibrary: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40 transition-opacity group-hover:opacity-60" />
 
                 {/* 3.3 Hover Actions Overlay - hidden on touch, visible on desktop hover */}
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] hidden lg:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] hidden [@media(hover:hover)_and_(pointer:fine)]:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center gap-3">
                   <button
                     onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
                     className="p-4 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black hover:scale-110 transition-all duration-300 shadow-lg"
@@ -205,7 +205,7 @@ const StyleLibrary: React.FC = () => {
                   </div>
 
                   {/* Mobile-only Copy button - tap card to open modal */}
-                  <div className="lg:hidden shrink-0">
+                  <div className="[@media(hover:hover)_and_(pointer:fine)]:hidden shrink-0">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
