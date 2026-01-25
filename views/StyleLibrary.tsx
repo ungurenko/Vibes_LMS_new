@@ -143,7 +143,8 @@ const StyleLibrary: React.FC = () => {
                 opacity: { duration: 0.25 }
               }}
               key={style.id}
-              className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px]"
+              onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
+              className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px] cursor-pointer"
             >
               {/* Image Area */}
               <div className="relative h-[65%] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -155,10 +156,10 @@ const StyleLibrary: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40 transition-opacity group-hover:opacity-60" />
 
-                {/* 3.3 Hover Actions Overlay */}
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                {/* 3.3 Hover Actions Overlay - hidden on touch, visible on desktop hover */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] hidden lg:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center gap-3">
                   <button
-                    onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
+                    onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
                     className="p-4 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black hover:scale-110 transition-all duration-300 shadow-lg"
                     title="Посмотреть пример"
                   >
@@ -203,20 +204,8 @@ const StyleLibrary: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Mobile-only action buttons - 44px minimum touch target */}
-                  <div className="flex gap-2 lg:hidden shrink-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        playSound('click');
-                        setSelectedStyle(style);
-                        setIsDescriptionExpanded(false);
-                      }}
-                      className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center active:scale-95 transition-transform"
-                      title="Посмотреть"
-                    >
-                      <Eye size={20} />
-                    </button>
+                  {/* Mobile-only Copy button - tap card to open modal */}
+                  <div className="lg:hidden shrink-0">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
