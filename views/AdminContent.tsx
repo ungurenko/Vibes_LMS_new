@@ -1572,6 +1572,30 @@ const AdminContent: React.FC<AdminContentProps> = () => {
                     onChange={(e) => updateField('categoryId', e.target.value)}
                     options={promptCategories.map(c => ({ value: c.id, label: c.name }))}
                 />
+                <div className="grid grid-cols-2 gap-4">
+                    <Select
+                        label="Этап работы"
+                        value={editingItem?.workStage || ''}
+                        onChange={(e) => updateField('workStage', e.target.value || null)}
+                        options={[
+                            { value: '', label: 'Не указан' },
+                            { value: 'structure', label: 'Структура' },
+                            { value: 'design', label: 'Дизайн' },
+                            { value: 'functionality', label: 'Функционал' }
+                        ]}
+                    />
+                    <Select
+                        label="Тип задачи"
+                        value={editingItem?.taskType || ''}
+                        onChange={(e) => updateField('taskType', e.target.value || null)}
+                        options={[
+                            { value: '', label: 'Не указан' },
+                            { value: 'modify', label: 'Изменить' },
+                            { value: 'fix', label: 'Исправить' },
+                            { value: 'optimize', label: 'Оптимизировать' }
+                        ]}
+                    />
+                </div>
                 <Input
                     label="Теги (через запятую)"
                     value={editingItem?.tags?.join(', ') || ''}

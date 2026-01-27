@@ -406,7 +406,8 @@ async function getPrompts(req: VercelRequest, res: VercelResponse) {
     const { rows } = await query(
         `SELECT p.id, p.title, p.description, p.content, p.usage_instruction,
                 pc.name as category, pc.id as category_id,
-                p.tags, p.copy_count, p.status, p.sort_order
+                p.tags, p.copy_count, p.status, p.sort_order,
+                p.work_stage, p.task_type
          FROM prompts p
          LEFT JOIN prompt_categories pc ON p.category_id = pc.id
          WHERE p.deleted_at IS NULL
@@ -424,23 +425,25 @@ async function getPrompts(req: VercelRequest, res: VercelResponse) {
         tags: row.tags || [],
         copyCount: row.copy_count,
         status: row.status,
+        workStage: row.work_stage,
+        taskType: row.task_type,
     }));
 
     return res.status(200).json(successResponse(prompts));
 }
 
 async function createPrompt(req: VercelRequest, res: VercelResponse) {
-    const { title, description, content, usage, categoryId, tags } = req.body;
+    const { title, description, content, usage, categoryId, tags, workStage, taskType } = req.body;
 
     if (!title || !content || !categoryId) {
         return res.status(400).json(errorResponse('title, content и categoryId обязательны'));
     }
 
     const { rows } = await query(
-        `INSERT INTO prompts (title, description, content, usage_instruction, category_id, tags, status)
-         VALUES ($1, $2, $3, $4, $5, $6, 'published')
+        `INSERT INTO prompts (title, description, content, usage_instruction, category_id, tags, status, work_stage, task_type)
+         VALUES ($1, $2, $3, $4, $5, $6, 'published', $7, $8)
          RETURNING *`,
-        [title, description, content, usage, categoryId, tags || []]
+        [title, description, content, usage, categoryId, tags || [], workStage || null, taskType || null]
     );
 
     // Fetch category name for response
@@ -457,17 +460,23 @@ async function createPrompt(req: VercelRequest, res: VercelResponse) {
         category: categoryName,
         tags: rows[0].tags || [],
         status: rows[0].status,
+        workStage: rows[0].work_stage,
+        taskType: rows[0].task_type,
     };
 
     return res.status(201).json(successResponse(prompt));
 }
 
 async function updatePrompt(req: VercelRequest, res: VercelResponse) {
-    const { id, title, description, content, usage, categoryId, tags, status } = req.body;
+    const { id, title, description, content, usage, categoryId, tags, status, workStage, taskType } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID промпта обязателен'));
     }
+
+    // Для workStage и taskType: undefined = не менять, null или '' = сбросить в NULL
+    const workStageValue = workStage === undefined ? undefined : (workStage || null);
+    const taskTypeValue = taskType === undefined ? undefined : (taskType || null);
 
     const { rows, rowCount } = await query(
         `UPDATE prompts SET
@@ -478,10 +487,17 @@ async function updatePrompt(req: VercelRequest, res: VercelResponse) {
           category_id = COALESCE($5, category_id),
           tags = COALESCE($6, tags),
           status = COALESCE($7, status),
+          work_stage = CASE WHEN $8::boolean THEN $9 ELSE work_stage END,
+          task_type = CASE WHEN $10::boolean THEN $11 ELSE task_type END,
           updated_at = NOW()
-        WHERE id = $8 AND deleted_at IS NULL
+        WHERE id = $12 AND deleted_at IS NULL
         RETURNING *`,
-        [title, description, content, usage, categoryId, tags, status, id]
+        [
+            title, description, content, usage, categoryId, tags, status,
+            workStage !== undefined, workStageValue,
+            taskType !== undefined, taskTypeValue,
+            id
+        ]
     );
 
     if (rowCount === 0) {
@@ -502,6 +518,8 @@ async function updatePrompt(req: VercelRequest, res: VercelResponse) {
         category: categoryName,
         tags: rows[0].tags || [],
         status: rows[0].status,
+        workStage: rows[0].work_stage,
+        taskType: rows[0].task_type,
     };
 
     return res.status(200).json(successResponse(prompt));
