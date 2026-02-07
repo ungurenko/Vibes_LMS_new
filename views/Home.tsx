@@ -6,7 +6,6 @@ import {
    Sparkles,
    ChevronDown,
    ChevronUp,
-   Clock,
    BookOpen,
    Wrench,
    MessageSquareText,
@@ -248,22 +247,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                         {/* Left side */}
                         <div className="flex-1 min-w-0">
-                           <div className="flex items-center gap-3 mb-3">
-                              {/* Call Badge (if today) */}
-                              {isCallToday && upcomingCall && (
-                                 <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-100/80 dark:bg-violet-500/15 rounded-xl"
-                                 >
-                                    <Clock size={14} className="text-violet-600 dark:text-violet-400" />
-                                    <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
-                                       Созвон в {upcomingCall.time}
-                                    </span>
-                                 </motion.div>
-                              )}
-                           </div>
-
                            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-2">
                               <span className="text-stone-900 dark:text-stone-50">Привет, </span>
                               <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">{userName}</span>
@@ -360,6 +343,48 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                   </div>
                </div>
             </motion.div>
+
+            {/* ===== UPCOMING CALL CARD (col-span-12) ===== */}
+            {upcomingCall && (
+               <motion.div variants={cardVariants} className="col-span-12">
+                  <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(139,92,246,0.06)] p-4 md:p-5">
+                     <div className="flex items-center gap-4">
+                        {/* Calendar icon */}
+                        <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/15 dark:to-fuchsia-500/15 rounded-2xl flex items-center justify-center flex-shrink-0">
+                           <Calendar size={22} className="text-violet-600 dark:text-violet-400" />
+                        </div>
+                        {/* Text: label + topic */}
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-2 mb-0.5">
+                              {isCallToday && (
+                                 <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500" />
+                                 </span>
+                              )}
+                              <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                                 Следующий созвон
+                              </span>
+                           </div>
+                           <p className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">
+                              {upcomingCall.topic}
+                           </p>
+                        </div>
+                        {/* Date/time on the right */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                           <div className="text-right">
+                              <div className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                                 {upcomingCall.relativeDate}
+                              </div>
+                              <div className="text-xs font-semibold text-violet-600 dark:text-violet-400">
+                                 {upcomingCall.time} МСК
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </motion.div>
+            )}
 
             {/* ===== TASKS CARD (lg:col-span-7 / 6 on celebration) ===== */}
             <motion.div
@@ -517,30 +542,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                      })}
                   </div>
 
-                  {/* Upcoming Call (if not today — show in quick actions) */}
-                  {upcomingCall && !isCallToday && (
-                     <div className="mt-4 pt-4 border-t border-black/[0.05] dark:border-white/[0.06]">
-                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-violet-50/80 to-fuchsia-50/80 dark:from-violet-500/10 dark:to-fuchsia-500/10 border border-violet-200/40 dark:border-violet-500/15">
-                           <div className="w-10 h-10 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/15 dark:to-fuchsia-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
-                              <Calendar size={18} className="text-violet-600 dark:text-violet-400" />
-                           </div>
-                           <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                 <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
-                                    {upcomingCall.relativeDate}
-                                 </span>
-                                 <span className="text-stone-300 dark:text-stone-700">·</span>
-                                 <span className="text-xs font-semibold text-stone-700 dark:text-stone-200">
-                                    {upcomingCall.time} МСК
-                                 </span>
-                              </div>
-                              <p className="text-sm text-stone-500 dark:text-stone-400 truncate">
-                                 {upcomingCall.topic}
-                              </p>
-                           </div>
-                        </div>
-                     </div>
-                  )}
                </div>
             </motion.div>
 
