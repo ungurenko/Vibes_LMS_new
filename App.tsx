@@ -12,7 +12,6 @@ import Roadmaps from './views/Roadmaps';
 import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
-import Onboarding from './views/Onboarding';
 import SplashScreen from './components/SplashScreen';
 import { ViewSkeleton } from './components/SkeletonLoader';
 
@@ -38,7 +37,7 @@ const AppContent: React.FC = () => {
     // --- Auth & Routing State ---
     const [currentUser, setCurrentUser] = useState<Student | null>(null);
     const [inviteCodeFromUrl, setInviteCodeFromUrl] = useState<string | null>(null);
-    const [view, setView] = useState<'login' | 'register' | 'app' | 'reset-password' | 'onboarding'>('login');
+    const [view, setView] = useState<'login' | 'register' | 'app' | 'reset-password'>('login');
     const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     // --- App Data State (The "Database") ---
@@ -95,8 +94,7 @@ const AppContent: React.FC = () => {
                             lastActive: 'Сейчас',
                             joinedDate: user.createdAt || new Date().toISOString(),
                             projects: {},
-                            niche: user.niche || undefined,
-                            onboardingCompleted: user.onboardingCompleted
+                            niche: user.niche || undefined
                         });
                         if (user.role === 'admin') {
                             setMode('admin');
@@ -106,12 +104,6 @@ const AppContent: React.FC = () => {
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
-
-                            if (!user.onboardingCompleted) {
-                                setView('onboarding');
-                                setIsAuthLoading(false);
-                                return;
-                            }
                         }
                         setIsAuthLoading(false);
                         setView('app');
@@ -274,8 +266,7 @@ const AppContent: React.FC = () => {
                     lastActive: 'Сейчас',
                     joinedDate: user.createdAt || new Date().toISOString(),
                     projects: {},
-                    niche: user.niche || undefined,
-                    onboardingCompleted: user.onboardingCompleted
+                    niche: user.niche || undefined
                 });
 
                 if (user.role === 'admin') {
@@ -286,11 +277,6 @@ const AppContent: React.FC = () => {
                 } else {
                     setMode('student');
                     setActiveTab('dashboard');
-
-                    if (!user.onboardingCompleted) {
-                        setView('onboarding');
-                        return;
-                    }
                 }
                 setView('app');
             } else {
@@ -322,31 +308,8 @@ const AppContent: React.FC = () => {
         // Очистить invite code из URL
         window.history.replaceState({}, '', window.location.pathname);
 
-        // Перейти к онбордингу
-        setView('onboarding');
-    };
-
-    const completeOnboarding = async (niche?: string) => {
-        if (currentUser?.id) {
-            try {
-                await fetchWithAuth('/api/auth/me', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        onboardingCompleted: true,
-                        ...(niche ? { niche } : {})
-                    })
-                });
-
-                // Update local state
-                setCurrentUser(prev => prev ? { ...prev, onboardingCompleted: true, niche } : null);
-                setView('app');
-            } catch (error) {
-                console.error('Failed to update onboarding status', error);
-                // Even if API fails, we let user pass in this session, but we don't save to localStorage anymore
-                setView('app');
-            }
-        }
+        // Перейти в приложение
+        setView('app');
     };
 
     const handleLogout = () => {
@@ -527,7 +490,6 @@ const AppContent: React.FC = () => {
     if (view === 'login') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} onSimulateResetLink={() => setView('reset-password')} />;
     if (view === 'reset-password') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} initialView="reset" onSimulateResetLink={() => { }} onResetComplete={() => setView('login')} />;
     if (view === 'register' && inviteCodeFromUrl) return <Register inviteCode={inviteCodeFromUrl} onRegister={handleRegister} onNavigateLogin={() => { window.history.replaceState({}, '', window.location.pathname); setView('login'); }} />;
-    if (view === 'onboarding' && currentUser) return <Onboarding userName={currentUser.name} onComplete={completeOnboarding} />;
 
     const renderContent = () => {
         switch (activeTab) {
@@ -594,8 +556,10 @@ const AppContent: React.FC = () => {
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden gpu-accelerated">
                 {mode === 'student' ? (
                     <>
-                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 dark:bg-violet-900/10 rounded-full blur-[120px] animate-blob" />
-                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-fuchsia-600/10 dark:bg-fuchsia-900/10 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/12 dark:bg-violet-900/12 rounded-full blur-[120px] animate-blob" />
+                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-fuchsia-600/12 dark:bg-fuchsia-900/12 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+                        <div className="absolute top-[30%] right-[-5%] w-[25%] h-[25%] bg-indigo-600/8 dark:bg-indigo-900/12 rounded-full blur-[80px] animate-blob animation-delay-4000" />
+                        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 20%, rgba(139,92,246,0.05) 0%, transparent 50%)' }} />
                     </>
                 ) : (
                     <>

@@ -7,7 +7,12 @@ import {
    ChevronDown,
    ChevronUp,
    Clock,
-   X
+   X,
+   BookOpen,
+   Wrench,
+   MessageSquareText,
+   BookA,
+   ChevronRight
 } from 'lucide-react';
 import { TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,21 +23,22 @@ interface HomeProps {
    userNiche?: string;
 }
 
-// Animation Variants (вынесены за компонент для предотвращения пересоздания)
+// Animation Variants
 const containerVariants = {
    hidden: { opacity: 0 },
    show: {
       opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+      transition: { staggerChildren: 0.08, delayChildren: 0.05 }
    }
 };
 
 const cardVariants = {
-   hidden: { y: 20, opacity: 0 },
+   hidden: { y: 24, opacity: 0, scale: 0.97 },
    show: {
       y: 0,
       opacity: 1,
-      transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
+      scale: 1,
+      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
    }
 };
 
@@ -64,6 +70,13 @@ interface DashboardStage {
    tasks: StageTask[];
 }
 
+const QUICK_ACTIONS = [
+   { label: 'Уроки', tab: 'lessons' as TabId, icon: BookOpen, gradient: 'from-violet-500/20 to-indigo-500/20' },
+   { label: 'Инструменты', tab: 'tools' as TabId, icon: Wrench, gradient: 'from-fuchsia-500/20 to-pink-500/20' },
+   { label: 'Промпты', tab: 'prompts' as TabId, icon: MessageSquareText, gradient: 'from-indigo-500/20 to-blue-500/20' },
+   { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500/20 to-teal-500/20' },
+];
+
 const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', userNiche }) => {
    const [stages, setStages] = useState<DashboardStage[]>([]);
    const [isNicheBannerDismissed, setIsNicheBannerDismissed] = useState(false);
@@ -75,7 +88,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    const activeStage = stages.find(s => s.id === activeStageId) || (stages.length > 0 ? stages[0] : null);
    const activeStageIndex = stages.findIndex(s => s.id === activeStageId);
 
-   // Компактный режим для задач
+   // Compact mode for tasks
    const [isTasksExpanded, setIsTasksExpanded] = useState(false);
    const MAX_VISIBLE_TASKS = 4;
    const tasks = activeStage?.tasks || [];
@@ -83,7 +96,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    const visibleTasks = isTasksExpanded ? tasks : tasks.slice(0, MAX_VISIBLE_TASKS);
    const hiddenCount = tasks.length - MAX_VISIBLE_TASKS;
 
-   // Загрузка стадий дашборда
+   // Load stages
    useEffect(() => {
       const fetchStages = async () => {
          try {
@@ -121,7 +134,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
       fetchStages();
    }, []);
 
-   // Загрузка ближайшего созвона
+   // Load upcoming call
    useEffect(() => {
       const fetchUpcomingCall = async () => {
          try {
@@ -191,7 +204,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    // Check if call is today
    const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
 
-   // Сортировка задач: активные сверху, выполненные снизу
+   // Sort tasks: active on top, completed on bottom
    const sortedTasks = [...visibleTasks].sort((a, b) => {
       const aCompleted = completedTasks.includes(a.id);
       const bCompleted = completedTasks.includes(b.id);
@@ -204,56 +217,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
          variants={containerVariants}
          initial="hidden"
          animate="show"
-         className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-24"
+         className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-24"
       >
-         {/* --- HEADER --- */}
-         <motion.header variants={cardVariants} className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-               <div>
-                  <h1 className="font-display text-2xl md:text-3xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight">
-                     Привет, {userName}!
-                  </h1>
-                  <p className="text-stone-500 dark:text-stone-400 text-base">
-                     Этап {currentStageNumber} из {totalStages || '—'}
-                  </p>
-               </div>
-
-               {/* Call Badge (если сегодня) */}
-               {isCallToday && upcomingCall && (
-                  <motion.div
-                     initial={{ opacity: 0, scale: 0.9 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-500/10 dark:to-fuchsia-500/10 border border-violet-200/60 dark:border-violet-500/20 rounded-2xl shadow-sm shadow-violet-100 dark:shadow-none"
-                  >
-                     <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
-                        <Clock size={16} className="text-violet-600 dark:text-violet-400" />
-                     </div>
-                     <div>
-                        <p className="text-xs font-medium text-violet-600/70 dark:text-violet-400/70 uppercase tracking-wide">Сегодня</p>
-                        <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
-                           Созвон в {upcomingCall.time}
-                        </p>
-                     </div>
-                  </motion.div>
-               )}
-            </div>
-
-            {/* Overall Progress Bar */}
-            <div className="flex items-center gap-4">
-               <div className="flex-1 h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-                  <motion.div
-                     initial={{ width: 0 }}
-                     animate={{ width: `${overallProgress}%` }}
-                     transition={{ duration: 0.6, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
-                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)]"
-                  />
-               </div>
-               <span className="text-sm font-bold text-stone-600 dark:text-stone-300 tabular-nums min-w-[3ch]">
-                  {overallProgress}%
-               </span>
-            </div>
-         </motion.header>
-
          {/* Niche Banner */}
          {!userNiche && !isNicheBannerDismissed && (
             <motion.div
@@ -261,7 +226,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
                transition={{ duration: 0.3 }}
-               className="relative mb-2 bg-gradient-to-r from-amber-50 via-violet-50 to-fuchsia-50 dark:from-amber-950/30 dark:via-violet-950/30 dark:to-fuchsia-950/30 rounded-2xl p-4 border border-amber-200/60 dark:border-violet-800/40 shadow-sm"
+               className="relative mb-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.08] shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)]"
             >
                {/* Shimmer effect */}
                <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
@@ -303,207 +268,275 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
             </motion.div>
          )}
 
-         {/* --- MAIN GRID --- */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         {/* --- BENTO GRID --- */}
+         <div className="grid grid-cols-12 gap-4">
 
-            {/* 1. CURRENT STAGE CARD */}
+            {/* ===== HERO CARD (col-span-12) ===== */}
             <motion.div
                variants={cardVariants}
-               className="group relative bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm hover:shadow-md hover:shadow-stone-200/50 dark:hover:shadow-none transition-shadow duration-300 flex flex-col overflow-hidden"
+               className="col-span-12"
             >
-               {/* Subtle gradient overlay */}
-               <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.02] to-transparent dark:from-violet-500/[0.03] pointer-events-none" />
-
-               {/* Week Label */}
-               <div className="relative flex items-center gap-2 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 rounded-lg">
-                     {activeStage?.weekLabel || 'WEEK 01'}
-                  </span>
-                  <span className="text-stone-300 dark:text-stone-700">·</span>
-                  <span className="text-xs font-medium text-stone-400 dark:text-stone-500">
-                     {activeStage?.subtitle || 'Загрузка...'}
-                  </span>
-               </div>
-
-               {/* Stage Title */}
-               <h2 className="relative font-display text-2xl md:text-[1.75rem] font-bold text-stone-900 dark:text-stone-50 mb-2 leading-tight tracking-tight">
-                  {activeStage?.title || 'Загрузка...'}
-               </h2>
-
-               {/* Description */}
-               {activeStage?.description && (
-                  <p className="relative text-stone-500 dark:text-stone-400 text-[15px] leading-relaxed mb-4 flex-1">
-                     {activeStage.description}
-                  </p>
-               )}
-
-               {/* Stage Progress */}
-               <div className="relative mt-auto">
-                  <div className="flex items-center justify-between mb-2.5">
-                     <span className="text-xs font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wide">
-                        Прогресс
-                     </span>
-                     <span className="text-sm font-bold text-stone-700 dark:text-stone-200 tabular-nums">
-                        {stageProgress}%
-                     </span>
-                  </div>
-                  <div className="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden mb-4">
-                     <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stageProgress}%` }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
-                     />
-                  </div>
-
-                  {/* CTA Button */}
-                  <button
-                     onClick={() => onNavigate('lessons')}
-                     className="w-full py-3 px-5 bg-stone-900 dark:bg-stone-50 text-white dark:text-stone-900 rounded-2xl font-semibold text-[15px] transition-all duration-200 flex items-center justify-center gap-2 group/btn hover:bg-stone-800 dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                     <span>Продолжить обучение</span>
-                     <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
-               </div>
-            </motion.div>
-
-            {/* 2. TASKS CARD */}
-            <motion.div
-               variants={cardVariants}
-               className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-sm flex flex-col"
-            >
-               {/* Header */}
-               <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-3">
-                     <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
-                     Задачи
-                  </h3>
-                  <div className="flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800 px-3 py-1.5 rounded-xl">
-                     <span className="text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums">{completedCount}</span>
-                     <span className="text-stone-300 dark:text-stone-600">/</span>
-                     <span className="text-sm font-medium text-stone-400 dark:text-stone-500 tabular-nums">{totalTasks}</span>
-                  </div>
-               </div>
-
-               {/* Celebration State или список задач */}
-               {completedCount === totalTasks && totalTasks > 0 ? (
-                  <motion.div
-                     initial={{ opacity: 0, scale: 0.9 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     className="flex-1 flex flex-col items-center justify-center text-center py-8"
-                  >
-                     <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-100 dark:shadow-none">
-                        <Sparkles size={32} className="text-emerald-500" />
-                     </div>
-                     <p className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-2">
-                        Всё готово!
-                     </p>
-                     <p className="text-stone-500 dark:text-stone-400 text-sm max-w-[200px]">
-                        Отдохни или переходи к следующему этапу
-                     </p>
-                  </motion.div>
-               ) : (
-                  <div className="flex-1 flex flex-col">
-                     <div className="flex-1 space-y-2 overflow-y-auto scrollbar-none">
-                        <AnimatePresence mode="popLayout">
-                           {sortedTasks.map((task) => {
-                              const isDone = completedTasks.includes(task.id);
-                              return (
+               <div className="p-[1px] rounded-3xl bg-gradient-to-r from-violet-500/50 via-indigo-500/50 to-fuchsia-500/50">
+                  <div className="bg-white/70 dark:bg-[#0a0a0f]/90 backdrop-blur-2xl rounded-3xl p-6 md:p-8 border border-black/[0.03] dark:border-white/[0.05] shadow-[0_4px_8px_rgba(0,0,0,0.03),0_24px_48px_rgba(0,0,0,0.06)]">
+                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        {/* Left side */}
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-3 mb-3">
+                              {/* Call Badge (if today) */}
+                              {isCallToday && upcomingCall && (
                                  <motion.div
-                                    key={task.id}
-                                    layout
-                                    variants={taskVariants}
-                                    initial="hidden"
-                                    animate="show"
-                                    exit="exit"
-                                    onClick={() => handleTaskToggle(task.id)}
-                                    className={`group rounded-2xl border cursor-pointer p-3 transition-all duration-200 ${
-                                       isDone
-                                          ? 'bg-stone-50 dark:bg-stone-800/30 border-stone-100 dark:border-stone-800'
-                                          : 'bg-white dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-sm'
-                                    }`}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-100/80 dark:bg-violet-500/15 rounded-xl"
                                  >
-                                    <div className="flex items-start gap-3.5">
-                                       <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                                          isDone
-                                             ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 border-transparent shadow-[0_0_8px_rgba(139,92,246,0.3)]'
-                                             : 'border-stone-300 dark:border-stone-600 group-hover:border-violet-400 dark:group-hover:border-violet-500 group-hover:shadow-sm'
-                                       }`}>
-                                          <AnimatePresence>
-                                             {isDone && (
-                                                <motion.div
-                                                   initial={{ scale: 0 }}
-                                                   animate={{ scale: 1 }}
-                                                   exit={{ scale: 0 }}
-                                                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                                >
-                                                   <Check size={12} className="text-white" strokeWidth={3} />
-                                                </motion.div>
-                                             )}
-                                          </AnimatePresence>
-                                       </div>
-                                       <span className={`text-[15px] leading-relaxed transition-colors ${
-                                          isDone
-                                             ? 'text-stone-400 dark:text-stone-500 line-through decoration-stone-300 dark:decoration-stone-600'
-                                             : 'text-stone-700 dark:text-stone-200'
-                                       }`}>
-                                          {task.title}
-                                       </span>
-                                    </div>
+                                    <Clock size={14} className="text-violet-600 dark:text-violet-400" />
+                                    <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                                       Созвон в {upcomingCall.time}
+                                    </span>
                                  </motion.div>
-                              );
-                           })}
-                        </AnimatePresence>
-                     </div>
+                              )}
+                           </div>
 
-                     {/* Expand/Collapse Button */}
-                     {isCompact && hiddenCount > 0 && (
-                        <button
-                           onClick={() => setIsTasksExpanded(!isTasksExpanded)}
-                           className="mt-4 w-full py-3 rounded-2xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm font-semibold text-stone-600 dark:text-stone-300 flex items-center justify-center gap-2"
-                        >
-                           {isTasksExpanded ? (
-                              <>
-                                 <ChevronUp size={16} />
-                                 Свернуть
-                              </>
-                           ) : (
-                              <>
-                                 <ChevronDown size={16} />
-                                 Ещё {hiddenCount} {hiddenCount === 1 ? 'задача' : hiddenCount < 5 ? 'задачи' : 'задач'}
-                              </>
+                           <h1 className="font-display text-3xl md:text-4xl font-bold text-stone-900 dark:text-stone-50 tracking-tight mb-2">
+                              Привет, {userName}!
+                           </h1>
+
+                           <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 rounded-lg">
+                                 {activeStage?.weekLabel || 'WEEK 01'}
+                              </span>
+                              <span className="text-stone-400 dark:text-stone-500 text-sm">
+                                 Этап {currentStageNumber} из {totalStages || '—'}
+                              </span>
+                           </div>
+
+                           <h2 className="font-display text-lg md:text-xl font-semibold text-stone-800 dark:text-stone-200 mb-1 leading-tight">
+                              {activeStage?.title || 'Загрузка...'}
+                           </h2>
+                           {activeStage?.description && (
+                              <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed mb-5 max-w-xl">
+                                 {activeStage.description}
+                              </p>
                            )}
-                        </button>
-                     )}
+
+                           <button
+                              onClick={() => onNavigate('lessons')}
+                              className="inline-flex items-center gap-2 py-3 px-6 bg-stone-900 dark:bg-stone-50 text-white dark:text-stone-900 rounded-2xl font-semibold text-[15px] transition-all duration-200 group/btn hover:bg-stone-800 dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
+                           >
+                              <span>Продолжить обучение</span>
+                              <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                           </button>
+                        </div>
+
+                        {/* Right side — progress display */}
+                        <div className="flex flex-col items-center md:items-end gap-4 shrink-0">
+                           {/* Large percentage */}
+                           <div className="relative flex items-center justify-center">
+                              {/* Decorative ring */}
+                              <div className="w-[120px] h-[120px] rounded-full border-[3px] border-violet-200/40 dark:border-violet-500/20 flex items-center justify-center"
+                                 style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)' }}>
+                                 <div className="text-5xl md:text-6xl font-extrabold font-display bg-gradient-to-br from-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
+                                    {overallProgress}%
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Mini stats row */}
+                           <div className="flex gap-4 md:gap-6">
+                              <div className="text-center">
+                                 <div className="font-mono text-lg font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                                    {currentStageNumber}/{totalStages || '—'}
+                                 </div>
+                                 <div className="text-xs text-stone-500">Этап</div>
+                              </div>
+                              <div className="text-center">
+                                 <div className="font-mono text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                    {completedCount}/{totalTasks}
+                                 </div>
+                                 <div className="text-xs text-stone-500">Задачи</div>
+                              </div>
+                              <div className="text-center">
+                                 <div className="font-mono text-lg font-bold text-violet-600 dark:text-violet-400 tabular-nums">
+                                    {stageProgress}%
+                                 </div>
+                                 <div className="text-xs text-stone-500">Прогресс</div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
                   </div>
-               )}
+               </div>
             </motion.div>
 
-            {/* 3. UPCOMING CALL (если НЕ сегодня — показываем карточку) */}
-            {upcomingCall && !isCallToday && (
-               <motion.div
-                  variants={cardVariants}
-                  className="md:col-span-2 bg-gradient-to-r from-white to-stone-50/50 dark:from-stone-900 dark:to-stone-900/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-sm flex items-center gap-4"
-               >
-                  <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/10 dark:to-fuchsia-500/10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-100 dark:shadow-none">
-                     <Calendar size={24} className="text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                     <div className="flex items-center gap-2.5 mb-1">
-                        <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
-                           {upcomingCall.relativeDate}
-                        </span>
-                        <span className="text-stone-300 dark:text-stone-700">·</span>
-                        <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-                           {upcomingCall.time} МСК
-                        </span>
+            {/* ===== TASKS CARD (lg:col-span-7) ===== */}
+            <motion.div
+               variants={cardVariants}
+               className="col-span-12 lg:col-span-7"
+            >
+               <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] p-5 md:p-6 flex flex-col h-full">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                     <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-3">
+                        <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
+                        Задачи
+                     </h3>
+                     <div className="flex items-center gap-1.5 bg-stone-100/80 dark:bg-white/[0.06] px-3 py-1.5 rounded-xl">
+                        <span className="text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums">{completedCount}</span>
+                        <span className="text-stone-300 dark:text-stone-600">/</span>
+                        <span className="text-sm font-medium text-stone-400 dark:text-stone-500 tabular-nums">{totalTasks}</span>
                      </div>
-                     <p className="text-[15px] text-stone-500 dark:text-stone-400 truncate">
-                        {upcomingCall.topic}
-                     </p>
                   </div>
-               </motion.div>
-            )}
+
+                  {/* Celebration State or task list */}
+                  {completedCount === totalTasks && totalTasks > 0 ? (
+                     <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex-1 flex flex-col items-center justify-center text-center py-8"
+                     >
+                        <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-100 dark:shadow-none">
+                           <Sparkles size={32} className="text-emerald-500" />
+                        </div>
+                        <p className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-2">
+                           Всё готово!
+                        </p>
+                        <p className="text-stone-500 dark:text-stone-400 text-sm max-w-[200px]">
+                           Отдохни или переходи к следующему этапу
+                        </p>
+                     </motion.div>
+                  ) : (
+                     <div className="flex-1 flex flex-col">
+                        <div className="flex-1 space-y-2 overflow-y-auto scrollbar-none">
+                           <AnimatePresence mode="popLayout">
+                              {sortedTasks.map((task) => {
+                                 const isDone = completedTasks.includes(task.id);
+                                 return (
+                                    <motion.div
+                                       key={task.id}
+                                       layout
+                                       variants={taskVariants}
+                                       initial="hidden"
+                                       animate="show"
+                                       exit="exit"
+                                       onClick={() => handleTaskToggle(task.id)}
+                                       className={`group rounded-2xl border cursor-pointer p-3 transition-all duration-200 ${
+                                          isDone
+                                             ? 'bg-stone-50/50 dark:bg-white/[0.02] border-stone-100 dark:border-white/[0.04]'
+                                             : 'bg-white/50 dark:bg-white/[0.03] border-stone-200/60 dark:border-white/[0.06] hover:border-violet-300 dark:hover:border-violet-500/50 hover:shadow-sm'
+                                       }`}
+                                    >
+                                       <div className="flex items-start gap-3.5">
+                                          <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                             isDone
+                                                ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 border-transparent shadow-[0_0_8px_rgba(139,92,246,0.3)]'
+                                                : 'border-stone-300 dark:border-stone-600 group-hover:border-violet-400 dark:group-hover:border-violet-500 group-hover:shadow-sm'
+                                          }`}>
+                                             <AnimatePresence>
+                                                {isDone && (
+                                                   <motion.div
+                                                      initial={{ scale: 0 }}
+                                                      animate={{ scale: 1 }}
+                                                      exit={{ scale: 0 }}
+                                                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                   >
+                                                      <Check size={12} className="text-white" strokeWidth={3} />
+                                                   </motion.div>
+                                                )}
+                                             </AnimatePresence>
+                                          </div>
+                                          <span className={`text-[15px] leading-relaxed transition-colors ${
+                                             isDone
+                                                ? 'text-stone-400 dark:text-stone-500 line-through decoration-stone-300 dark:decoration-stone-600'
+                                                : 'text-stone-700 dark:text-stone-200'
+                                          }`}>
+                                             {task.title}
+                                          </span>
+                                       </div>
+                                    </motion.div>
+                                 );
+                              })}
+                           </AnimatePresence>
+                        </div>
+
+                        {/* Expand/Collapse Button */}
+                        {isCompact && hiddenCount > 0 && (
+                           <button
+                              onClick={() => setIsTasksExpanded(!isTasksExpanded)}
+                              className="mt-4 w-full py-3 rounded-2xl bg-stone-100/60 dark:bg-white/[0.04] hover:bg-stone-200/60 dark:hover:bg-white/[0.06] transition-colors text-sm font-semibold text-stone-600 dark:text-stone-300 flex items-center justify-center gap-2"
+                           >
+                              {isTasksExpanded ? (
+                                 <>
+                                    <ChevronUp size={16} />
+                                    Свернуть
+                                 </>
+                              ) : (
+                                 <>
+                                    <ChevronDown size={16} />
+                                    Ещё {hiddenCount} {hiddenCount === 1 ? 'задача' : hiddenCount < 5 ? 'задачи' : 'задач'}
+                                 </>
+                              )}
+                           </button>
+                        )}
+                     </div>
+                  )}
+               </div>
+            </motion.div>
+
+            {/* ===== QUICK ACTIONS CARD (lg:col-span-5) ===== */}
+            <motion.div
+               variants={cardVariants}
+               className="col-span-12 lg:col-span-5"
+            >
+               <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] p-5 md:p-6 flex flex-col h-full">
+                  <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-4">
+                     Быстрые действия
+                  </h3>
+
+                  <div className="space-y-2 flex-1">
+                     {QUICK_ACTIONS.map((action) => {
+                        const Icon = action.icon;
+                        return (
+                           <button
+                              key={action.tab}
+                              onClick={() => onNavigate(action.tab)}
+                              className="flex items-center gap-3 w-full p-3 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all duration-200"
+                           >
+                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center`}>
+                                 <Icon size={18} className="text-violet-600 dark:text-violet-400" />
+                              </div>
+                              <span className="font-medium text-sm text-stone-700 dark:text-stone-200">{action.label}</span>
+                              <ChevronRight size={16} className="ml-auto text-stone-400" />
+                           </button>
+                        );
+                     })}
+                  </div>
+
+                  {/* Upcoming Call (if not today — show in quick actions) */}
+                  {upcomingCall && !isCallToday && (
+                     <div className="mt-4 pt-4 border-t border-black/[0.05] dark:border-white/[0.06]">
+                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-violet-50/80 to-fuchsia-50/80 dark:from-violet-500/10 dark:to-fuchsia-500/10 border border-violet-200/40 dark:border-violet-500/15">
+                           <div className="w-10 h-10 bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-500/15 dark:to-fuchsia-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <Calendar size={18} className="text-violet-600 dark:text-violet-400" />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                 <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                                    {upcomingCall.relativeDate}
+                                 </span>
+                                 <span className="text-stone-300 dark:text-stone-700">·</span>
+                                 <span className="text-xs font-semibold text-stone-700 dark:text-stone-200">
+                                    {upcomingCall.time} МСК
+                                 </span>
+                              </div>
+                              <p className="text-sm text-stone-500 dark:text-stone-400 truncate">
+                                 {upcomingCall.topic}
+                              </p>
+                           </div>
+                        </div>
+                     </div>
+                  )}
+               </div>
+            </motion.div>
 
          </div>
       </motion.div>
