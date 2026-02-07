@@ -158,22 +158,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
       fetchUpcomingCall();
    }, []);
 
-   // Confetti on 100% completion
-   useEffect(() => {
-      if (completedCount === totalTasks && totalTasks > 0) {
-         // @ts-ignore
-         if (typeof confetti === 'function') {
-            // @ts-ignore
-            confetti({
-               particleCount: 120,
-               spread: 80,
-               origin: { y: 0.5 },
-               colors: ['#8b5cf6', '#d946ef', '#a78bfa', '#f0abfc', '#ffffff']
-            });
-         }
-      }
-   }, [completedCount, totalTasks]);
-
    const handleTaskToggle = async (taskId: string) => {
       const isCompleted = completedTasks.includes(taskId);
 
@@ -218,6 +202,22 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
 
    // Check if call is today
    const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
+
+   // Confetti on 100% completion
+   useEffect(() => {
+      if (completedCount === totalTasks && totalTasks > 0) {
+         // @ts-ignore
+         if (typeof confetti === 'function') {
+            // @ts-ignore
+            confetti({
+               particleCount: 120,
+               spread: 80,
+               origin: { y: 0.5 },
+               colors: ['#8b5cf6', '#d946ef', '#a78bfa', '#f0abfc', '#ffffff']
+            });
+         }
+      }
+   }, [completedCount, totalTasks]);
 
    // Sort tasks: active on top, completed on bottom
    const sortedTasks = [...visibleTasks].sort((a, b) => {
