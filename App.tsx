@@ -493,7 +493,7 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
             // Update Lessons to receive modules prop
             case 'lessons': return <Lessons />;
             case 'roadmaps': return <Roadmaps />;
@@ -514,7 +514,7 @@ const AppContent: React.FC = () => {
                     );
                 }
                 return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
 
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
@@ -547,7 +547,7 @@ const AppContent: React.FC = () => {
                 <Suspense fallback={<ViewSkeleton />}>
                     <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
                 </Suspense>
-            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
         }
     };
 
@@ -556,8 +556,10 @@ const AppContent: React.FC = () => {
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden gpu-accelerated">
                 {mode === 'student' ? (
                     <>
-                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 dark:bg-violet-900/10 rounded-full blur-[120px] animate-blob" />
-                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-fuchsia-600/10 dark:bg-fuchsia-900/10 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/12 dark:bg-violet-900/12 rounded-full blur-[120px] animate-blob" />
+                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-fuchsia-600/12 dark:bg-fuchsia-900/12 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+                        <div className="absolute top-[30%] right-[-5%] w-[25%] h-[25%] bg-indigo-600/8 dark:bg-indigo-900/12 rounded-full blur-[80px] animate-blob animation-delay-4000" />
+                        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 20%, rgba(139,92,246,0.05) 0%, transparent 50%)' }} />
                     </>
                 ) : (
                     <>

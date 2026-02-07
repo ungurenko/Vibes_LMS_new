@@ -181,6 +181,26 @@ export const GridSkeleton: React.FC<GridSkeletonProps> = ({
   );
 };
 
+// === Dashboard Skeleton (bento-grid layout) ===
+export const DashboardSkeleton: React.FC = () => (
+  <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-24">
+    <div className="grid grid-cols-12 gap-4">
+      {/* Hero card */}
+      <div className="col-span-12">
+        <Skeleton className="h-[200px] rounded-3xl" />
+      </div>
+      {/* Tasks card */}
+      <div className="col-span-12 lg:col-span-7">
+        <Skeleton className="h-[280px] rounded-3xl" />
+      </div>
+      {/* Quick Actions card */}
+      <div className="col-span-12 lg:col-span-5">
+        <Skeleton className="h-[280px] rounded-3xl" />
+      </div>
+    </div>
+  </div>
+);
+
 // === View Skeleton (for lazy-loaded views) ===
 export const ViewSkeleton: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px] w-full">

@@ -5,7 +5,7 @@
 @theme {
   /* Font families */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Vibe color palette */
@@ -21,6 +21,12 @@
   --color-vibe-900: #4c1d95;
   --color-vibe-950: #2e1065;
 
+  /* Glass Cosmos tokens */
+  --color-glass-bg: rgba(255,255,255,0.72);
+  --color-glass-bg-dark: rgba(255,255,255,0.04);
+  --color-glass-border: rgba(0,0,0,0.05);
+  --color-glass-border-dark: rgba(255,255,255,0.08);
+
   /* Dark theme colors */
   --color-dark-bg: #09090b;
   --color-dark-card: #18181b;
@@ -29,6 +35,7 @@
   /* Custom animations */
   --animate-blob: blob 10s infinite;
   --animate-wave: wave 2.5s infinite;
+  --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
 
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
@@ -48,9 +55,9 @@
     100% { transform: rotate(0.0deg); }
   }
 
-  @keyframes banner-shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(139,92,246,0.15); }
+    50% { box-shadow: 0 0 40px rgba(139,92,246,0.3); }
   }
 }
 
@@ -99,7 +106,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -0.02em;
   font-weight: 700;
 }
