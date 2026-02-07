@@ -35,6 +35,7 @@
   /* Custom animations */
   --animate-blob: blob 10s infinite;
   --animate-wave: wave 2.5s infinite;
+  --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
 
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
