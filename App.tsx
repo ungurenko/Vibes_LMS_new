@@ -493,7 +493,7 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
             // Update Lessons to receive modules prop
             case 'lessons': return <Lessons />;
             case 'roadmaps': return <Roadmaps />;
@@ -514,7 +514,7 @@ const AppContent: React.FC = () => {
                     );
                 }
                 return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
 
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
@@ -547,7 +547,7 @@ const AppContent: React.FC = () => {
                 <Suspense fallback={<ViewSkeleton />}>
                     <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
                 </Suspense>
-            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} userNiche={currentUser?.niche} />;
+            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
         }
     };
 

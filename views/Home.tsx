@@ -7,7 +7,6 @@ import {
    ChevronDown,
    ChevronUp,
    Clock,
-   X,
    BookOpen,
    Wrench,
    MessageSquareText,
@@ -19,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
    userName?: string;
-   userNiche?: string;
+
 }
 
 // Animation Variants
@@ -76,9 +75,9 @@ const QUICK_ACTIONS = [
    { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500/30 to-teal-500/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
 ];
 
-const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', userNiche }) => {
+const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) => {
    const [stages, setStages] = useState<DashboardStage[]>([]);
-   const [isNicheBannerDismissed, setIsNicheBannerDismissed] = useState(false);
+
    const [activeStageId, setActiveStageId] = useState<string | null>(null);
    const [completedTasks, setCompletedTasks] = useState<string[]>([]);
    const [upcomingCall, setUpcomingCall] = useState<UpcomingCall | null>(null);
@@ -234,55 +233,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
          animate="show"
          className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-24"
       >
-         {/* Niche Banner */}
-         {!userNiche && !isNicheBannerDismissed && (
-            <motion.div
-               initial={{ opacity: 0, y: -10 }}
-               animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: -10 }}
-               transition={{ duration: 0.3 }}
-               className="relative mb-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.08] shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)]"
-            >
-               {/* Shimmer effect */}
-               <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-                  <div
-                     className="absolute inset-0 -translate-x-full"
-                     style={{
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                        animation: 'banner-shimmer 4s ease-in-out infinite',
-                        animationDelay: '2s',
-                     }}
-                  />
-               </div>
-               <button
-                  onClick={() => setIsNicheBannerDismissed(true)}
-                  className="absolute top-3 right-3 p-1 text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors"
-               >
-                  <X size={16} />
-               </button>
-               <div className="flex items-center gap-3 pr-6">
-                  <motion.div
-                     animate={{ scale: [1, 1.1, 1] }}
-                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                     className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-violet-500 flex items-center justify-center shadow-sm"
-                  >
-                     <Sparkles size={18} className="text-white" />
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                     <p className="text-sm font-medium text-stone-700 dark:text-stone-200">
-                        Укажи свою нишу — AI-ассистент будет давать персональные советы
-                     </p>
-                  </div>
-                  <button
-                     onClick={() => onNavigate('profile')}
-                     className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-white/80 dark:bg-white/10 px-3.5 py-1.5 rounded-lg border border-violet-200 dark:border-violet-700/50 hover:border-violet-300 dark:hover:border-violet-600 transition-colors"
-                  >
-                     Заполнить
-                  </button>
-               </div>
-            </motion.div>
-         )}
-
          {/* --- BENTO GRID --- */}
          <div className="grid grid-cols-12 gap-4">
 
