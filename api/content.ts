@@ -143,14 +143,23 @@ async function getPrompts(req: VercelRequest, res: VercelResponse, tokenData: an
   try {
     const { category, categoryId, workStage, taskType } = req.query;
 
+    // Единый запрос с LEFT JOIN и json_agg для шагов (вместо 2 отдельных)
     let sql = `
       SELECT
         p.id, p.title, p.description, p.content, p.usage_instruction,
         pc.name as category, pc.id as category_id, pc.color_theme,
         p.tags, p.copy_count, p.status, p.sort_order,
-        p.work_stage, p.task_type
+        p.work_stage, p.task_type,
+        COALESCE(
+          json_agg(
+            json_build_object('title', ps.title, 'description', ps.description, 'content', ps.content)
+            ORDER BY ps.sort_order
+          ) FILTER (WHERE ps.id IS NOT NULL),
+          NULL
+        ) AS steps
       FROM prompts p
       LEFT JOIN prompt_categories pc ON p.category_id = pc.id
+      LEFT JOIN prompt_steps ps ON ps.prompt_id = p.id
       WHERE p.deleted_at IS NULL AND p.status = 'published'
     `;
     const params: any[] = [];
@@ -181,60 +190,28 @@ async function getPrompts(req: VercelRequest, res: VercelResponse, tokenData: an
       paramIndex++;
     }
 
-    sql += ` ORDER BY p.sort_order`;
+    sql += ` GROUP BY p.id, pc.name, pc.id, pc.color_theme ORDER BY p.sort_order`;
 
     const { rows: prompts } = await query(sql, params);
-
-    // Получаем шаги для multi-step промптов
-    const promptIds = prompts.map((p: any) => p.id);
-
-    let steps: any[] = [];
-    if (promptIds.length > 0) {
-      const stepsResult = await query(
-        `SELECT id, prompt_id, title, description, content, sort_order
-         FROM prompt_steps
-         WHERE prompt_id = ANY($1)
-         ORDER BY prompt_id, sort_order`,
-        [promptIds]
-      );
-      steps = stepsResult.rows;
-    }
-
-    // Группируем шаги по промптам
-    const stepsByPrompt = new Map<string, any[]>();
-    for (const step of steps) {
-      if (!stepsByPrompt.has(step.prompt_id)) {
-        stepsByPrompt.set(step.prompt_id, []);
-      }
-      stepsByPrompt.get(step.prompt_id)!.push({
-        title: step.title,
-        description: step.description,
-        content: step.content,
-      });
-    }
 
     // HTTP кэширование для статичных данных
     res.setHeader('Cache-Control', 'public, max-age=1800, stale-while-revalidate=3600');
 
     // Форматируем ответ
-    const result = prompts.map((p: any) => {
-      const promptSteps = stepsByPrompt.get(p.id);
-
-      return {
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        content: p.content,
-        usage: p.usage_instruction,
-        category: p.category, // Для совместимости с UI
-        categoryId: p.category_id,
-        colorTheme: p.color_theme,
-        tags: p.tags || [],
-        steps: promptSteps || undefined,
-        workStage: p.work_stage,
-        taskType: p.task_type,
-      };
-    });
+    const result = prompts.map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      content: p.content,
+      usage: p.usage_instruction,
+      category: p.category,
+      categoryId: p.category_id,
+      colorTheme: p.color_theme,
+      tags: p.tags || [],
+      steps: p.steps || undefined,
+      workStage: p.work_stage,
+      taskType: p.task_type,
+    }));
 
     return res.status(200).json(successResponse(result));
   } catch (error) {

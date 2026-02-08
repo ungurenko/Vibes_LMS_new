@@ -14,6 +14,7 @@ import {
 import { TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuth } from '../lib/fetchWithAuth';
+import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
@@ -96,22 +97,35 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
 
    // Load stages
    useEffect(() => {
+      const applyStages = (data: DashboardStage[]) => {
+         setStages(data);
+
+         const active = data.find((s: any) => s.isActive);
+         const current = data.find((s: any) => s.status === 'current');
+         setActiveStageId(active?.id || current?.id || data[0]?.id);
+
+         const completedTaskIds = data
+            .flatMap((stage: any) => stage.tasks)
+            .filter((task: any) => task.completed)
+            .map((task: any) => task.id);
+         setCompletedTasks(completedTaskIds);
+      };
+
       const fetchStages = async () => {
          try {
-            setIsLoadingStages(true);
+            // Сначала показываем кэшированные данные
+            const cached = getCached<DashboardStage[]>(CACHE_KEYS.STAGES, CACHE_TTL.STAGES);
+            if (cached) {
+               applyStages(cached);
+               setIsLoadingStages(false);
+            } else {
+               setIsLoadingStages(true);
+            }
+
+            // Всегда обновляем с сервера
             const data = await fetchWithAuthGet<DashboardStage[]>('/api/stages');
-
-            setStages(data);
-
-            const active = data.find((s: any) => s.isActive);
-            const current = data.find((s: any) => s.status === 'current');
-            setActiveStageId(active?.id || current?.id || data[0]?.id);
-
-            const completedTaskIds = data
-               .flatMap((stage: any) => stage.tasks)
-               .filter((task: any) => task.completed)
-               .map((task: any) => task.id);
-            setCompletedTasks(completedTaskIds);
+            applyStages(data);
+            setCache(CACHE_KEYS.STAGES, data);
          } catch (error) {
             console.error('Error fetching stages:', error);
          } finally {

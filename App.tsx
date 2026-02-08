@@ -2,18 +2,20 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
-import Home from './views/Home';
-import StyleLibrary from './views/StyleLibrary';
-import Glossary from './views/Glossary';
-import ToolsView from './views/ToolsView';
-import Lessons from './views/Lessons';
-import PromptBase from './views/PromptBase';
-import Roadmaps from './views/Roadmaps';
-import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
 import SplashScreen from './components/SplashScreen';
 import { ViewSkeleton } from './components/SkeletonLoader';
+
+// Lazy loaded student views (code splitting)
+const Home = lazy(() => import('./views/Home'));
+const StyleLibrary = lazy(() => import('./views/StyleLibrary'));
+const Glossary = lazy(() => import('./views/Glossary'));
+const ToolsView = lazy(() => import('./views/ToolsView'));
+const Lessons = lazy(() => import('./views/Lessons'));
+const PromptBase = lazy(() => import('./views/PromptBase'));
+const Roadmaps = lazy(() => import('./views/Roadmaps'));
+const UserProfile = lazy(() => import('./views/UserProfile'));
 
 // Lazy loaded heavy components (code splitting)
 const ToolChat = lazy(() => import('./views/ToolChat'));
@@ -25,7 +27,6 @@ const AdminSettings = lazy(() => import('./views/AdminSettings'));
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
-import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
 import { fetchWithAuth } from './lib/fetchWithAuth';
@@ -199,16 +200,22 @@ const AppContent: React.FC = () => {
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 // Parallel fetch all content
-                const [stylesRes, promptsRes, glossaryRes] = await Promise.all([
+                const [stylesRes, promptsRes, glossaryRes, stagesRes, lessonsRes, categoriesRes] = await Promise.all([
                     fetch('/api/content/styles', { headers }).then(r => r.json()),
                     fetch('/api/content/prompts', { headers }).then(r => r.json()),
-                    fetch('/api/content/glossary', { headers }).then(r => r.json())
+                    fetch('/api/content/glossary', { headers }).then(r => r.json()),
+                    fetch('/api/stages', { headers }).then(r => r.json()),
+                    fetch('/api/lessons', { headers }).then(r => r.json()),
+                    fetch('/api/content/categories', { headers }).then(r => r.json())
                 ]);
 
                 // Cache successful responses
                 if (stylesRes.success) setCache(CACHE_KEYS.STYLES, stylesRes.data);
                 if (promptsRes.success) setCache(CACHE_KEYS.PROMPTS, promptsRes.data);
                 if (glossaryRes.success) setCache(CACHE_KEYS.GLOSSARY, glossaryRes.data);
+                if (stagesRes.success) setCache(CACHE_KEYS.STAGES, stagesRes.data);
+                if (lessonsRes.success) setCache(CACHE_KEYS.LESSONS, lessonsRes.data);
+                if (categoriesRes.success) setCache(CACHE_KEYS.CATEGORIES, categoriesRes.data);
             } catch (error) {
                 // Silent fail - prefetch is not critical
                 console.log('Prefetch failed (non-critical):', error);
@@ -493,13 +500,12 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
-            // Update Lessons to receive modules prop
-            case 'lessons': return <Lessons />;
-            case 'roadmaps': return <Roadmaps />;
-            case 'styles': return <StyleLibrary />;
-            case 'prompts': return <PromptBase />;
-            case 'glossary': return <Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} />;
+            case 'dashboard': return <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
+            case 'lessons': return <Suspense fallback={<ViewSkeleton />}><Lessons /></Suspense>;
+            case 'roadmaps': return <Suspense fallback={<ViewSkeleton />}><Roadmaps /></Suspense>;
+            case 'styles': return <Suspense fallback={<ViewSkeleton />}><StyleLibrary /></Suspense>;
+            case 'prompts': return <Suspense fallback={<ViewSkeleton />}><PromptBase /></Suspense>;
+            case 'glossary': return <Suspense fallback={<ViewSkeleton />}><Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} /></Suspense>;
             case 'tools':
                 if (selectedTool) {
                     return (
@@ -513,8 +519,8 @@ const AppContent: React.FC = () => {
                         </Suspense>
                     );
                 }
-                return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+                return <Suspense fallback={<ViewSkeleton />}><ToolsView onSelectTool={handleSelectTool} /></Suspense>;
+            case 'profile': return currentUser ? <Suspense fallback={<ViewSkeleton />}><UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /></Suspense> : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
 
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
@@ -547,7 +553,7 @@ const AppContent: React.FC = () => {
                 <Suspense fallback={<ViewSkeleton />}>
                     <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
                 </Suspense>
-            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            ) : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
         }
     };
 
@@ -610,7 +616,7 @@ const AppContent: React.FC = () => {
                             initial={{ opacity: 0, y: 15, scale: 0.99 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -15, scale: 0.99 }}
-                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
                             className="h-full"
                         >
                             {renderContent()}

@@ -27,6 +27,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import AdminPasswordModal from './AdminPasswordModal';
 
+// Preload map: tab → dynamic import для предзагрузки чанков при hover
+const preloadMap: Partial<Record<TabId, () => Promise<any>>> = {
+  dashboard: () => import('../views/Home'),
+  lessons: () => import('../views/Lessons'),
+  roadmaps: () => import('../views/Roadmaps'),
+  styles: () => import('../views/StyleLibrary'),
+  prompts: () => import('../views/PromptBase'),
+  glossary: () => import('../views/Glossary'),
+  tools: () => import('../views/ToolsView'),
+  profile: () => import('../views/UserProfile'),
+};
+
 interface SidebarProps {
   activeTab: TabId;
   setActiveTab: (id: TabId) => void;
@@ -170,9 +182,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                 setActiveTab(item.id);
                 setIsOpen(false);
               }}
+              onMouseEnter={() => preloadMap[item.id]?.()}
+              onTouchStart={() => preloadMap[item.id]?.()}
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${
-                isActive 
-                  ? 'text-zinc-900 dark:text-white' 
+                isActive
+                  ? 'text-zinc-900 dark:text-white'
                   : 'text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
               }`}
             >

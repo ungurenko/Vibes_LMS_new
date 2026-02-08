@@ -30,7 +30,8 @@ export default defineConfig(({ mode }) => {
             manualChunks: {
               'vendor': ['react', 'react-dom'],
               'motion': ['framer-motion'],
-              'markdown': ['react-markdown']
+              'markdown': ['react-markdown'],
+              'icons': ['lucide-react']
             }
           }
         }

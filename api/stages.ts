@@ -56,7 +56,7 @@ export default async function handler(
     );
 
     // HTTP кэширование для данных с прогрессом
-    res.setHeader('Cache-Control', 'private, max-age=30');
+    res.setHeader('Cache-Control', 'private, max-age=120, stale-while-revalidate=300');
 
     // Группируем результат в иерархическую структуру
     const stagesMap = new Map<string, any>();
