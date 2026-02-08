@@ -4,9 +4,10 @@ import { Search, Hash, BookOpen, ArrowUp, Sparkles, Copy, MessageSquare, Share2,
 import { GlossaryCategory, GlossaryTerm, TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GlossaryTermSkeleton } from '../components/SkeletonLoader';
-import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { useCachedFetch } from '../lib/hooks/useCachedFetch';
+import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
 
 const CATEGORIES: GlossaryCategory[] = ['Все', 'Базовые', 'Код', 'Инструменты', 'API', 'Ошибки', 'Вайб-кодинг'];
 
@@ -27,50 +28,22 @@ interface GlossaryProps {
 
 const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
    const { playSound } = useSound();
-   const [glossaryData, setGlossaryData] = useState<GlossaryTerm[]>([]);
    const [search, setSearch] = useState('');
    const [activeCategory, setActiveCategory] = useState<GlossaryCategory>('Все');
    const [randomTerm, setRandomTerm] = useState<GlossaryTerm | null>(null);
-   const [copiedId, setCopiedId] = useState<string | null>(null);
-   const [isLoading, setIsLoading] = useState(true);
 
-   // Загрузка глоссария из API с кэшированием
+   const { data: glossaryData, isLoading } = useCachedFetch<GlossaryTerm[]>(
+      '/api/content/glossary', [], { cacheKey: CACHE_KEYS.GLOSSARY, cacheTTL: CACHE_TTL.GLOSSARY }
+   );
+   const { copiedId, triggerCopy } = useCopyFeedback(2000);
+
+   // Set random term when data loads
    useEffect(() => {
-      const fetchGlossary = async () => {
-         try {
-            // Проверяем кэш
-            const cached = getCached<GlossaryTerm[]>(CACHE_KEYS.GLOSSARY, CACHE_TTL.GLOSSARY);
-            if (cached) {
-               setGlossaryData(cached);
-               if (cached.length > 0) {
-                  const randomIndex = Math.floor(Math.random() * cached.length);
-                  setRandomTerm(cached[randomIndex]);
-               }
-               setIsLoading(false);
-               return;
-            }
-
-            setIsLoading(true);
-            const data = await fetchWithAuthGet<GlossaryTerm[]>('/api/content/glossary');
-            setGlossaryData(data);
-            // Сохраняем в кэш
-            setCache(CACHE_KEYS.GLOSSARY, data);
-
-            // Set random term after data loaded
-            if (data.length > 0) {
-               const randomIndex = Math.floor(Math.random() * data.length);
-               setRandomTerm(data[randomIndex]);
-            }
-         } catch (error) {
-            console.error('Error fetching glossary:', error);
-            setGlossaryData([]);
-         } finally {
-            setIsLoading(false);
-         }
-      };
-
-      fetchGlossary();
-   }, []);
+      if (glossaryData.length > 0 && !randomTerm) {
+         const randomIndex = Math.floor(Math.random() * glossaryData.length);
+         setRandomTerm(glossaryData[randomIndex]);
+      }
+   }, [glossaryData]);
 
    const refreshRandomTerm = () => {
       playSound('click');
@@ -87,8 +60,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
    const handleCopy = (id: string, text: string) => {
       playSound('copy');
       navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      triggerCopy(id);
    };
 
    const handleAskAssistant = (term: string, definition?: string) => {

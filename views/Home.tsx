@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { TabId } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuth } from '../lib/fetchWithAuth';
 
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
@@ -98,29 +99,19 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
       const fetchStages = async () => {
          try {
             setIsLoadingStages(true);
-            const token = localStorage.getItem('vibes_token');
-            const response = await fetch('/api/stages', {
-               headers: {
-                  'Authorization': `Bearer ${token}`
-               }
-            });
+            const data = await fetchWithAuthGet<DashboardStage[]>('/api/stages');
 
-            if (!response.ok) return;
+            setStages(data);
 
-            const result = await response.json();
-            if (result.success && result.data) {
-               setStages(result.data);
+            const active = data.find((s: any) => s.isActive);
+            const current = data.find((s: any) => s.status === 'current');
+            setActiveStageId(active?.id || current?.id || data[0]?.id);
 
-               const activeStage = result.data.find((s: any) => s.isActive);
-               const currentStage = result.data.find((s: any) => s.status === 'current');
-               setActiveStageId(activeStage?.id || currentStage?.id || result.data[0]?.id);
-
-               const completedTaskIds = result.data
-                  .flatMap((stage: any) => stage.tasks)
-                  .filter((task: any) => task.completed)
-                  .map((task: any) => task.id);
-               setCompletedTasks(completedTaskIds);
-            }
+            const completedTaskIds = data
+               .flatMap((stage: any) => stage.tasks)
+               .filter((task: any) => task.completed)
+               .map((task: any) => task.id);
+            setCompletedTasks(completedTaskIds);
          } catch (error) {
             console.error('Error fetching stages:', error);
          } finally {
@@ -135,21 +126,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
    useEffect(() => {
       const fetchUpcomingCall = async () => {
          try {
-            const token = localStorage.getItem('vibes_token');
-            const response = await fetch('/api/calls/upcoming', {
-               headers: {
-                  'Authorization': `Bearer ${token}`
-               }
-            });
-
-            if (!response.ok) return;
-
-            const result = await response.json();
-            if (result.success && result.data) {
-               setUpcomingCall(result.data);
-            }
+            const data = await fetchWithAuthGet<UpcomingCall>('/api/calls/upcoming');
+            setUpcomingCall(data);
          } catch (error) {
-            console.error('Error fetching upcoming call:', error);
+            // Не показываем ошибку если нет предстоящих созвонов
          }
       };
 
@@ -160,27 +140,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
       const isCompleted = completedTasks.includes(taskId);
 
       try {
-         const token = localStorage.getItem('vibes_token');
-
          if (isCompleted) {
-            await fetch('/api/stages?action=complete-task', {
+            await fetchWithAuth('/api/stages?action=complete-task', {
                method: 'DELETE',
-               headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-               },
+               headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({ taskId })
             });
             setCompletedTasks(prev => prev.filter(id => id !== taskId));
          } else {
-            await fetch('/api/stages?action=complete-task', {
-               method: 'POST',
-               headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-               },
-               body: JSON.stringify({ taskId })
-            });
+            await fetchWithAuthPost('/api/stages?action=complete-task', { taskId });
             setCompletedTasks(prev => [...prev, taskId]);
          }
       } catch (error) {

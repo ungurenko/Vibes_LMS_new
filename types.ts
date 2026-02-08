@@ -186,7 +186,6 @@ export interface Student {
   projects: StudentProjects;
   notes?: string;
   niche?: string;
-  onboardingCompleted?: boolean;
 }
 
 export interface StudentProfile extends Student {

@@ -39,7 +39,6 @@ interface UpdateProfileRequest {
   avatarUrl?: string;
   newPassword?: string;
   niche?: string;
-  onboardingCompleted?: boolean;
   preferences?: Record<string, any>;
 }
 
@@ -68,7 +67,6 @@ interface UserData {
   service_url: string | null;
   github_url: string | null;
   niche: string | null;
-  onboarding_completed: boolean;
   preferences: Record<string, any>;
   current_stage_title: string | null;
 }
@@ -327,7 +325,6 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
         u.service_url,
         u.github_url,
         u.niche,
-        u.onboarding_completed,
         u.preferences,
         ds.title as current_stage_title
       FROM users u
@@ -364,7 +361,6 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
           github: user.github_url,
         },
         niche: user.niche,
-        onboardingCompleted: user.onboarding_completed,
         preferences: user.preferences,
         currentStage: user.current_stage_title,
       })
@@ -383,10 +379,10 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json(errorResponse('Не авторизован'));
     }
 
-    const { firstName, lastName, avatarUrl, newPassword, niche, onboardingCompleted, preferences } = req.body as UpdateProfileRequest;
+    const { firstName, lastName, avatarUrl, newPassword, niche, preferences } = req.body as UpdateProfileRequest;
 
     // Проверяем, что есть что обновлять
-    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && niche === undefined && onboardingCompleted === undefined && !preferences) {
+    if (!firstName && lastName === undefined && !avatarUrl && !newPassword && niche === undefined && !preferences) {
       return res.status(400).json(errorResponse('Нет данных для обновления'));
     }
 
@@ -431,12 +427,6 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
       paramIndex++;
     }
 
-    if (onboardingCompleted !== undefined) {
-      updates.push(`onboarding_completed = $${paramIndex}`);
-      params.push(onboardingCompleted);
-      paramIndex++;
-    }
-
     if (preferences) {
         updates.push(`preferences = $${paramIndex}`);
         params.push(preferences);
@@ -470,7 +460,6 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
         u.service_url,
         u.github_url,
         u.niche,
-        u.onboarding_completed,
         u.preferences,
         ds.title as current_stage_title
       FROM users u
@@ -502,7 +491,6 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
           github: user.github_url,
         },
         niche: user.niche,
-        onboardingCompleted: user.onboarding_completed,
         preferences: user.preferences,
         currentStage: user.current_stage_title,
       })

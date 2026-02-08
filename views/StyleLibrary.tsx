@@ -1,58 +1,33 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Copy, Check, Eye, X, Palette, Sparkles, MoveRight } from 'lucide-react';
 import { StyleCategory, StyleCard } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GridSkeleton, StyleCardSkeleton } from '../components/SkeletonLoader';
-import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { copyToClipboard } from '../lib/clipboard';
+import { useCachedFetch } from '../lib/hooks/useCachedFetch';
+import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
 const StyleLibrary: React.FC = () => {
   const { playSound } = useSound();
-  const [styles, setStyles] = useState<StyleCard[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<StyleCard | null>(null);
   const [activeCategory, setActiveCategory] = useState<StyleCategory>('Все');
-  const [isLoading, setIsLoading] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  // Загрузка стилей из API с кэшированием
-  useEffect(() => {
-    const fetchStyles = async () => {
-      try {
-        // Проверяем кэш
-        const cached = getCached<StyleCard[]>(CACHE_KEYS.STYLES, CACHE_TTL.STYLES);
-        if (cached) {
-          setStyles(cached);
-          setIsLoading(false);
-          return;
-        }
+  const { data: styles, isLoading } = useCachedFetch<StyleCard[]>(
+    '/api/content/styles', [], { cacheKey: CACHE_KEYS.STYLES, cacheTTL: CACHE_TTL.STYLES }
+  );
+  const { copiedId, triggerCopy } = useCopyFeedback(3000);
 
-        setIsLoading(true);
-        const data = await fetchWithAuthGet<StyleCard[]>('/api/content/styles');
-        setStyles(data);
-        // Сохраняем в кэш
-        setCache(CACHE_KEYS.STYLES, data);
-      } catch (error) {
-        console.error('Error fetching styles:', error);
-        setStyles([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStyles();
-  }, []);
-
-  const handleCopy = (id: string, prompt: string) => {
+  const handleCopy = async (id: string, prompt: string) => {
     playSound('copy');
-    navigator.clipboard.writeText(prompt);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 3000);
+    const success = await copyToClipboard(prompt);
+    if (success) triggerCopy(id);
   };
 
   const filteredStyles = useMemo(() => {
@@ -140,7 +115,8 @@ const StyleLibrary: React.FC = () => {
                 opacity: { duration: 0.25 }
               }}
               key={style.id}
-              className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px]"
+              onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
+              className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-violet-900/10 dark:hover:shadow-violet-900/20 flex flex-col h-[400px] cursor-pointer"
             >
               {/* Image Area */}
               <div className="relative h-[65%] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -152,10 +128,10 @@ const StyleLibrary: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40 transition-opacity group-hover:opacity-60" />
 
-                {/* 3.3 Hover Actions Overlay */}
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                {/* 3.3 Hover Actions Overlay - hidden on touch, visible on desktop hover */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] hidden [@media(hover:hover)_and_(pointer:fine)]:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center gap-3">
                   <button
-                    onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
+                    onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
                     className="p-4 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black hover:scale-110 transition-all duration-300 shadow-lg"
                     title="Посмотреть пример"
                   >
@@ -190,12 +166,29 @@ const StyleLibrary: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {style.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs uppercase font-bold tracking-wider">
-                      {tag}
-                    </span>
-                  ))}
+                {/* Tags + Mobile Actions Row */}
+                <div className="flex items-end justify-between gap-3">
+                  <div className="flex flex-wrap gap-2 flex-1">
+                    {style.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs uppercase font-bold tracking-wider">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Mobile-only Copy button - tap card to open modal */}
+                  <div className="[@media(hover:hover)_and_(pointer:fine)]:hidden shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(style.id, style.prompt);
+                      }}
+                      className="w-11 h-11 rounded-xl bg-violet-600 text-white flex items-center justify-center active:scale-95 transition-transform"
+                      title="Скопировать промпт"
+                    >
+                      {copiedId === style.id ? <Check size={20} /> : <Copy size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, Drawer } from '../components/Shared';
-import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuth, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas';
 
@@ -350,29 +350,17 @@ const ChatsTab: React.FC = () => {
   // Load chats and stats
   const loadChats = useCallback(async () => {
     try {
-      const token = localStorage.getItem('vibes_token');
-
       // Load stats
-      const statsRes = await fetch('/api/admin?resource=ai-chats&stats=true', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (statsRes.ok) {
-        const statsResult = await statsRes.json();
-        if (statsResult.success) setStats(statsResult.data);
-      }
+      const statsData = await fetchWithAuthGet<ChatsStats>('/api/admin?resource=ai-chats&stats=true');
+      setStats(statsData);
 
       // Load chats list
       const url = filter === 'all'
         ? '/api/admin?resource=ai-chats'
         : `/api/admin?resource=ai-chats&tool_type=${filter}`;
 
-      const chatsRes = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (chatsRes.ok) {
-        const chatsResult = await chatsRes.json();
-        if (chatsResult.success) setChats(chatsResult.data);
-      }
+      const chatsData = await fetchWithAuthGet<ChatSummary[]>(url);
+      setChats(chatsData);
     } catch (error) {
       console.error('Failed to load chats:', error);
     } finally {
@@ -391,14 +379,8 @@ const ChatsTab: React.FC = () => {
     setChatDetail(null);
 
     try {
-      const token = localStorage.getItem('vibes_token');
-      const res = await fetch(`/api/admin?resource=ai-chats&chat_id=${chatId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success) setChatDetail(result.data);
-      }
+      const data = await fetchWithAuthGet<ChatDetail>(`/api/admin?resource=ai-chats&chat_id=${chatId}`);
+      setChatDetail(data);
     } catch (error) {
       console.error('Failed to load chat detail:', error);
     } finally {
@@ -420,22 +402,13 @@ const ChatsTab: React.FC = () => {
 
     setExporting(true);
     try {
-      const token = localStorage.getItem('vibes_token');
-      const res = await fetch(`/api/admin?resource=ai-chats&export=true&tool_type=${filter}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!res.ok) {
-        throw new Error('Ошибка экспорта');
-      }
-
-      const result = await res.json();
-      if (!result.success || !result.data?.markdown) {
+      const exportData = await fetchWithAuthGet<{ markdown: string }>(`/api/admin?resource=ai-chats&export=true&tool_type=${filter}`);
+      if (!exportData?.markdown) {
         throw new Error('Нет данных для экспорта');
       }
 
       // Создаём и скачиваем файл
-      const blob = new Blob([result.data.markdown], { type: 'text/markdown;charset=utf-8' });
+      const blob = new Blob([exportData.markdown], { type: 'text/markdown;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const date = new Date().toISOString().split('T')[0];

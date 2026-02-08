@@ -20,9 +20,10 @@ import {
 import { PromptCategory, PromptItem, PromptCategoryItem, WorkStage, TaskType } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuth } from '../lib/fetchWithAuth';
 import { GridSkeleton, PromptCardSkeleton } from '../components/SkeletonLoader';
 import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
 
 // --- Constants & Types ---
 
@@ -82,7 +83,6 @@ const PromptBase: React.FC = () => {
     const { playSound } = useSound();
     const [prompts, setPrompts] = useState<PromptItem[]>([]);
     const [categories, setCategories] = useState<PromptCategoryItem[]>([]);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState<string>('Все');
     const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
@@ -104,6 +104,8 @@ const PromptBase: React.FC = () => {
     const [wizardTaskType, setWizardTaskType] = useState<TaskType | 'unsure' | null>(null);
     const [wizardResults, setWizardResults] = useState<PromptItem[]>([]);
     const [wizardLoading, setWizardLoading] = useState(false);
+
+    const { copiedId, triggerCopy } = useCopyFeedback(2000);
 
     // Загрузка данных
     useEffect(() => {
@@ -152,8 +154,7 @@ const PromptBase: React.FC = () => {
     const handleCopy = (id: string, content: string) => {
         playSound('copy');
         navigator.clipboard.writeText(content);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
+        triggerCopy(id);
     };
 
     // Toggle favorite with optimistic update
@@ -182,12 +183,8 @@ const PromptBase: React.FC = () => {
 
         // API запрос
         try {
-            const token = localStorage.getItem('vibes_token');
             if (isFavorite) {
-                await fetch(`/api/content/favorites?promptId=${promptId}`, {
-                    method: 'DELETE',
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await fetchWithAuth(`/api/content/favorites?promptId=${promptId}`, { method: 'DELETE' });
             } else {
                 await fetchWithAuthPost('/api/content/favorites', { promptId });
             }

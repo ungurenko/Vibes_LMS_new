@@ -109,7 +109,7 @@ CREATE TABLE users (
 
     -- Метаданные
     email_verified BOOLEAN DEFAULT FALSE,
-    onboarding_completed BOOLEAN DEFAULT FALSE,
+    onboarding_completed BOOLEAN DEFAULT FALSE,  -- DEPRECATED: колонка не используется, оставлена для обратной совместимости
     last_active_at TIMESTAMPTZ,
 
     -- Аудит

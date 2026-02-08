@@ -16,6 +16,7 @@ import {
 import { Student } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '../components/Shared';
+import { fetchWithAuthPost, fetchWithAuthPatch } from '../lib/fetchWithAuth';
 
 interface UserProfileProps {
   user: Student;
@@ -61,59 +62,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
       setIsSaving(true);
 
       try {
-          const token = localStorage.getItem('vibes_token');
-          if (!token) {
-              setError('Сессия истекла. Войдите снова.');
-              setIsSaving(false);
-              return;
-          }
-
           let finalAvatarUrl = avatarUrl;
 
           // Если есть новое фото - сначала загружаем его
           if (avatarBase64) {
-              const uploadResponse = await fetch('/api/upload', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                      base64: avatarBase64,
-                      filename: `avatar-${Date.now()}.jpg`
-                  })
+              const uploadResult = await fetchWithAuthPost<{ url: string }>('/api/upload', {
+                  base64: avatarBase64,
+                  filename: `avatar-${Date.now()}.jpg`
               });
-
-              const uploadData = await uploadResponse.json();
-
-              if (!uploadResponse.ok) {
-                  throw new Error(uploadData.error || 'Ошибка загрузки фото');
-              }
-
-              finalAvatarUrl = uploadData.data.url;
+              finalAvatarUrl = uploadResult.url;
           }
 
           // Обновляем профиль
-          const profileResponse = await fetch('/api/auth/me', {
-              method: 'PATCH',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                  firstName: firstName.trim(),
-                  lastName: lastName.trim(),
-                  avatarUrl: finalAvatarUrl,
-                  niche: niche.trim(),
-                  ...(newPassword ? { newPassword } : {})
-              })
+          await fetchWithAuthPatch('/api/auth/me', {
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              avatarUrl: finalAvatarUrl,
+              niche: niche.trim(),
+              ...(newPassword ? { newPassword } : {})
           });
-
-          const profileData = await profileResponse.json();
-
-          if (!profileResponse.ok) {
-              throw new Error(profileData.error || 'Ошибка сохранения профиля');
-          }
 
           // Успешно! Обновляем UI
           setAvatarUrl(finalAvatarUrl);

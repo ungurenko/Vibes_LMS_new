@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CourseModule, LessonStatus } from '../types';
 import { LessonItemSkeleton } from '../components/SkeletonLoader';
 import { getCached, setCache, removeCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
@@ -49,7 +50,7 @@ const Lessons: React.FC = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'materials'>('overview');
 
-    // Load modules from API with caching
+    // Load modules from API with caching (stale-while-revalidate)
     useEffect(() => {
         const fetchModules = async () => {
             try {
@@ -58,36 +59,21 @@ const Lessons: React.FC = () => {
                 if (cachedData) {
                     setModules(cachedData);
                     setIsLoading(false);
-                    // Set first available lesson as active
                     if (cachedData.length > 0 && cachedData[0].lessons?.length > 0) {
                         setActiveModuleId(cachedData[0].id);
                         setActiveLessonId(cachedData[0].lessons[0].id);
                     }
-                    // Continue to fetch fresh data in background
                 } else {
                     setIsLoading(true);
                 }
 
-                const token = localStorage.getItem('vibes_token');
-                const response = await fetch('/api/lessons', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const data = await fetchWithAuthGet<CourseModule[]>('/api/lessons');
+                setModules(data);
+                setCache(CACHE_KEYS.LESSONS, data);
 
-                if (!response.ok) return;
-
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setModules(result.data);
-                    // Save to cache
-                    setCache(CACHE_KEYS.LESSONS, result.data);
-
-                    // Set first available lesson as active (only if not already set)
-                    if (!cachedData && result.data.length > 0 && result.data[0].lessons?.length > 0) {
-                        setActiveModuleId(result.data[0].id);
-                        setActiveLessonId(result.data[0].lessons[0].id);
-                    }
+                if (!cachedData && data.length > 0 && data[0].lessons?.length > 0) {
+                    setActiveModuleId(data[0].id);
+                    setActiveLessonId(data[0].lessons[0].id);
                 }
             } catch (error) {
                 console.error('Error fetching lessons:', error);
@@ -167,24 +153,10 @@ const Lessons: React.FC = () => {
         setCache(CACHE_KEYS.LESSONS, updatedModules);
 
         try {
-            const token = localStorage.getItem('vibes_token');
-            const response = await fetch('/api/lessons', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    lessonId: activeLesson.id,
-                    completed: newCompletedStatus
-                })
+            await fetchWithAuthPost('/api/lessons', {
+                lessonId: activeLesson.id,
+                completed: newCompletedStatus
             });
-
-            if (!response.ok) {
-                console.error('Failed to update lesson status');
-                // Revert cache on error
-                removeCache(CACHE_KEYS.LESSONS);
-            }
         } catch (error) {
             console.error('Error updating lesson status:', error);
             // Revert cache on error
