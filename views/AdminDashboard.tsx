@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer, Input } from '../components/Shared';
+import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 
 // --- Types ---
 
@@ -116,18 +117,9 @@ const AdminDashboard: React.FC = () => {
     if (showRefreshIndicator) setIsRefreshing(true);
 
     try {
-      const token = localStorage.getItem('vibes_token');
-      const res = await fetch('/api/admin?resource=dashboard-stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success) {
-          setStats(result.data);
-          setLastRefresh(new Date());
-        }
-      }
+      const data = await fetchWithAuthGet<DashboardStats>('/api/admin?resource=dashboard-stats');
+      setStats(data);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
     } finally {

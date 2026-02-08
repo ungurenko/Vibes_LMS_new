@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer, PageHeader, Input, Select, ConfirmModal } from '../components/Shared';
+import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuthPut, fetchWithAuthDelete } from '../lib/fetchWithAuth';
 
 // --- Types ---
 
@@ -67,19 +68,8 @@ const AdminCalls: React.FC = () => {
     const fetchCalls = async () => {
         try {
             setIsLoading(true);
-            const token = localStorage.getItem('vibes_token');
-            const response = await fetch('/api/admin?resource=calls', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch calls');
-
-            const result = await response.json();
-            if (result.success && result.data) {
-                setCalls(result.data);
-            }
+            const data = await fetchWithAuthGet<AdminCall[]>('/api/admin?resource=calls');
+            setCalls(data);
         } catch (error) {
             console.error('Error fetching calls:', error);
         } finally {
@@ -102,16 +92,7 @@ const AdminCalls: React.FC = () => {
         if (!callToDelete) return;
 
         try {
-            const token = localStorage.getItem('vibes_token');
-            const response = await fetch(`/api/admin?resource=calls&id=${callToDelete}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete call');
-
+            await fetchWithAuthDelete(`/api/admin?resource=calls&id=${callToDelete}`);
             setCalls(prev => prev.filter(c => c.id !== callToDelete));
             setIsDeleteModalOpen(false);
             setCallToDelete(null);
@@ -148,27 +129,15 @@ const AdminCalls: React.FC = () => {
         if (!editingCall.topic) return;
 
         try {
-            const token = localStorage.getItem('vibes_token');
             const isUpdate = !!editingCall.id;
+            const saved = isUpdate
+                ? await fetchWithAuthPut<AdminCall>('/api/admin?resource=calls', editingCall)
+                : await fetchWithAuthPost<AdminCall>('/api/admin?resource=calls', editingCall);
 
-            const response = await fetch('/api/admin?resource=calls', {
-                method: isUpdate ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(editingCall)
-            });
-
-            if (!response.ok) throw new Error('Failed to save call');
-
-            const result = await response.json();
-            if (result.success && result.data) {
-                if (isUpdate) {
-                    setCalls(prev => prev.map(c => c.id === result.data.id ? result.data : c));
-                } else {
-                    setCalls(prev => [result.data, ...prev]);
-                }
+            if (isUpdate) {
+                setCalls(prev => prev.map(c => c.id === saved.id ? saved : c));
+            } else {
+                setCalls(prev => [saved, ...prev]);
             }
 
             setIsEditorOpen(false);

@@ -1,13 +1,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  Settings, 
-  Link, 
-  Plus, 
-  Copy, 
-  Check, 
-  Trash2, 
-  CheckCircle2, 
+import {
+  Settings,
+  Link,
+  Plus,
+  Copy,
+  Check,
+  Trash2,
+  CheckCircle2,
   Ban,
   Clock,
   Users,
@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { InviteLink, NavigationConfig } from '../types';
 import { useSound } from '../SoundContext';
 import { Modal, PageHeader, ConfirmModal } from '../components/Shared';
+import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 interface AdminSettingsProps {
     invites: InviteLink[];
@@ -116,18 +117,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
 
   // --- Navigation Config Effects ---
   useEffect(() => {
-    // Загружаем конфигурацию навигации при монтировании
-    fetch('/api/admin?resource=navigation', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('vibes_token')}`
-      }
-    })
-      .then(res => res.json())
-      .then(result => {
-        if (result.success) {
-          setNavConfig(result.data);
-        }
-      })
+    fetchWithAuthGet<NavigationConfig>('/api/admin?resource=navigation')
+      .then(data => setNavConfig(data))
       .catch(err => {
         console.error('Failed to load navigation config:', err);
         showToast('Ошибка загрузки настроек навигации', 'error');
@@ -145,25 +136,9 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
     setNavConfigSaving(key);
 
     try {
-      const response = await fetch('/api/admin?resource=navigation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('vibes_token')}`
-        },
-        body: JSON.stringify(updatedConfig)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setNavConfig(result.data);
-        showToast('Настройки сохранены', 'success');
-      } else {
-        // Откат при ошибке
-        setNavConfig(navConfig);
-        showToast('Ошибка сохранения', 'error');
-      }
+      const data = await fetchWithAuthPost<NavigationConfig>('/api/admin?resource=navigation', updatedConfig);
+      setNavConfig(data);
+      showToast('Настройки сохранены', 'success');
     } catch (error) {
       // Откат при ошибке
       setNavConfig(navConfig);

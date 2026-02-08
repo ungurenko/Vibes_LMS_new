@@ -109,3 +109,41 @@ export async function fetchWithAuthPost<T = any>(
   });
   return response.data as T;
 }
+
+/**
+ * Вспомогательная функция для PUT запросов
+ */
+export async function fetchWithAuthPut<T = any>(
+  url: string,
+  body: any
+): Promise<T> {
+  const response = await fetchWithAuth<T>(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return response.data as T;
+}
+
+/**
+ * Вспомогательная функция для PATCH запросов
+ */
+export async function fetchWithAuthPatch<T = any>(
+  url: string,
+  body: any
+): Promise<T> {
+  const response = await fetchWithAuth<T>(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return response.data as T;
+}
+
+/**
+ * Вспомогательная функция для DELETE запросов
+ */
+export async function fetchWithAuthDelete<T = any>(url: string): Promise<T> {
+  const response = await fetchWithAuth<T>(url, { method: 'DELETE' });
+  return response.data as T;
+}

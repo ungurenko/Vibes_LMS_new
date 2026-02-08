@@ -1,61 +1,33 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Copy, Check, Eye, X, Palette, Sparkles, MoveRight } from 'lucide-react';
 import { StyleCategory, StyleCard } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
-import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { GridSkeleton, StyleCardSkeleton } from '../components/SkeletonLoader';
-import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 import { copyToClipboard } from '../lib/clipboard';
+import { useCachedFetch } from '../lib/hooks/useCachedFetch';
+import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
 
 const CATEGORIES: StyleCategory[] = ['Все', 'Светлые', 'Тёмные', 'Яркие', 'Минимализм'];
 
 const StyleLibrary: React.FC = () => {
   const { playSound } = useSound();
-  const [styles, setStyles] = useState<StyleCard[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<StyleCard | null>(null);
   const [activeCategory, setActiveCategory] = useState<StyleCategory>('Все');
-  const [isLoading, setIsLoading] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  // Загрузка стилей из API с кэшированием
-  useEffect(() => {
-    const fetchStyles = async () => {
-      try {
-        // Проверяем кэш
-        const cached = getCached<StyleCard[]>(CACHE_KEYS.STYLES, CACHE_TTL.STYLES);
-        if (cached) {
-          setStyles(cached);
-          setIsLoading(false);
-          return;
-        }
-
-        setIsLoading(true);
-        const data = await fetchWithAuthGet<StyleCard[]>('/api/content/styles');
-        setStyles(data);
-        // Сохраняем в кэш
-        setCache(CACHE_KEYS.STYLES, data);
-      } catch (error) {
-        console.error('Error fetching styles:', error);
-        setStyles([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStyles();
-  }, []);
+  const { data: styles, isLoading } = useCachedFetch<StyleCard[]>(
+    '/api/content/styles', [], { cacheKey: CACHE_KEYS.STYLES, cacheTTL: CACHE_TTL.STYLES }
+  );
+  const { copiedId, triggerCopy } = useCopyFeedback(3000);
 
   const handleCopy = async (id: string, prompt: string) => {
     playSound('copy');
     const success = await copyToClipboard(prompt);
-    if (success) {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 3000);
-    }
+    if (success) triggerCopy(id);
   };
 
   const filteredStyles = useMemo(() => {
