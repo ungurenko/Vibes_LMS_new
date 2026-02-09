@@ -6,7 +6,7 @@ import { successResponse, errorResponse } from '../auth.js';
 
 // POST - Создать модуль
 async function createModule(req: VercelRequest, res: VercelResponse) {
-    const { title, description, status = 'locked', sortOrder } = req.body;
+    const { title, description, status = 'locked', sortOrder, cohortIds } = req.body;
 
     if (!title) {
         return res.status(400).json(errorResponse('Название модуля обязательно'));
@@ -19,13 +19,25 @@ async function createModule(req: VercelRequest, res: VercelResponse) {
         [title, description, status, sortOrder || 0]
     );
 
+    const moduleId = rows[0].id;
+
+    // Save cohort associations
+    if (cohortIds && Array.isArray(cohortIds) && cohortIds.length > 0) {
+        const values = cohortIds.map((_: string, i: number) => `($1, $${i + 2})`).join(', ');
+        await query(
+            `INSERT INTO module_cohorts (module_id, cohort_id) VALUES ${values} ON CONFLICT DO NOTHING`,
+            [moduleId, ...cohortIds]
+        );
+    }
+
     const module = {
-        id: rows[0].id,
+        id: moduleId,
         title: rows[0].title,
         description: rows[0].description,
         status: rows[0].status,
         sortOrder: rows[0].sort_order,
         lessons: [],
+        cohortIds: cohortIds || [],
     };
 
     return res.status(201).json(successResponse(module));
@@ -33,7 +45,7 @@ async function createModule(req: VercelRequest, res: VercelResponse) {
 
 // PUT - Обновить модуль
 async function updateModule(req: VercelRequest, res: VercelResponse) {
-    const { id, title, description, status, sortOrder } = req.body;
+    const { id, title, description, status, sortOrder, cohortIds } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID модуля обязателен'));
@@ -55,12 +67,25 @@ async function updateModule(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json(errorResponse('Модуль не найден'));
     }
 
+    // Sync cohort associations if provided
+    if (cohortIds && Array.isArray(cohortIds)) {
+        await query(`DELETE FROM module_cohorts WHERE module_id = $1`, [id]);
+        if (cohortIds.length > 0) {
+            const values = cohortIds.map((_: string, i: number) => `($1, $${i + 2})`).join(', ');
+            await query(
+                `INSERT INTO module_cohorts (module_id, cohort_id) VALUES ${values} ON CONFLICT DO NOTHING`,
+                [id, ...cohortIds]
+            );
+        }
+    }
+
     const module = {
         id: rows[0].id,
         title: rows[0].title,
         description: rows[0].description,
         status: rows[0].status,
         sortOrder: rows[0].sort_order,
+        cohortIds: cohortIds || [],
     };
 
     return res.status(200).json(successResponse(module));
@@ -146,6 +171,20 @@ async function getLessons(req: VercelRequest, res: VercelResponse) {
      ORDER BY lesson_id, sort_order`
     );
 
+    // Получаем привязки модулей к когортам
+    const { rows: moduleCohorts } = await query(
+        `SELECT module_id, cohort_id FROM module_cohorts`
+    );
+
+    // Группируем когорты по модулям
+    const cohortsByModule = new Map<string, string[]>();
+    for (const mc of moduleCohorts) {
+        if (!cohortsByModule.has(mc.module_id)) {
+            cohortsByModule.set(mc.module_id, []);
+        }
+        cohortsByModule.get(mc.module_id)!.push(mc.cohort_id);
+    }
+
     // Группируем материалы по урокам
     const materialsByLesson = new Map<string, any[]>();
     for (const material of materials) {
@@ -202,6 +241,7 @@ async function getLessons(req: VercelRequest, res: VercelResponse) {
         status: module.status,
         sortOrder: module.sort_order,
         lessons: lessonsByModule.get(module.id) || [],
+        cohortIds: cohortsByModule.get(module.id) || [],
     }));
 
     return res.status(200).json(successResponse(result));

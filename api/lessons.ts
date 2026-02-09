@@ -12,6 +12,7 @@ import {
     successResponse,
     errorResponse,
 } from './_lib/auth.js';
+import { getUserCohortId } from './_lib/cohort.js';
 
 export default async function handler(
     req: VercelRequest,
@@ -90,47 +91,95 @@ export default async function handler(
 
         const userId = tokenData.userId;
 
-        // Оптимизированный единый запрос с JOIN (вместо 4 отдельных)
-        const { rows } = await query(
-            `SELECT
-                cm.id AS module_id, cm.title AS module_title,
-                cm.description AS module_description, cm.status AS module_status,
-                cm.sort_order AS module_sort_order,
-                l.id AS lesson_id, l.title AS lesson_title,
-                l.description AS lesson_description, l.duration,
-                l.video_url, l.status AS lesson_status,
-                l.sort_order AS lesson_sort_order,
-                lm.id AS material_id, lm.title AS material_title,
-                lm.type AS material_type, lm.url AS material_url,
-                lm.sort_order AS material_sort_order,
-                lt.id AS task_id, lt.text AS task_text,
-                lt.sort_order AS task_sort_order,
-                CASE WHEN ultp.completed_at IS NOT NULL THEN true ELSE false END AS task_completed,
-                CASE WHEN ulp.completed_at IS NOT NULL THEN true ELSE false END AS completed
-            FROM course_modules cm
-            LEFT JOIN lessons l ON l.module_id = cm.id AND l.deleted_at IS NULL
-            LEFT JOIN lesson_materials lm ON lm.lesson_id = l.id
-            LEFT JOIN lesson_tasks lt ON lt.lesson_id = l.id
-            LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = $1
-            LEFT JOIN user_lesson_task_progress ultp ON ultp.task_id = lt.id AND ultp.user_id = $1
-            WHERE cm.deleted_at IS NULL
-            ORDER BY cm.sort_order, l.sort_order, lm.sort_order, lt.sort_order`,
-            [userId]
-        );
+        // Get user's cohort for module filtering
+        const userCohortId = await getUserCohortId(userId);
 
-        // Кэширование на 30 сек для ускорения повторных загрузок
+        // Build cohort filter condition
+        const cohortJoin = userCohortId
+            ? `INNER JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $2`
+            : '';
+        const cohortParams = userCohortId ? [userId, userCohortId] : [userId];
+        const userParam = '$1';
+        const cohortFilterForMaterials = userCohortId
+            ? `JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $1`
+            : '';
+        const cohortFilterForTasks = userCohortId
+            ? `JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $2`
+            : '';
+
+        // 3 параллельных запроса вместо 1 mega-JOIN с 5 LEFT JOIN
+        // (избегаем картезианского произведения materials × tasks)
+        const [modulesLessonsResult, materialsResult, tasksResult] = await Promise.all([
+            // 1. Модули + уроки + прогресс (2 JOIN) + cohort filter
+            query(
+                `SELECT
+                    cm.id AS module_id, cm.title AS module_title,
+                    cm.description AS module_description, cm.status AS module_status,
+                    cm.sort_order AS module_sort_order,
+                    l.id AS lesson_id, l.title AS lesson_title,
+                    l.description AS lesson_description, l.duration,
+                    l.video_url, l.status AS lesson_status,
+                    l.sort_order AS lesson_sort_order,
+                    CASE WHEN ulp.completed_at IS NOT NULL THEN true ELSE false END AS completed
+                FROM course_modules cm
+                ${cohortJoin}
+                LEFT JOIN lessons l ON l.module_id = cm.id AND l.deleted_at IS NULL
+                LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = ${userParam}
+                WHERE cm.deleted_at IS NULL
+                ORDER BY cm.sort_order, l.sort_order`,
+                cohortParams
+            ),
+            // 2. Материалы (все для активных уроков)
+            query(
+                `SELECT lm.id, lm.lesson_id, lm.title, lm.type, lm.url, lm.sort_order
+                FROM lesson_materials lm
+                JOIN lessons l ON l.id = lm.lesson_id AND l.deleted_at IS NULL
+                JOIN course_modules cm ON cm.id = l.module_id AND cm.deleted_at IS NULL
+                ${cohortFilterForMaterials}
+                ORDER BY lm.sort_order`,
+                userCohortId ? [userCohortId] : []
+            ),
+            // 3. Задания + прогресс заданий
+            query(
+                `SELECT lt.id, lt.lesson_id, lt.text, lt.sort_order,
+                    CASE WHEN ultp.completed_at IS NOT NULL THEN true ELSE false END AS task_completed
+                FROM lesson_tasks lt
+                JOIN lessons l ON l.id = lt.lesson_id AND l.deleted_at IS NULL
+                JOIN course_modules cm ON cm.id = l.module_id AND cm.deleted_at IS NULL
+                ${cohortFilterForTasks}
+                LEFT JOIN user_lesson_task_progress ultp ON ultp.task_id = lt.id AND ultp.user_id = $1
+                ORDER BY lt.sort_order`,
+                userCohortId ? [userId, userCohortId] : [userId]
+            )
+        ]);
+
+        // Кэширование на 2 мин для ускорения повторных загрузок
         // private — кэш только для конкретного пользователя
         // stale-while-revalidate — показывать устаревшие данные пока идёт обновление
-        res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
+        res.setHeader('Cache-Control', 'private, max-age=120, stale-while-revalidate=300');
 
-        // Группируем результат в иерархическую структуру
+        // Индексируем материалы и задания по lesson_id
+        const materialsByLesson = new Map<string, any[]>();
+        for (const m of materialsResult.rows) {
+            if (!materialsByLesson.has(m.lesson_id)) materialsByLesson.set(m.lesson_id, []);
+            materialsByLesson.get(m.lesson_id)!.push({
+                id: m.id, title: m.title, type: m.type, url: m.url,
+            });
+        }
+
+        const tasksByLesson = new Map<string, any[]>();
+        for (const t of tasksResult.rows) {
+            if (!tasksByLesson.has(t.lesson_id)) tasksByLesson.set(t.lesson_id, []);
+            tasksByLesson.get(t.lesson_id)!.push({
+                id: t.id, text: t.text, completed: t.task_completed,
+            });
+        }
+
+        // Собираем иерархию из плоского результата
         const modulesMap = new Map<string, any>();
-        const lessonsMap = new Map<string, any>();
-        const addedMaterials = new Map<string, Set<string>>(); // lesson_id -> Set<material_id>
-        const addedTasks = new Map<string, Set<string>>();     // lesson_id -> Set<task_id>
+        const seenLessons = new Set<string>();
 
-        for (const row of rows) {
-            // Добавляем модуль если ещё нет
+        for (const row of modulesLessonsResult.rows) {
             if (!modulesMap.has(row.module_id)) {
                 modulesMap.set(row.module_id, {
                     id: row.module_id,
@@ -142,52 +191,22 @@ export default async function handler(
                 });
             }
 
-            // Пропускаем если нет урока (модуль без уроков)
-            if (!row.lesson_id) continue;
+            if (!row.lesson_id || seenLessons.has(row.lesson_id)) continue;
+            seenLessons.add(row.lesson_id);
 
-            // Добавляем урок если ещё нет
-            if (!lessonsMap.has(row.lesson_id)) {
-                // Если урок пройден пользователем, переопределяем его статус на 'completed' для фронтенда
-                const computedStatus = row.completed ? 'completed' : row.lesson_status;
-
-                const lesson = {
-                    id: row.lesson_id,
-                    moduleId: row.module_id,
-                    title: row.lesson_title,
-                    description: row.lesson_description,
-                    duration: row.duration,
-                    videoUrl: row.video_url,
-                    status: computedStatus,
-                    materials: [],
-                    tasks: [],
-                    completed: row.completed,
-                };
-                lessonsMap.set(row.lesson_id, lesson);
-                modulesMap.get(row.module_id)!.lessons.push(lesson);
-                addedMaterials.set(row.lesson_id, new Set());
-                addedTasks.set(row.lesson_id, new Set());
-            }
-
-            // Добавляем материал если есть и ещё не добавлен (избегаем дублирования из-за JOIN)
-            if (row.material_id && !addedMaterials.get(row.lesson_id)?.has(row.material_id)) {
-                addedMaterials.get(row.lesson_id)!.add(row.material_id);
-                lessonsMap.get(row.lesson_id)!.materials.push({
-                    id: row.material_id,
-                    title: row.material_title,
-                    type: row.material_type,
-                    url: row.material_url,
-                });
-            }
-
-            // Добавляем задание если есть и ещё не добавлено (избегаем дублирования из-за JOIN)
-            if (row.task_id && !addedTasks.get(row.lesson_id)?.has(row.task_id)) {
-                addedTasks.get(row.lesson_id)!.add(row.task_id);
-                lessonsMap.get(row.lesson_id)!.tasks.push({
-                    id: row.task_id,
-                    text: row.task_text,
-                    completed: row.task_completed,
-                });
-            }
+            const computedStatus = row.completed ? 'completed' : row.lesson_status;
+            modulesMap.get(row.module_id)!.lessons.push({
+                id: row.lesson_id,
+                moduleId: row.module_id,
+                title: row.lesson_title,
+                description: row.lesson_description,
+                duration: row.duration,
+                videoUrl: row.video_url,
+                status: computedStatus,
+                materials: materialsByLesson.get(row.lesson_id) || [],
+                tasks: tasksByLesson.get(row.lesson_id) || [],
+                completed: row.completed,
+            });
         }
 
         // Формируем результат с прогрессом

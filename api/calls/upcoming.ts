@@ -3,6 +3,7 @@
  *
  * Получить ближайший запланированный созвон для студентов
  * Используется на Dashboard для отображения виджета "Следующий созвон"
+ * Фильтрует по когорте пользователя + кросс-доступ через cohort_call_access
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -29,18 +30,23 @@ export default async function handler(
         }
 
         // Получаем ближайший созвон со статусом scheduled или live
+        // Фильтр по когорте студента + кросс-доступ через cohort_call_access
         const { rows } = await query(
-            `SELECT 
-        id, topic, description, 
+            `SELECT
+        id, topic, description,
         scheduled_date, scheduled_time, duration, timezone,
         status, meeting_url
-      FROM admin_calls 
-      WHERE deleted_at IS NULL 
+      FROM admin_calls
+      WHERE deleted_at IS NULL
         AND status IN ('scheduled', 'live')
-        AND (scheduled_date > CURRENT_DATE 
+        AND (scheduled_date > CURRENT_DATE
              OR (scheduled_date = CURRENT_DATE AND scheduled_time >= CURRENT_TIME))
+        AND (cohort_id = (SELECT cohort_id FROM users WHERE id = $1)
+             OR id IN (SELECT call_id FROM cohort_call_access
+                       WHERE cohort_id = (SELECT cohort_id FROM users WHERE id = $1)))
       ORDER BY scheduled_date ASC, scheduled_time ASC
-      LIMIT 1`
+      LIMIT 1`,
+            [tokenData.userId]
         );
 
         if (rows.length === 0) {

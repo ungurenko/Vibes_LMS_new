@@ -2,18 +2,20 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
-import Home from './views/Home';
-import StyleLibrary from './views/StyleLibrary';
-import Glossary from './views/Glossary';
-import ToolsView from './views/ToolsView';
-import Lessons from './views/Lessons';
-import PromptBase from './views/PromptBase';
-import Roadmaps from './views/Roadmaps';
-import UserProfile from './views/UserProfile';
 import Login from './views/Login';
 import Register from './views/Register';
 import SplashScreen from './components/SplashScreen';
 import { ViewSkeleton } from './components/SkeletonLoader';
+
+// Lazy loaded student views (code splitting)
+const Home = lazy(() => import('./views/Home'));
+const StyleLibrary = lazy(() => import('./views/StyleLibrary'));
+const Glossary = lazy(() => import('./views/Glossary'));
+const ToolsView = lazy(() => import('./views/ToolsView'));
+const Lessons = lazy(() => import('./views/Lessons'));
+const PromptBase = lazy(() => import('./views/PromptBase'));
+const Roadmaps = lazy(() => import('./views/Roadmaps'));
+const UserProfile = lazy(() => import('./views/UserProfile'));
 
 // Lazy loaded heavy components (code splitting)
 const ToolChat = lazy(() => import('./views/ToolChat'));
@@ -22,10 +24,11 @@ const AdminContent = lazy(() => import('./views/AdminContent'));
 const AdminCalls = lazy(() => import('./views/AdminCalls'));
 const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
-import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
+const AdminCohorts = lazy(() => import('./views/AdminCohorts'));
+import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
+import CohortSelector from './components/admin/CohortSelector';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
-import { STUDENTS_DATA, COURSE_MODULES } from './data';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
 import { fetchWithAuth } from './lib/fetchWithAuth';
@@ -55,6 +58,11 @@ const AppContent: React.FC = () => {
     const [selectedTool, setSelectedTool] = useState<ToolType>(null);
     const [toolInitialMessage, setToolInitialMessage] = useState<string | null>(null);
     const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
+
+    // --- Cohort State ---
+    const [cohorts, setCohorts] = useState<Cohort[]>([]);
+    const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null);
+    const [userCohort, setUserCohort] = useState<{ id: string; name: string } | null>(null);
 
     // Убрали сохранение modules в localStorage
 
@@ -94,13 +102,19 @@ const AppContent: React.FC = () => {
                             lastActive: 'Сейчас',
                             joinedDate: user.createdAt || new Date().toISOString(),
                             projects: {},
-                            niche: user.niche || undefined
+                            niche: user.niche || undefined,
+                            cohortId: user.cohortId,
+                            cohortName: user.cohortName,
                         });
+                        // Сохраняем когорту студента
+                        if (user.cohortId) {
+                            setUserCohort({ id: user.cohortId, name: user.cohortName || '' });
+                        }
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
-                            // Загрузить инвайты и студентов для админ-панели (параллельно)
-                            Promise.all([loadInvites(), loadStudents()]);
+                            // Загрузить инвайты, студентов и когорты для админ-панели (параллельно)
+                            Promise.all([loadInvites(), loadStudents(), loadCohorts()]);
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
@@ -199,16 +213,22 @@ const AppContent: React.FC = () => {
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 // Parallel fetch all content
-                const [stylesRes, promptsRes, glossaryRes] = await Promise.all([
+                const [stylesRes, promptsRes, glossaryRes, stagesRes, lessonsRes, categoriesRes] = await Promise.all([
                     fetch('/api/content/styles', { headers }).then(r => r.json()),
                     fetch('/api/content/prompts', { headers }).then(r => r.json()),
-                    fetch('/api/content/glossary', { headers }).then(r => r.json())
+                    fetch('/api/content/glossary', { headers }).then(r => r.json()),
+                    fetch('/api/stages', { headers }).then(r => r.json()),
+                    fetch('/api/lessons', { headers }).then(r => r.json()),
+                    fetch('/api/content/categories', { headers }).then(r => r.json())
                 ]);
 
                 // Cache successful responses
                 if (stylesRes.success) setCache(CACHE_KEYS.STYLES, stylesRes.data);
                 if (promptsRes.success) setCache(CACHE_KEYS.PROMPTS, promptsRes.data);
                 if (glossaryRes.success) setCache(CACHE_KEYS.GLOSSARY, glossaryRes.data);
+                if (stagesRes.success) setCache(CACHE_KEYS.STAGES, stagesRes.data);
+                if (lessonsRes.success) setCache(CACHE_KEYS.LESSONS, lessonsRes.data);
+                if (categoriesRes.success) setCache(CACHE_KEYS.CATEGORIES, categoriesRes.data);
             } catch (error) {
                 // Silent fail - prefetch is not critical
                 console.log('Prefetch failed (non-critical):', error);
@@ -273,7 +293,7 @@ const AppContent: React.FC = () => {
                     setMode('admin');
                     setActiveTab('admin-students');
                     // Загружаем данные для админки сразу после входа (параллельно)
-                    Promise.all([loadInvites(), loadStudents()]);
+                    Promise.all([loadInvites(), loadStudents(), loadCohorts()]);
                 } else {
                     setMode('student');
                     setActiveTab('dashboard');
@@ -339,6 +359,28 @@ const AppContent: React.FC = () => {
     const handleTransferToTZ = (idea: string) => {
         setToolInitialMessage(idea);
         setSelectedTool('tz_helper');
+    };
+
+    const loadCohorts = async () => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/admin?resource=cohorts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (result.success) {
+                setCohorts(result.data);
+                // Выбрать первую активную когорту по умолчанию
+                if (!selectedCohortId && result.data.length > 0) {
+                    const active = result.data.find((c: Cohort) => c.isActive);
+                    setSelectedCohortId(active?.id || result.data[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading cohorts:', error);
+        }
     };
 
     const loadInvites = async () => {
@@ -411,7 +453,8 @@ const AppContent: React.FC = () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        expiresInDays: daysValid
+                        expiresInDays: daysValid,
+                        cohortId: selectedCohortId
                     })
                 });
 
@@ -491,15 +534,16 @@ const AppContent: React.FC = () => {
     if (view === 'reset-password') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} initialView="reset" onSimulateResetLink={() => { }} onResetComplete={() => setView('login')} />;
     if (view === 'register' && inviteCodeFromUrl) return <Register inviteCode={inviteCodeFromUrl} onRegister={handleRegister} onNavigateLogin={() => { window.history.replaceState({}, '', window.location.pathname); setView('login'); }} />;
 
+    const selectedCohortName = cohorts.find(c => c.id === selectedCohortId)?.name || null;
+
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
-            // Update Lessons to receive modules prop
-            case 'lessons': return <Lessons />;
-            case 'roadmaps': return <Roadmaps />;
-            case 'styles': return <StyleLibrary />;
-            case 'prompts': return <PromptBase />;
-            case 'glossary': return <Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} />;
+            case 'dashboard': return <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} userCohort={userCohort} /></Suspense>;
+            case 'lessons': return <Suspense fallback={<ViewSkeleton />}><Lessons /></Suspense>;
+            case 'roadmaps': return <Suspense fallback={<ViewSkeleton />}><Roadmaps /></Suspense>;
+            case 'styles': return <Suspense fallback={<ViewSkeleton />}><StyleLibrary /></Suspense>;
+            case 'prompts': return <Suspense fallback={<ViewSkeleton />}><PromptBase /></Suspense>;
+            case 'glossary': return <Suspense fallback={<ViewSkeleton />}><Glossary onNavigate={setActiveTab} onAskAI={handleAskAI} /></Suspense>;
             case 'tools':
                 if (selectedTool) {
                     return (
@@ -513,23 +557,28 @@ const AppContent: React.FC = () => {
                         </Suspense>
                     );
                 }
-                return <ToolsView onSelectTool={handleSelectTool} />;
-            case 'profile': return currentUser ? <UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /> : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+                return <Suspense fallback={<ViewSkeleton />}><ToolsView onSelectTool={handleSelectTool} /></Suspense>;
+            case 'profile': return currentUser ? <Suspense fallback={<ViewSkeleton />}><UserProfile user={currentUser} onUserUpdate={handleUserUpdate} /></Suspense> : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
 
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
             case 'admin-content': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminContent />
+                    <AdminContent selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} cohorts={cohorts} />
                 </Suspense>
             );
             case 'admin-calls': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminCalls />
+                    <AdminCalls selectedCohortId={selectedCohortId} cohorts={cohorts} selectedCohortName={selectedCohortName} />
+                </Suspense>
+            );
+            case 'admin-cohorts': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminCohorts cohorts={cohorts} onCohortsChange={loadCohorts} />
                 </Suspense>
             );
             case 'admin-tools': return (
@@ -539,15 +588,15 @@ const AppContent: React.FC = () => {
             );
             case 'admin-settings': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />
+                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
 
             default: return mode === 'admin' ? (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} />
                 </Suspense>
-            ) : <Home onNavigate={setActiveTab} userName={currentUser?.name} />;
+            ) : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
         }
     };
 
@@ -586,7 +635,10 @@ const AppContent: React.FC = () => {
                 </header>
 
                 {(activeTab === 'dashboard' || activeTab.startsWith('admin-')) && (
-                    <div className="hidden md:flex justify-end items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
+                    <div className="hidden md:flex justify-between items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
+                        {mode === 'admin' && cohorts.length > 0 ? (
+                            <CohortSelector cohorts={cohorts} selectedId={selectedCohortId} onChange={setSelectedCohortId} />
+                        ) : <div />}
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
                                 <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>
@@ -610,7 +662,7 @@ const AppContent: React.FC = () => {
                             initial={{ opacity: 0, y: 15, scale: 0.99 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -15, scale: 0.99 }}
-                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
                             className="h-full"
                         >
                             {renderContent()}

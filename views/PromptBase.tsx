@@ -117,9 +117,11 @@ const PromptBase: React.FC = () => {
 
                 setIsLoading(!cachedPrompts);
 
+                const cachedCategories = getCached<PromptCategoryItem[]>(CACHE_KEYS.CATEGORIES, CACHE_TTL.CATEGORIES);
+
                 const [promptsData, categoriesData, favoritesData] = await Promise.all([
                     cachedPrompts ? Promise.resolve(cachedPrompts) : fetchWithAuthGet<PromptItem[]>('/api/content/prompts'),
-                    fetchWithAuthGet<PromptCategoryItem[]>('/api/content/categories'),
+                    cachedCategories ? Promise.resolve(cachedCategories) : fetchWithAuthGet<PromptCategoryItem[]>('/api/content/categories'),
                     cachedFavorites ? Promise.resolve(cachedFavorites) : fetchWithAuthGet<string[]>('/api/content/favorites')
                 ]);
 
@@ -131,6 +133,9 @@ const PromptBase: React.FC = () => {
                     setCache(CACHE_KEYS.PROMPTS, promptsData);
                 }
                 setCategories(categoriesData);
+                if (!cachedCategories) {
+                    setCache(CACHE_KEYS.CATEGORIES, categoriesData);
+                }
 
                 // Устанавливаем избранное
                 setFavorites(new Set(favoritesData));

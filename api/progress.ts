@@ -52,20 +52,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         try {
             if (completed) {
-                // Добавляем шаг в выполненные
-                await query(`
-                    INSERT INTO user_roadmap_step_progress (user_id, step_id)
-                    VALUES ($1, $2)
-                    ON CONFLICT (user_id, step_id) DO NOTHING
-                `, [user.userId, stepId]);
-
-                // Проверяем, начат ли roadmap, если нет - создаем запись
-                await query(`
-                    INSERT INTO user_roadmap_progress (user_id, roadmap_id, started_at)
-                    VALUES ($1, $2, NOW())
-                    ON CONFLICT (user_id, roadmap_id) DO NOTHING
-                `, [user.userId, roadmapId]);
-
+                // 1. Вставляем шаг + создаём запись прогресса roadmap (параллельно)
+                await Promise.all([
+                    query(`
+                        INSERT INTO user_roadmap_step_progress (user_id, step_id)
+                        VALUES ($1, $2)
+                        ON CONFLICT (user_id, step_id) DO NOTHING
+                    `, [user.userId, stepId]),
+                    query(`
+                        INSERT INTO user_roadmap_progress (user_id, roadmap_id, started_at)
+                        VALUES ($1, $2, NOW())
+                        ON CONFLICT (user_id, roadmap_id) DO NOTHING
+                    `, [user.userId, roadmapId])
+                ]);
             } else {
                 // Удаляем шаг из выполненных
                 await query(`
@@ -74,37 +73,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 `, [user.userId, stepId]);
             }
 
-            // Проверяем, завершен ли весь roadmap
-            // 1. Считаем всего шагов в roadmap
-            const totalStepsRes = await query(`
-                SELECT COUNT(*) as count FROM roadmap_steps WHERE roadmap_id = $1
-            `, [roadmapId]);
-            const totalSteps = parseInt(totalStepsRes.rows[0].count);
-
-            // 2. Считаем выполненные шаги пользователя в этом roadmap
-            const completedStepsRes = await query(`
-                SELECT COUNT(ursp.step_id) as count
-                FROM user_roadmap_step_progress ursp
-                JOIN roadmap_steps rs ON rs.id = ursp.step_id
-                WHERE ursp.user_id = $1 AND rs.roadmap_id = $2
+            // 2. Единый запрос: считаем total и completed одновременно
+            const countsRes = await query(`
+                SELECT
+                    (SELECT COUNT(*) FROM roadmap_steps WHERE roadmap_id = $2) AS total,
+                    (SELECT COUNT(ursp.step_id)
+                     FROM user_roadmap_step_progress ursp
+                     JOIN roadmap_steps rs ON rs.id = ursp.step_id
+                     WHERE ursp.user_id = $1 AND rs.roadmap_id = $2) AS completed
             `, [user.userId, roadmapId]);
-            const completedSteps = parseInt(completedStepsRes.rows[0].count);
+            const totalSteps = parseInt(countsRes.rows[0].total);
+            const completedSteps = parseInt(countsRes.rows[0].completed);
 
             // 3. Обновляем статус roadmap
-            if (completedSteps === totalSteps && totalSteps > 0) {
-                await query(`
-                    UPDATE user_roadmap_progress
-                    SET completed_at = NOW()
-                    WHERE user_id = $1 AND roadmap_id = $2
-                `, [user.userId, roadmapId]);
-            } else {
-                // Если не все выполнены - сбрасываем completed_at (вдруг пользователь снял галочку)
-                await query(`
-                    UPDATE user_roadmap_progress
-                    SET completed_at = NULL
-                    WHERE user_id = $1 AND roadmap_id = $2
-                `, [user.userId, roadmapId]);
-            }
+            await query(`
+                UPDATE user_roadmap_progress
+                SET completed_at = CASE WHEN $3 THEN NOW() ELSE NULL END
+                WHERE user_id = $1 AND roadmap_id = $2
+            `, [user.userId, roadmapId, completedSteps === totalSteps && totalSteps > 0]);
 
             return res.status(200).json({ success: true });
         } catch (error) {

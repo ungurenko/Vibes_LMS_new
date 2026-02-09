@@ -16,12 +16,13 @@ import {
   Music,
   X,
   Eye,
-  Loader
+  Loader,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { InviteLink, NavigationConfig } from '../types';
 import { useSound } from '../SoundContext';
 import { Modal, PageHeader, ConfirmModal } from '../components/Shared';
+import ScopeBanner from '../components/admin/ScopeBanner';
 import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 interface AdminSettingsProps {
@@ -29,15 +30,16 @@ interface AdminSettingsProps {
     onGenerateInvites: (count: number, daysValid: number | null) => void;
     onDeleteInvite: (id: string) => void;
     onDeactivateInvite: (id: string) => void;
+    selectedCohortName?: string | null;
 }
 
-const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvites, onDeleteInvite, onDeactivateInvite }) => {
-  
+const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvites, onDeleteInvite, onDeactivateInvite, selectedCohortName }) => {
+
   // --- UI State ---
   const [activeTab, setActiveTab] = useState<'invites' | 'general'>('invites');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'neutral' | 'error' } | null>(null);
   const [copyId, setCopyId] = useState<string | null>(null);
-  
+
   // --- Sound Context ---
   const { isEnabled, toggleSound, volume, setVolume, playSound } = useSound();
 
@@ -45,7 +47,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [genCount, setGenCount] = useState(10);
   const [genDuration, setGenDuration] = useState<number | null>(null); // null = infinite
-  
+
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'used' | 'deactivated'>('all');
 
   // Deletion State
@@ -67,13 +69,13 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
   const copyToClipboard = (id: string, token: string) => {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}?invite=${token}`;
-    
+
     navigator.clipboard.writeText(link);
     setCopyId(id);
     setTimeout(() => setCopyId(null), 2000);
     showToast('Ссылка скопирована');
   };
-  
+
   const handleGenerateSubmit = () => {
       onGenerateInvites(genCount, genDuration);
       setIsGenerateModalOpen(false);
@@ -161,9 +163,9 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
-      
+
       {/* Header */}
-      <PageHeader 
+      <PageHeader
         title="Настройки"
         description="Управление доступами и системой."
         action={
@@ -171,8 +173,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 <button
                     onClick={() => setActiveTab('invites')}
                     className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                    activeTab === 'invites' 
-                        ? 'bg-white dark:bg-zinc-800 text-violet-600 dark:text-violet-400 shadow-sm' 
+                    activeTab === 'invites'
+                        ? 'bg-white dark:bg-zinc-800 text-violet-600 dark:text-violet-400 shadow-sm'
                         : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
                     }`}
                 >
@@ -182,8 +184,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 <button
                     onClick={() => setActiveTab('general')}
                     className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                    activeTab === 'general' 
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                    activeTab === 'general'
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                         : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
                     }`}
                 >
@@ -193,6 +195,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
             </div>
         }
       />
+
+      {/* Scope Banner */}
+      {activeTab === 'invites' ? (
+        <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Инвайты потока: ${selectedCohortName}` : undefined} />
+      ) : null}
 
       <AnimatePresence mode="wait">
         {activeTab === 'invites' && (
@@ -239,7 +246,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
 
                     {/* Action Buttons */}
                     <div className="xl:w-auto flex flex-col sm:flex-row gap-3">
-                         <button 
+                         <button
                             onClick={() => setIsGenerateModalOpen(true)}
                             className="h-full min-h-[80px] px-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl"
                          >
@@ -262,8 +269,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                     key={status}
                                     onClick={() => setFilterStatus(status as any)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
-                                        filterStatus === status 
-                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-black' 
+                                        filterStatus === status
+                                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-black'
                                         : 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
                                     }`}
                                 >
@@ -291,8 +298,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                             <div className="font-mono text-sm text-zinc-900 dark:text-white font-medium">
                                                 ...{invite.token}
                                             </div>
-                                            <div className="text-xs text-zinc-400 mt-0.5">
+                                            <div className="text-xs text-zinc-400 mt-0.5 flex items-center gap-2">
                                                 {window.location.host}/invite/...
+                                                {invite.cohortName && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-bold">{invite.cohortName}</span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -405,7 +415,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                         {/* Toggle Switch */}
                         <div className="flex items-center justify-between">
                             <span className="font-medium text-zinc-700 dark:text-zinc-300">Включить звуки</span>
-                            <button 
+                            <button
                                 onClick={toggleSound}
                                 className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 ${isEnabled ? 'bg-violet-600' : 'bg-zinc-200 dark:bg-zinc-700'}`}
                             >
@@ -421,11 +431,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                             </div>
                             <div className="flex items-center gap-4">
                                 <Volume1 size={20} className="text-zinc-400" />
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="1" 
-                                    step="0.05" 
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.05"
                                     value={volume}
                                     onChange={(e) => setVolume(parseFloat(e.target.value))}
                                     className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-violet-600"
@@ -435,7 +445,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                         </div>
 
                         {/* Test Button */}
-                        <button 
+                        <button
                             onClick={() => playSound('success')}
                             className="w-full py-3 rounded-xl border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 font-bold hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
                         >
@@ -511,11 +521,12 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 </div>
             </motion.div>
         )}
+
       </AnimatePresence>
 
       {/* Generate Modal - Fixed with Scrollable Overlay */}
-      <Modal 
-        isOpen={isGenerateModalOpen} 
+      <Modal
+        isOpen={isGenerateModalOpen}
         onClose={() => setIsGenerateModalOpen(false)}
         title="Сгенерировать ссылки"
       >
@@ -528,8 +539,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                             key={num}
                             onClick={() => setGenCount(num)}
                             className={`py-3 rounded-xl text-sm font-bold border transition-all ${
-                                genCount === num 
-                                ? 'bg-violet-600 text-white border-violet-600' 
+                                genCount === num
+                                ? 'bg-violet-600 text-white border-violet-600'
                                 : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-violet-300'
                             }`}
                         >
@@ -557,7 +568,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 </div>
             </div>
 
-            <button 
+            <button
                 onClick={handleGenerateSubmit}
                 className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl"
             >
@@ -585,7 +596,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
         )}
       </AnimatePresence>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={executeDelete}

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { Input, Select } from '../../Shared';
-import { RoadmapStep, CourseModule, PromptCategoryItem } from '../../../types';
+import { RoadmapStep, CourseModule, PromptCategoryItem, Cohort } from '../../../types';
 
 // --- Common props for all forms ---
 
@@ -26,50 +26,101 @@ interface EditorFormProps {
 
 interface ModuleFormProps extends EditorFormProps {
   validationErrors: string[];
+  cohorts?: Cohort[];
 }
 
-export const ModuleForm: React.FC<ModuleFormProps> = ({ editingItem, updateField, validationErrors }) => (
-  <div className="space-y-6">
-    {validationErrors.length > 0 && (
-      <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
-        <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400">
-          {validationErrors.map((err, idx) => (
-            <li key={idx}>{err}</li>
-          ))}
-        </ul>
-      </div>
-    )}
+export const ModuleForm: React.FC<ModuleFormProps> = ({ editingItem, updateField, validationErrors, cohorts = [] }) => {
+  const toggleCohort = (cohortId: string) => {
+    const current: string[] = editingItem?.cohortIds || [];
+    const updated = current.includes(cohortId)
+      ? current.filter((id: string) => id !== cohortId)
+      : [...current, cohortId];
+    updateField('cohortIds', updated);
+  };
 
-    <Input
-      label="Название модуля"
-      placeholder="Например: Прямые эфиры"
-      value={editingItem?.title || ''}
-      onChange={(e) => updateField('title', e.target.value)}
-    />
+  const activeCohorts = cohorts.filter(c => c.isActive);
 
-    <div>
-      <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание</label>
-      <textarea
-        rows={3}
-        value={editingItem?.description || ''}
-        onChange={(e) => updateField('description', e.target.value)}
-        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
-        placeholder="Краткое описание модуля..."
+  return (
+    <div className="space-y-6">
+      {validationErrors.length > 0 && (
+        <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
+          <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400">
+            {validationErrors.map((err, idx) => (
+              <li key={idx}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <Input
+        label="Название модуля"
+        placeholder="Например: Прямые эфиры"
+        value={editingItem?.title || ''}
+        onChange={(e) => updateField('title', e.target.value)}
       />
-    </div>
 
-    <Select
-      label="Статус"
-      value={editingItem?.status || 'locked'}
-      onChange={(e) => updateField('status', e.target.value)}
-      options={[
-        { value: 'locked', label: 'Заблокирован' },
-        { value: 'available', label: 'Доступен' },
-        { value: 'completed', label: 'Завершён' }
-      ]}
-    />
-  </div>
-);
+      <div>
+        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание</label>
+        <textarea
+          rows={3}
+          value={editingItem?.description || ''}
+          onChange={(e) => updateField('description', e.target.value)}
+          className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500"
+          placeholder="Краткое описание модуля..."
+        />
+      </div>
+
+      <Select
+        label="Статус"
+        value={editingItem?.status || 'locked'}
+        onChange={(e) => updateField('status', e.target.value)}
+        options={[
+          { value: 'locked', label: 'Заблокирован' },
+          { value: 'available', label: 'Доступен' },
+          { value: 'completed', label: 'Завершён' }
+        ]}
+      />
+
+      {activeCohorts.length > 0 && (
+        <div>
+          <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3">
+            Доступен потокам
+          </label>
+          <div className="space-y-2">
+            {activeCohorts.map(cohort => {
+              const isChecked = (editingItem?.cohortIds || []).includes(cohort.id);
+              return (
+                <label
+                  key={cohort.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    isChecked
+                      ? 'border-violet-300 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10'
+                      : 'border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleCohort(cohort.id)}
+                    className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <span className={`text-sm font-medium ${isChecked ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                    {cohort.name}
+                  </span>
+                  {cohort.studentCount !== undefined && (
+                    <span className="text-xs text-zinc-400 ml-auto">
+                      {cohort.studentCount} студентов
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // --- Lesson Form ---
 

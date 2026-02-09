@@ -20,12 +20,25 @@ import {
   Volume2,
   VolumeX,
   Lock,
-  Laptop
+  Laptop,
+  Layers
 } from 'lucide-react';
 import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import AdminPasswordModal from './AdminPasswordModal';
+
+// Preload map: tab → dynamic import для предзагрузки чанков при hover
+const preloadMap: Partial<Record<TabId, () => Promise<any>>> = {
+  dashboard: () => import('../views/Home'),
+  lessons: () => import('../views/Lessons'),
+  roadmaps: () => import('../views/Roadmaps'),
+  styles: () => import('../views/StyleLibrary'),
+  prompts: () => import('../views/PromptBase'),
+  glossary: () => import('../views/Glossary'),
+  tools: () => import('../views/ToolsView'),
+  profile: () => import('../views/UserProfile'),
+};
 
 interface SidebarProps {
   activeTab: TabId;
@@ -54,6 +67,7 @@ const adminNavItems: NavItem[] = [
   { id: 'admin-students', label: 'Ученики', icon: Users },
   { id: 'admin-content', label: 'Контент', icon: Book },
   { id: 'admin-calls', label: 'Созвоны', icon: Video },
+  { id: 'admin-cohorts', label: 'Потоки', icon: Layers },
   { id: 'admin-tools', label: 'Инструменты', icon: Sparkles },
   { id: 'admin-settings', label: 'Настройки', icon: Settings },
 ];
@@ -170,9 +184,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                 setActiveTab(item.id);
                 setIsOpen(false);
               }}
+              onMouseEnter={() => preloadMap[item.id]?.()}
+              onTouchStart={() => preloadMap[item.id]?.()}
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${
-                isActive 
-                  ? 'text-zinc-900 dark:text-white' 
+                isActive
+                  ? 'text-zinc-900 dark:text-white'
                   : 'text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
               }`}
             >

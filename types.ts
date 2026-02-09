@@ -3,7 +3,7 @@ import React from 'react';
 
 export type TabId =
   | 'dashboard' | 'lessons' | 'roadmaps' | 'styles' | 'prompts' | 'glossary' | 'tools' | 'community' | 'profile' | 'practice'
-  | 'admin-students' | 'admin-content' | 'admin-calls' | 'admin-tools' | 'admin-settings';
+  | 'admin-students' | 'admin-content' | 'admin-calls' | 'admin-cohorts' | 'admin-tools' | 'admin-settings';
 
 export interface NavItem {
   id: TabId;
@@ -83,6 +83,7 @@ export interface CourseModule {
   description: string;
   status: 'available' | 'locked' | 'completed';
   lessons: Lesson[];
+  cohortIds?: string[];
 }
 
 export type PromptCategory = string;
@@ -186,6 +187,8 @@ export interface Student {
   projects: StudentProjects;
   notes?: string;
   niche?: string;
+  cohortId?: string;
+  cohortName?: string;
 }
 
 export interface StudentProfile extends Student {
@@ -239,6 +242,8 @@ export interface InviteLink {
   usedByEmail?: string;
   usedByName?: string;
   usedAt?: string; // ISO Date
+  cohortId?: string;
+  cohortName?: string;
 }
 
 // Platform Settings Types
@@ -277,4 +282,16 @@ export interface QuickQuestion {
   text: string;
   sortOrder: number;
   isActive: boolean;
+}
+
+export interface Cohort {
+  id: string;
+  name: string;
+  description?: string;
+  startDate?: string;
+  isActive: boolean;
+  sortOrder: number;
+  studentCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

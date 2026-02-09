@@ -12,9 +12,10 @@ import {
   Layers
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlossaryTerm, CourseModule, PromptCategoryItem } from '../types';
+import { GlossaryTerm, CourseModule, PromptCategoryItem, Cohort } from '../types';
 import { Drawer, PageHeader, Input, ConfirmModal } from '../components/Shared';
 import { removeCache, CACHE_KEYS } from '../lib/cache';
+import ScopeBanner from '../components/admin/ScopeBanner';
 import { useAdminFetch } from '../lib/hooks/useAdminFetch';
 import {
   LessonsTab,
@@ -43,9 +44,12 @@ type ContentTab = 'lessons' | 'styles' | 'prompts' | 'prompt-categories' | 'glos
 interface AdminContentProps {
   modules?: CourseModule[];
   onUpdateModules?: (modules: CourseModule[]) => void;
+  selectedCohortId?: string | null;
+  selectedCohortName?: string | null;
+  cohorts?: Cohort[];
 }
 
-const AdminContent: React.FC<AdminContentProps> = () => {
+const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedCohortName, cohorts = [] }) => {
   // --- Tab & Editor State ---
   const [activeTab, setActiveTab] = useState<ContentTab>('lessons');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -65,7 +69,10 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   const { data: promptCategories, reload: reloadPromptCategories } = useAdminFetch<PromptCategoryItem[]>('/api/admin-content?type=categories', []);
   const { data: glossary, setData: setGlossary, reload: reloadGlossary } = useAdminFetch<GlossaryTerm[]>('/api/admin-content?type=glossary', []);
   const { data: roadmaps, setData: setRoadmaps, reload: reloadRoadmaps } = useAdminFetch<AdminRoadmap[]>('/api/admin-content?type=roadmaps', []);
-  const { data: stages, reload: reloadStages } = useAdminFetch<AdminStage[]>('/api/admin?resource=stages', []);
+  const stagesUrl = selectedCohortId
+    ? `/api/admin?resource=stages&cohortId=${selectedCohortId}`
+    : '/api/admin?resource=stages';
+  const { data: stages, reload: reloadStages } = useAdminFetch<AdminStage[]>(stagesUrl, []);
 
   // --- Helpers ---
 
@@ -213,14 +220,16 @@ const AdminContent: React.FC<AdminContentProps> = () => {
         title: '',
         description: '',
         status: 'locked',
-        sortOrder: (modules.length + 1) * 10
+        sortOrder: (modules.length + 1) * 10,
+        cohortIds: cohorts.filter(c => c.isActive).map(c => c.id),
       });
     } else {
       setEditingItem({
         id: module.id,
         title: module.title,
         description: module.description || '',
-        status: module.status || 'locked'
+        status: module.status || 'locked',
+        cohortIds: module.cohortIds || [],
       });
     }
     setValidationErrors([]);
@@ -357,13 +366,14 @@ const AdminContent: React.FC<AdminContentProps> = () => {
         await reloadRoadmaps();
       }
       else if (activeTab === 'stages') {
+        const stagePayload = isUpdate ? editingItem : { ...editingItem, cohortId: selectedCohortId };
         const response = await fetch('/api/admin?resource=stages', {
           method: isUpdate ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(editingItem)
+          body: JSON.stringify(stagePayload)
         });
 
         if (!response.ok) throw new Error('Failed to save stage');
@@ -593,7 +603,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
 
   const renderEditorForm = () => {
     if (editingModuleMode) {
-      return <ModuleForm editingItem={editingItem} updateField={updateField} validationErrors={validationErrors} />;
+      return <ModuleForm editingItem={editingItem} updateField={updateField} validationErrors={validationErrors} cohorts={cohorts} />;
     }
 
     return (
@@ -724,6 +734,15 @@ const AdminContent: React.FC<AdminContentProps> = () => {
         ))}
       </div>
 
+      {/* Scope Banner */}
+      {activeTab === 'stages' ? (
+        <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Стадии потока: ${selectedCohortName}` : undefined} />
+      ) : activeTab === 'lessons' ? (
+        <ScopeBanner type="shared" label="Модули привязаны к потокам индивидуально" />
+      ) : (
+        <ScopeBanner type="shared" />
+      )}
+
       {/* Main Content Area */}
       <motion.div
         key={activeTab}
@@ -742,6 +761,7 @@ const AdminContent: React.FC<AdminContentProps> = () => {
             onDeleteModule={(id) => confirmDelete(id, 'modules')}
             onAddLessonToModule={(moduleId) => openEditor({ moduleId })}
             onAddModule={() => openModuleEditor()}
+            cohorts={cohorts}
           />
         )}
         {activeTab === 'styles' && (

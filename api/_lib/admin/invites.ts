@@ -30,10 +30,13 @@ export async function handleInvites(
           il.expires_at,
           il.created_at,
           il.used_at,
+          il.cohort_id,
+          c.name as cohort_name,
           u.first_name as used_by_name,
           u.email as used_by_email
         FROM invite_links il
         LEFT JOIN users u ON u.id = il.used_by_id
+        LEFT JOIN cohorts c ON c.id = il.cohort_id
         ORDER BY il.created_at DESC
       `);
 
@@ -44,6 +47,8 @@ export async function handleInvites(
         expiresAt: row.expires_at,
         createdAt: row.created_at,
         usedAt: row.used_at,
+        cohortId: row.cohort_id,
+        cohortName: row.cohort_name,
         usedByName: row.used_by_name,
         usedByEmail: row.used_by_email,
       }));
@@ -53,7 +58,7 @@ export async function handleInvites(
 
     // POST - создать новый инвайт
     if (req.method === 'POST') {
-      const { expiresInDays } = req.body;
+      const { expiresInDays, cohortId } = req.body;
 
       // Генерируем уникальный токен
       const token = generateToken();
@@ -66,10 +71,10 @@ export async function handleInvites(
       }
 
       const { rows } = await query(
-        `INSERT INTO invite_links (token, status, expires_at, created_by_id)
-         VALUES ($1, 'active', $2, $3)
-         RETURNING id, token, status, expires_at, created_at`,
-        [token, expiresAt, tokenData.userId]
+        `INSERT INTO invite_links (token, status, expires_at, created_by_id, cohort_id)
+         VALUES ($1, 'active', $2, $3, $4)
+         RETURNING id, token, status, expires_at, created_at, cohort_id`,
+        [token, expiresAt, tokenData.userId, cohortId || null]
       );
 
       return res.status(201).json(successResponse(rows[0]));
