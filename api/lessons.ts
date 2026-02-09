@@ -12,6 +12,7 @@ import {
     successResponse,
     errorResponse,
 } from './_lib/auth.js';
+import { getUserCohortId } from './_lib/cohort.js';
 
 export default async function handler(
     req: VercelRequest,
@@ -90,10 +91,26 @@ export default async function handler(
 
         const userId = tokenData.userId;
 
+        // Get user's cohort for module filtering
+        const userCohortId = await getUserCohortId(userId);
+
+        // Build cohort filter condition
+        const cohortJoin = userCohortId
+            ? `INNER JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $2`
+            : '';
+        const cohortParams = userCohortId ? [userId, userCohortId] : [userId];
+        const userParam = '$1';
+        const cohortFilterForMaterials = userCohortId
+            ? `JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $1`
+            : '';
+        const cohortFilterForTasks = userCohortId
+            ? `JOIN module_cohorts mc ON mc.module_id = cm.id AND mc.cohort_id = $2`
+            : '';
+
         // 3 параллельных запроса вместо 1 mega-JOIN с 5 LEFT JOIN
         // (избегаем картезианского произведения materials × tasks)
         const [modulesLessonsResult, materialsResult, tasksResult] = await Promise.all([
-            // 1. Модули + уроки + прогресс (2 JOIN)
+            // 1. Модули + уроки + прогресс (2 JOIN) + cohort filter
             query(
                 `SELECT
                     cm.id AS module_id, cm.title AS module_title,
@@ -105,11 +122,12 @@ export default async function handler(
                     l.sort_order AS lesson_sort_order,
                     CASE WHEN ulp.completed_at IS NOT NULL THEN true ELSE false END AS completed
                 FROM course_modules cm
+                ${cohortJoin}
                 LEFT JOIN lessons l ON l.module_id = cm.id AND l.deleted_at IS NULL
-                LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = $1
+                LEFT JOIN user_lesson_progress ulp ON ulp.lesson_id = l.id AND ulp.user_id = ${userParam}
                 WHERE cm.deleted_at IS NULL
                 ORDER BY cm.sort_order, l.sort_order`,
-                [userId]
+                cohortParams
             ),
             // 2. Материалы (все для активных уроков)
             query(
@@ -117,7 +135,9 @@ export default async function handler(
                 FROM lesson_materials lm
                 JOIN lessons l ON l.id = lm.lesson_id AND l.deleted_at IS NULL
                 JOIN course_modules cm ON cm.id = l.module_id AND cm.deleted_at IS NULL
-                ORDER BY lm.sort_order`
+                ${cohortFilterForMaterials}
+                ORDER BY lm.sort_order`,
+                userCohortId ? [userCohortId] : []
             ),
             // 3. Задания + прогресс заданий
             query(
@@ -126,9 +146,10 @@ export default async function handler(
                 FROM lesson_tasks lt
                 JOIN lessons l ON l.id = lt.lesson_id AND l.deleted_at IS NULL
                 JOIN course_modules cm ON cm.id = l.module_id AND cm.deleted_at IS NULL
+                ${cohortFilterForTasks}
                 LEFT JOIN user_lesson_task_progress ultp ON ultp.task_id = lt.id AND ultp.user_id = $1
                 ORDER BY lt.sort_order`,
-                [userId]
+                userCohortId ? [userId, userCohortId] : [userId]
             )
         ]);
 

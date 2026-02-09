@@ -83,6 +83,7 @@ export interface CourseModule {
   description: string;
   status: 'available' | 'locked' | 'completed';
   lessons: Lesson[];
+  cohortIds?: string[];
 }
 
 export type PromptCategory = string;

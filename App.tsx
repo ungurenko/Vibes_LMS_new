@@ -568,7 +568,7 @@ const AppContent: React.FC = () => {
             );
             case 'admin-content': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminContent selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
+                    <AdminContent selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} cohorts={cohorts} />
                 </Suspense>
             );
             case 'admin-calls': return (

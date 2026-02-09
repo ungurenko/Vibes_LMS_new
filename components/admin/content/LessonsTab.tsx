@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit, Trash2, GripVertical, Video, Eye, Plus, Link as LinkIcon } from 'lucide-react';
 import { Reorder } from 'framer-motion';
-import { Lesson, CourseModule } from '../../../types';
+import { Lesson, CourseModule, Cohort } from '../../../types';
 
 interface LessonsTabProps {
   modules: CourseModule[];
@@ -12,6 +12,7 @@ interface LessonsTabProps {
   onDeleteModule: (id: string) => void;
   onAddLessonToModule: (moduleId: string) => void;
   onAddModule: () => void;
+  cohorts?: Cohort[];
 }
 
 const LessonsTab: React.FC<LessonsTabProps> = ({
@@ -22,7 +23,10 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
   onDeleteLesson,
   onDeleteModule,
   onAddLessonToModule,
+  cohorts = [],
 }) => {
+  // Map cohort ids to names for badge display
+  const cohortMap = new Map(cohorts.map(c => [c.id, c.name]));
   const handleReorderModules = (newOrder: CourseModule[]) => {
     setModules(newOrder);
   };
@@ -42,13 +46,26 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
           className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm"
         >
           <div className="bg-zinc-50 dark:bg-zinc-800/50 px-6 py-4 flex items-center justify-between border-b border-zinc-100 dark:border-white/5 cursor-grab active:cursor-grabbing group">
-            <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 group-hover:bg-zinc-300 dark:group-hover:bg-zinc-600 transition-colors">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="p-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 group-hover:bg-zinc-300 dark:group-hover:bg-zinc-600 transition-colors shrink-0">
                 <GripVertical size={14} />
               </div>
-              {module.title}
-            </h3>
-            <div className="flex items-center gap-3">
+              <h3 className="font-bold text-zinc-900 dark:text-white truncate">{module.title}</h3>
+              {module.cohortIds && module.cohortIds.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap ml-2">
+                  {module.cohortIds.map(cid => {
+                    const name = cohortMap.get(cid);
+                    if (!name) return null;
+                    return (
+                      <span key={cid} className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 whitespace-nowrap">
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
               <span className="text-xs font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-white/5">
                 {module.lessons.length} уроков
               </span>

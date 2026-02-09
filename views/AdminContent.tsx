@@ -12,7 +12,7 @@ import {
   Layers
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlossaryTerm, CourseModule, PromptCategoryItem } from '../types';
+import { GlossaryTerm, CourseModule, PromptCategoryItem, Cohort } from '../types';
 import { Drawer, PageHeader, Input, ConfirmModal } from '../components/Shared';
 import { removeCache, CACHE_KEYS } from '../lib/cache';
 import ScopeBanner from '../components/admin/ScopeBanner';
@@ -46,9 +46,10 @@ interface AdminContentProps {
   onUpdateModules?: (modules: CourseModule[]) => void;
   selectedCohortId?: string | null;
   selectedCohortName?: string | null;
+  cohorts?: Cohort[];
 }
 
-const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedCohortName }) => {
+const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedCohortName, cohorts = [] }) => {
   // --- Tab & Editor State ---
   const [activeTab, setActiveTab] = useState<ContentTab>('lessons');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -219,14 +220,16 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
         title: '',
         description: '',
         status: 'locked',
-        sortOrder: (modules.length + 1) * 10
+        sortOrder: (modules.length + 1) * 10,
+        cohortIds: cohorts.filter(c => c.isActive).map(c => c.id),
       });
     } else {
       setEditingItem({
         id: module.id,
         title: module.title,
         description: module.description || '',
-        status: module.status || 'locked'
+        status: module.status || 'locked',
+        cohortIds: module.cohortIds || [],
       });
     }
     setValidationErrors([]);
@@ -600,7 +603,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
 
   const renderEditorForm = () => {
     if (editingModuleMode) {
-      return <ModuleForm editingItem={editingItem} updateField={updateField} validationErrors={validationErrors} />;
+      return <ModuleForm editingItem={editingItem} updateField={updateField} validationErrors={validationErrors} cohorts={cohorts} />;
     }
 
     return (
@@ -734,6 +737,8 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
       {/* Scope Banner */}
       {activeTab === 'stages' ? (
         <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Стадии потока: ${selectedCohortName}` : undefined} />
+      ) : activeTab === 'lessons' ? (
+        <ScopeBanner type="shared" label="Модули привязаны к потокам индивидуально" />
       ) : (
         <ScopeBanner type="shared" />
       )}
@@ -756,6 +761,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
             onDeleteModule={(id) => confirmDelete(id, 'modules')}
             onAddLessonToModule={(moduleId) => openEditor({ moduleId })}
             onAddModule={() => openModuleEditor()}
+            cohorts={cohorts}
           />
         )}
         {activeTab === 'styles' && (
