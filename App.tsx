@@ -24,6 +24,7 @@ const AdminContent = lazy(() => import('./views/AdminContent'));
 const AdminCalls = lazy(() => import('./views/AdminCalls'));
 const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
+const AdminCohorts = lazy(() => import('./views/AdminCohorts'));
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
 import CohortSelector from './components/admin/CohortSelector';
 
@@ -533,6 +534,8 @@ const AppContent: React.FC = () => {
     if (view === 'reset-password') return <Login onLogin={handleLogin} onNavigateToRegister={() => setView('register')} initialView="reset" onSimulateResetLink={() => { }} onResetComplete={() => setView('login')} />;
     if (view === 'register' && inviteCodeFromUrl) return <Register inviteCode={inviteCodeFromUrl} onRegister={handleRegister} onNavigateLogin={() => { window.history.replaceState({}, '', window.location.pathname); setView('login'); }} />;
 
+    const selectedCohortName = cohorts.find(c => c.id === selectedCohortId)?.name || null;
+
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard': return <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} userCohort={userCohort} /></Suspense>;
@@ -560,17 +563,22 @@ const AppContent: React.FC = () => {
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
             case 'admin-content': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminContent />
+                    <AdminContent selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
             case 'admin-calls': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminCalls selectedCohortId={selectedCohortId} cohorts={cohorts} />
+                    <AdminCalls selectedCohortId={selectedCohortId} cohorts={cohorts} selectedCohortName={selectedCohortName} />
+                </Suspense>
+            );
+            case 'admin-cohorts': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminCohorts cohorts={cohorts} onCohortsChange={loadCohorts} />
                 </Suspense>
             );
             case 'admin-tools': return (
@@ -580,7 +588,7 @@ const AppContent: React.FC = () => {
             );
             case 'admin-settings': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} selectedCohortId={selectedCohortId} cohorts={cohorts} onCohortsChange={loadCohorts} />
+                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
 

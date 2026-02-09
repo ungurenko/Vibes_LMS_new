@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import { GlossaryTerm, CourseModule, PromptCategoryItem } from '../types';
 import { Drawer, PageHeader, Input, ConfirmModal } from '../components/Shared';
 import { removeCache, CACHE_KEYS } from '../lib/cache';
+import ScopeBanner from '../components/admin/ScopeBanner';
 import { useAdminFetch } from '../lib/hooks/useAdminFetch';
 import {
   LessonsTab,
@@ -43,9 +44,11 @@ type ContentTab = 'lessons' | 'styles' | 'prompts' | 'prompt-categories' | 'glos
 interface AdminContentProps {
   modules?: CourseModule[];
   onUpdateModules?: (modules: CourseModule[]) => void;
+  selectedCohortId?: string | null;
+  selectedCohortName?: string | null;
 }
 
-const AdminContent: React.FC<AdminContentProps> = () => {
+const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedCohortName }) => {
   // --- Tab & Editor State ---
   const [activeTab, setActiveTab] = useState<ContentTab>('lessons');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -65,7 +68,10 @@ const AdminContent: React.FC<AdminContentProps> = () => {
   const { data: promptCategories, reload: reloadPromptCategories } = useAdminFetch<PromptCategoryItem[]>('/api/admin-content?type=categories', []);
   const { data: glossary, setData: setGlossary, reload: reloadGlossary } = useAdminFetch<GlossaryTerm[]>('/api/admin-content?type=glossary', []);
   const { data: roadmaps, setData: setRoadmaps, reload: reloadRoadmaps } = useAdminFetch<AdminRoadmap[]>('/api/admin-content?type=roadmaps', []);
-  const { data: stages, reload: reloadStages } = useAdminFetch<AdminStage[]>('/api/admin?resource=stages', []);
+  const stagesUrl = selectedCohortId
+    ? `/api/admin?resource=stages&cohortId=${selectedCohortId}`
+    : '/api/admin?resource=stages';
+  const { data: stages, reload: reloadStages } = useAdminFetch<AdminStage[]>(stagesUrl, []);
 
   // --- Helpers ---
 
@@ -357,13 +363,14 @@ const AdminContent: React.FC<AdminContentProps> = () => {
         await reloadRoadmaps();
       }
       else if (activeTab === 'stages') {
+        const stagePayload = isUpdate ? editingItem : { ...editingItem, cohortId: selectedCohortId };
         const response = await fetch('/api/admin?resource=stages', {
           method: isUpdate ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(editingItem)
+          body: JSON.stringify(stagePayload)
         });
 
         if (!response.ok) throw new Error('Failed to save stage');
@@ -723,6 +730,13 @@ const AdminContent: React.FC<AdminContentProps> = () => {
           </button>
         ))}
       </div>
+
+      {/* Scope Banner */}
+      {activeTab === 'stages' ? (
+        <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Стадии потока: ${selectedCohortName}` : undefined} />
+      ) : (
+        <ScopeBanner type="shared" />
+      )}
 
       {/* Main Content Area */}
       <motion.div

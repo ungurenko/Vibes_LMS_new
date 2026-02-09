@@ -20,7 +20,8 @@ import {
   Volume2,
   VolumeX,
   Lock,
-  Laptop
+  Laptop,
+  Layers
 } from 'lucide-react';
 import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,6 +67,7 @@ const adminNavItems: NavItem[] = [
   { id: 'admin-students', label: 'Ученики', icon: Users },
   { id: 'admin-content', label: 'Контент', icon: Book },
   { id: 'admin-calls', label: 'Созвоны', icon: Video },
+  { id: 'admin-cohorts', label: 'Потоки', icon: Layers },
   { id: 'admin-tools', label: 'Инструменты', icon: Sparkles },
   { id: 'admin-settings', label: 'Настройки', icon: Settings },
 ];

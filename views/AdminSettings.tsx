@@ -17,29 +17,26 @@ import {
   X,
   Eye,
   Loader,
-  Calendar,
-  Archive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { InviteLink, NavigationConfig, Cohort } from '../types';
+import { InviteLink, NavigationConfig } from '../types';
 import { useSound } from '../SoundContext';
 import { Modal, PageHeader, ConfirmModal } from '../components/Shared';
-import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuthPut, fetchWithAuthDelete } from '../lib/fetchWithAuth';
+import ScopeBanner from '../components/admin/ScopeBanner';
+import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 
 interface AdminSettingsProps {
     invites: InviteLink[];
     onGenerateInvites: (count: number, daysValid: number | null) => void;
     onDeleteInvite: (id: string) => void;
     onDeactivateInvite: (id: string) => void;
-    selectedCohortId?: string | null;
-    cohorts?: Cohort[];
-    onCohortsChange?: () => void;
+    selectedCohortName?: string | null;
 }
 
-const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvites, onDeleteInvite, onDeactivateInvite, selectedCohortId, cohorts = [], onCohortsChange }) => {
+const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvites, onDeleteInvite, onDeactivateInvite, selectedCohortName }) => {
 
   // --- UI State ---
-  const [activeTab, setActiveTab] = useState<'invites' | 'general' | 'cohorts'>('invites');
+  const [activeTab, setActiveTab] = useState<'invites' | 'general'>('invites');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'neutral' | 'error' } | null>(null);
   const [copyId, setCopyId] = useState<string | null>(null);
 
@@ -56,12 +53,6 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
   // Deletion State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [inviteToDelete, setInviteToDelete] = useState<string | null>(null);
-
-  // Cohort Management State
-  const [isAddCohortOpen, setIsAddCohortOpen] = useState(false);
-  const [editingCohort, setEditingCohort] = useState<Partial<Cohort> | null>(null);
-  const [cohortForm, setCohortForm] = useState({ name: '', description: '', startDate: '', cloneStagesFrom: '' });
-  const [isCohortSaving, setIsCohortSaving] = useState(false);
 
   // Navigation Config State
   const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
@@ -103,71 +94,6 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
           setInviteToDelete(null);
           showToast('Инвайт удален', 'neutral');
       }
-  };
-
-  // --- Cohort Functions ---
-
-  const handleSaveCohort = async () => {
-    if (!cohortForm.name.trim()) return;
-    setIsCohortSaving(true);
-    try {
-      if (editingCohort?.id) {
-        await fetchWithAuthPut('/api/admin?resource=cohorts', {
-          id: editingCohort.id,
-          name: cohortForm.name,
-          description: cohortForm.description,
-          startDate: cohortForm.startDate || null,
-        });
-      } else {
-        await fetchWithAuthPost('/api/admin?resource=cohorts', {
-          name: cohortForm.name,
-          description: cohortForm.description,
-          startDate: cohortForm.startDate || null,
-          cloneStagesFrom: cohortForm.cloneStagesFrom || undefined,
-        });
-      }
-      onCohortsChange?.();
-      setIsAddCohortOpen(false);
-      setEditingCohort(null);
-      setCohortForm({ name: '', description: '', startDate: '', cloneStagesFrom: '' });
-      showToast(editingCohort?.id ? 'Поток обновлён' : 'Поток создан');
-    } catch (error) {
-      console.error('Error saving cohort:', error);
-      showToast('Ошибка сохранения', 'error');
-    } finally {
-      setIsCohortSaving(false);
-    }
-  };
-
-  const handleArchiveCohort = async (id: string) => {
-    try {
-      await fetchWithAuthPut('/api/admin?resource=cohorts', {
-        id,
-        isActive: false,
-      });
-      onCohortsChange?.();
-      showToast('Поток архивирован');
-    } catch (error) {
-      console.error('Error archiving cohort:', error);
-      showToast('Ошибка архивирования', 'error');
-    }
-  };
-
-  const openEditCohort = (cohort: Cohort) => {
-    setEditingCohort(cohort);
-    setCohortForm({
-      name: cohort.name,
-      description: cohort.description || '',
-      startDate: cohort.startDate || '',
-      cloneStagesFrom: '',
-    });
-    setIsAddCohortOpen(true);
-  };
-
-  const openAddCohort = () => {
-    setEditingCohort(null);
-    setCohortForm({ name: '', description: '', startDate: '', cloneStagesFrom: '' });
-    setIsAddCohortOpen(true);
   };
 
   // --- Computed Stats ---
@@ -266,20 +192,14 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                     <Settings size={16} />
                     Общие
                 </button>
-                <button
-                    onClick={() => setActiveTab('cohorts')}
-                    className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                    activeTab === 'cohorts'
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                    }`}
-                >
-                    <Users size={16} />
-                    Потоки
-                </button>
             </div>
         }
       />
+
+      {/* Scope Banner */}
+      {activeTab === 'invites' ? (
+        <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Инвайты потока: ${selectedCohortName}` : undefined} />
+      ) : null}
 
       <AnimatePresence mode="wait">
         {activeTab === 'invites' && (
@@ -602,96 +522,6 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
             </motion.div>
         )}
 
-        {activeTab === 'cohorts' && (
-            <motion.div
-                key="cohorts"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-            >
-                {/* Add Cohort Button */}
-                <div className="flex justify-end">
-                    <button
-                        onClick={openAddCohort}
-                        className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 shadow-lg"
-                    >
-                        <Plus size={18} />
-                        Создать поток
-                    </button>
-                </div>
-
-                {/* Cohorts Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {cohorts.map(cohort => (
-                        <div
-                            key={cohort.id}
-                            className={`bg-white dark:bg-zinc-900 rounded-2xl border p-6 transition-all ${
-                                cohort.isActive
-                                    ? 'border-violet-200 dark:border-violet-500/20 shadow-sm'
-                                    : 'border-zinc-200 dark:border-white/5 opacity-60'
-                            }`}
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div>
-                                    <h4 className="font-bold text-lg text-zinc-900 dark:text-white">{cohort.name}</h4>
-                                    {cohort.description && (
-                                        <p className="text-sm text-zinc-500 mt-1">{cohort.description}</p>
-                                    )}
-                                </div>
-                                {cohort.isActive ? (
-                                    <span className="px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
-                                        Активен
-                                    </span>
-                                ) : (
-                                    <span className="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-xs font-bold">
-                                        Архив
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm text-zinc-500 mb-4">
-                                <span className="flex items-center gap-1">
-                                    <Users size={14} />
-                                    {cohort.studentCount || 0} студентов
-                                </span>
-                                {cohort.startDate && (
-                                    <span className="flex items-center gap-1">
-                                        <Calendar size={14} />
-                                        {new Date(cohort.startDate).toLocaleDateString('ru-RU')}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => openEditCohort(cohort)}
-                                    className="flex-1 py-2 px-3 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
-                                >
-                                    Редактировать
-                                </button>
-                                {cohort.isActive && (
-                                    <button
-                                        onClick={() => handleArchiveCohort(cohort.id)}
-                                        className="py-2 px-3 rounded-xl text-sm font-bold text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                        title="Архивировать"
-                                    >
-                                        <Ban size={16} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {cohorts.length === 0 && (
-                    <div className="text-center py-12 text-zinc-400">
-                        Потоки не созданы. Создайте первый поток.
-                    </div>
-                )}
-            </motion.div>
-        )}
       </AnimatePresence>
 
       {/* Generate Modal - Fixed with Scrollable Overlay */}
@@ -743,68 +573,6 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl"
             >
                 Сгенерировать
-            </button>
-        </div>
-      </Modal>
-
-      {/* Add/Edit Cohort Modal */}
-      <Modal
-        isOpen={isAddCohortOpen}
-        onClose={() => { setIsAddCohortOpen(false); setEditingCohort(null); }}
-        title={editingCohort?.id ? 'Редактировать поток' : 'Создать поток'}
-      >
-        <div className="space-y-4">
-            <div>
-                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Название</label>
-                <input
-                    type="text"
-                    value={cohortForm.name}
-                    onChange={(e) => setCohortForm({ ...cohortForm, name: e.target.value })}
-                    placeholder="Например: Поток 2"
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 transition-colors"
-                    autoFocus
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание</label>
-                <input
-                    type="text"
-                    value={cohortForm.description}
-                    onChange={(e) => setCohortForm({ ...cohortForm, description: e.target.value })}
-                    placeholder="Краткое описание потока"
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 transition-colors"
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Дата старта</label>
-                <input
-                    type="date"
-                    value={cohortForm.startDate}
-                    onChange={(e) => setCohortForm({ ...cohortForm, startDate: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 transition-colors"
-                />
-            </div>
-            {!editingCohort?.id && cohorts.length > 0 && (
-                <div>
-                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Клонировать стадии из</label>
-                    <select
-                        value={cohortForm.cloneStagesFrom}
-                        onChange={(e) => setCohortForm({ ...cohortForm, cloneStagesFrom: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 transition-colors appearance-none"
-                    >
-                        <option value="">Не клонировать</option>
-                        {cohorts.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
-            <button
-                onClick={handleSaveCohort}
-                disabled={!cohortForm.name.trim() || isCohortSaving}
-                className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {isCohortSaving ? 'Сохранение...' : editingCohort?.id ? 'Сохранить' : 'Создать'}
             </button>
         </div>
       </Modal>

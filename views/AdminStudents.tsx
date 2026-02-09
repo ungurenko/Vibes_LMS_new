@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/Shared';
 import { StudentProfile } from '../components/admin/students/StudentProfile';
 import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
+import ScopeBanner from '../components/admin/ScopeBanner';
 
 // --- Types ---
 type ViewMode = 'list' | 'profile';
@@ -34,6 +35,7 @@ interface AdminStudentsProps {
     onAddStudent: (student: Student) => void;
     onDeleteStudent: (id: string) => void;
     selectedCohortId?: string | null;
+    selectedCohortName?: string | null;
 }
 
 // --- Sub-components ---
@@ -56,7 +58,7 @@ const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'githu
   );
 };
 
-const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId }) => {
+const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId, selectedCohortName }) => {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -311,6 +313,9 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
         transition={{ duration: 0.3 }}
         className={viewMode === 'list' ? 'block' : 'hidden'}
       >
+        {/* Scope Banner */}
+        <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Студенты потока: ${selectedCohortName}` : undefined} />
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>

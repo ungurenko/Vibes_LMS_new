@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer, PageHeader, Input, Select, ConfirmModal } from '../components/Shared';
 import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuthPut, fetchWithAuthDelete } from '../lib/fetchWithAuth';
 import { Cohort } from '../types';
+import ScopeBanner from '../components/admin/ScopeBanner';
 
 // --- Types ---
 
@@ -59,9 +60,10 @@ const REMINDER_OPTIONS: { id: ReminderType; label: string }[] = [
 interface AdminCallsProps {
     selectedCohortId?: string | null;
     cohorts?: Cohort[];
+    selectedCohortName?: string | null;
 }
 
-const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [] }) => {
+const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [], selectedCohortName }) => {
     const [calls, setCalls] = useState<AdminCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -258,6 +260,9 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [] 
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
+
+            {/* Scope Banner */}
+            <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Созвоны потока: ${selectedCohortName}` : undefined} />
 
             {/* Header */}
             <PageHeader

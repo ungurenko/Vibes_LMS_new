@@ -13,12 +13,13 @@ const CohortSelector: React.FC<CohortSelectorProps> = ({ cohorts, selectedId, on
 
     return (
         <div className="flex items-center gap-2">
-            <Users size={16} className="text-zinc-400 shrink-0" />
+            <Users size={16} className="text-violet-500 dark:text-violet-400 shrink-0" />
             <select
                 value={selectedId || ''}
                 onChange={(e) => onChange(e.target.value || null)}
-                className="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-sm font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-violet-500 transition-colors appearance-none cursor-pointer pr-8"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+                title="Фильтрует: студенты, стадии, созвоны, инвайты"
+                className="px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-sm font-bold text-violet-700 dark:text-violet-300 focus:outline-none focus:border-violet-500 transition-colors appearance-none cursor-pointer pr-8"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
             >
                 {cohorts.map(c => (
                     <option key={c.id} value={c.id}>
