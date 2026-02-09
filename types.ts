@@ -186,6 +186,8 @@ export interface Student {
   projects: StudentProjects;
   notes?: string;
   niche?: string;
+  cohortId?: string;
+  cohortName?: string;
 }
 
 export interface StudentProfile extends Student {
@@ -239,6 +241,8 @@ export interface InviteLink {
   usedByEmail?: string;
   usedByName?: string;
   usedAt?: string; // ISO Date
+  cohortId?: string;
+  cohortName?: string;
 }
 
 // Platform Settings Types
@@ -277,4 +281,16 @@ export interface QuickQuestion {
   text: string;
   sortOrder: number;
   isActive: boolean;
+}
+
+export interface Cohort {
+  id: string;
+  name: string;
+  description?: string;
+  startDate?: string;
+  isActive: boolean;
+  sortOrder: number;
+  studentCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

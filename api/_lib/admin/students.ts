@@ -41,9 +41,11 @@ export async function handleStudents(
             u.role, u.status, u.progress_percent,
             u.landing_url, u.service_url, u.github_url,
             u.admin_notes, u.last_active_at, u.created_at,
+            u.cohort_id,
             cm.title as current_module
           FROM users u
           LEFT JOIN course_modules cm ON cm.id = u.current_module_id
+          LEFT JOIN cohorts c ON c.id = u.cohort_id
           WHERE u.id = $1 AND u.role = 'student'`,
           [id]
         );
@@ -122,6 +124,7 @@ export async function handleStudents(
             github: student.github_url,
           },
           notes: student.admin_notes,
+          cohortId: student.cohort_id,
           stats: {
              lessonsCompleted: parseInt(lessonsResult.rows[0].count),
              projectsSubmitted: parseInt(projectsResult.rows[0].count),
@@ -150,13 +153,23 @@ export async function handleStudents(
           u.admin_notes,
           u.last_active_at,
           u.created_at,
+          u.cohort_id,
+          c.name as cohort_name,
           cm.title as current_module
         FROM users u
         LEFT JOIN course_modules cm ON cm.id = u.current_module_id
+        LEFT JOIN cohorts c ON c.id = u.cohort_id
         WHERE u.deleted_at IS NULL AND u.role = 'student'
       `;
       const params: any[] = [];
       let paramIndex = 1;
+
+      const cohortId = req.query.cohortId;
+      if (cohortId) {
+        sql += ` AND u.cohort_id = $${paramIndex}`;
+        params.push(cohortId);
+        paramIndex++;
+      }
 
       if (status && status !== 'Все') {
         sql += ` AND u.status = $${paramIndex}`;
@@ -194,6 +207,8 @@ export async function handleStudents(
           github: row.github_url,
         },
         notes: row.admin_notes,
+        cohortId: row.cohort_id,
+        cohortName: row.cohort_name,
       }));
 
       return res.status(200).json(successResponse(students));

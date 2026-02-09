@@ -4,16 +4,20 @@ import { successResponse, errorResponse } from '../auth.js';
 
 // GET - Получить все созвоны
 async function getCalls(req: VercelRequest, res: VercelResponse) {
+    const cohortId = req.query.cohortId;
+
     const { rows } = await query(
         `SELECT
       id, topic, description,
       scheduled_date, scheduled_time, duration, timezone,
       status, meeting_url, recording_url, attendees_count,
-      reminders,
+      reminders, cohort_id,
       created_at, updated_at
     FROM admin_calls
     WHERE deleted_at IS NULL
-    ORDER BY scheduled_date DESC, scheduled_time DESC`
+      ${cohortId ? 'AND cohort_id = $1' : ''}
+    ORDER BY scheduled_date DESC, scheduled_time DESC`,
+        cohortId ? [cohortId] : []
     );
 
     const calls = rows.map((row: any) => ({
@@ -29,6 +33,7 @@ async function getCalls(req: VercelRequest, res: VercelResponse) {
         recordingUrl: row.recording_url,
         attendeesCount: row.attendees_count,
         reminders: row.reminders || [],
+        cohortId: row.cohort_id,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     }));
@@ -49,6 +54,7 @@ async function createCall(req: VercelRequest, res: VercelResponse) {
         meetingUrl,
         recordingUrl,
         reminders = [],
+        cohortId,
     } = req.body;
 
     if (!topic || !date || !time) {
@@ -58,10 +64,10 @@ async function createCall(req: VercelRequest, res: VercelResponse) {
     const { rows } = await query(
         `INSERT INTO admin_calls (
       topic, description, scheduled_date, scheduled_time,
-      duration, timezone, status, meeting_url, recording_url, reminders
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      duration, timezone, status, meeting_url, recording_url, reminders, cohort_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *`,
-        [topic, description, date, time, duration, timezone, status, meetingUrl, recordingUrl, reminders]
+        [topic, description, date, time, duration, timezone, status, meetingUrl, recordingUrl, reminders, cohortId || null]
     );
 
     const row = rows[0];
@@ -78,6 +84,7 @@ async function createCall(req: VercelRequest, res: VercelResponse) {
         recordingUrl: row.recording_url,
         attendeesCount: row.attendees_count,
         reminders: row.reminders || [],
+        cohortId: row.cohort_id,
         createdAt: row.created_at,
     };
 

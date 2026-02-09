@@ -16,11 +16,13 @@ import {
     Users,
     X,
     BellRing,
-    CalendarCheck
+    CalendarCheck,
+    Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer, PageHeader, Input, Select, ConfirmModal } from '../components/Shared';
 import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuthPut, fetchWithAuthDelete } from '../lib/fetchWithAuth';
+import { Cohort } from '../types';
 
 // --- Types ---
 
@@ -44,6 +46,8 @@ interface AdminCall {
     materials?: CallMaterial[];
     attendeesCount?: number;
     reminders: ReminderType[];
+    cohortId?: string;
+    cohortName?: string;
 }
 
 const REMINDER_OPTIONS: { id: ReminderType; label: string }[] = [
@@ -52,7 +56,12 @@ const REMINDER_OPTIONS: { id: ReminderType; label: string }[] = [
     { id: '15m', label: 'За 15 минут' },
 ];
 
-const AdminCalls: React.FC = () => {
+interface AdminCallsProps {
+    selectedCohortId?: string | null;
+    cohorts?: Cohort[];
+}
+
+const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [] }) => {
     const [calls, setCalls] = useState<AdminCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -63,12 +72,19 @@ const AdminCalls: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [callToDelete, setCallToDelete] = useState<string | null>(null);
 
+    // Cross-access sharing state
+    const [sharingCallId, setSharingCallId] = useState<string | null>(null);
+    const [sharedCohorts, setSharedCohorts] = useState<string[]>([]);
+
     // --- API Functions ---
 
     const fetchCalls = async () => {
         try {
             setIsLoading(true);
-            const data = await fetchWithAuthGet<AdminCall[]>('/api/admin?resource=calls');
+            const url = selectedCohortId
+                ? `/api/admin?resource=calls&cohortId=${selectedCohortId}`
+                : '/api/admin?resource=calls';
+            const data = await fetchWithAuthGet<AdminCall[]>(url);
             setCalls(data);
         } catch (error) {
             console.error('Error fetching calls:', error);
@@ -79,7 +95,7 @@ const AdminCalls: React.FC = () => {
 
     useEffect(() => {
         fetchCalls();
-    }, []);
+    }, [selectedCohortId]);
 
     // --- Actions ---
 
@@ -118,7 +134,8 @@ const AdminCalls: React.FC = () => {
                 duration: '60 мин',
                 status: 'scheduled',
                 materials: [],
-                reminders: ['1h', '15m'] // Defaults
+                reminders: ['1h', '15m'],
+                cohortId: selectedCohortId || undefined,
             });
         }
         setIsEditorOpen(true);
@@ -178,6 +195,47 @@ const AdminCalls: React.FC = () => {
             ...prev,
             materials: prev.materials?.filter((_, i) => i !== index)
         }));
+    };
+
+    // --- Cross-access sharing ---
+    const openShareModal = async (callId: string) => {
+        setSharingCallId(callId);
+        try {
+            const data = await fetchWithAuthGet<{ cohortId: string }[]>(`/api/admin?resource=call-access&callId=${callId}`);
+            setSharedCohorts(data.map(d => d.cohortId));
+        } catch (error) {
+            console.error('Error loading call access:', error);
+            setSharedCohorts([]);
+        }
+    };
+
+    const toggleCohortAccess = async (cohortId: string) => {
+        if (!sharingCallId) return;
+
+        if (sharedCohorts.includes(cohortId)) {
+            // Найти и удалить
+            try {
+                const data = await fetchWithAuthGet<{ id: string; cohortId: string }[]>(`/api/admin?resource=call-access&callId=${sharingCallId}`);
+                const record = data.find(d => d.cohortId === cohortId);
+                if (record) {
+                    await fetchWithAuthDelete(`/api/admin?resource=call-access&id=${record.id}`);
+                    setSharedCohorts(prev => prev.filter(id => id !== cohortId));
+                }
+            } catch (error) {
+                console.error('Error revoking access:', error);
+            }
+        } else {
+            // Добавить доступ
+            try {
+                await fetchWithAuthPost('/api/admin?resource=call-access', {
+                    callId: sharingCallId,
+                    cohortId,
+                });
+                setSharedCohorts(prev => [...prev, cohortId]);
+            } catch (error) {
+                console.error('Error granting access:', error);
+            }
+        }
     };
 
     // --- UI Helpers ---
@@ -344,6 +402,16 @@ const AdminCalls: React.FC = () => {
                                         >
                                             <Video size={16} />
                                             Добавить запись
+                                        </button>
+                                    )}
+
+                                    {call.recordingUrl && cohorts.length > 1 && (
+                                        <button
+                                            onClick={() => openShareModal(call.id)}
+                                            className="w-full py-2 px-4 rounded-xl text-sm font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors flex items-center justify-center lg:justify-start gap-2"
+                                        >
+                                            <Share2 size={16} />
+                                            Расшарить
                                         </button>
                                     )}
 
@@ -536,6 +604,66 @@ const AdminCalls: React.FC = () => {
                 onConfirm={executeDelete}
                 message="Вы уверены, что хотите удалить этот созвон?"
             />
+
+            {/* Share Recording Modal */}
+            {sharingCallId && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm"
+                        onClick={() => setSharingCallId(null)}
+                    />
+                    <div className="fixed inset-0 z-[101] overflow-y-auto pointer-events-none">
+                        <div className="flex min-h-full items-center justify-center p-4 pointer-events-auto">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-100 dark:border-white/10 p-6"
+                            >
+                                <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-4">
+                                    Расшарить запись
+                                </h3>
+                                <p className="text-sm text-zinc-500 mb-4">Выберите потоки для доступа к записи:</p>
+                                <div className="space-y-2">
+                                    {cohorts.filter(c => {
+                                        const call = calls.find(cl => cl.id === sharingCallId);
+                                        return c.id !== call?.cohortId;
+                                    }).map(cohort => (
+                                        <label
+                                            key={cohort.id}
+                                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                                sharedCohorts.includes(cohort.id)
+                                                    ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30'
+                                                    : 'border-zinc-200 dark:border-white/10 hover:border-violet-200'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={sharedCohorts.includes(cohort.id)}
+                                                onChange={() => toggleCohortAccess(cohort.id)}
+                                                className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
+                                            />
+                                            <span className="font-medium text-zinc-900 dark:text-white">{cohort.name}</span>
+                                            {cohort.studentCount !== undefined && (
+                                                <span className="text-xs text-zinc-400 ml-auto">{cohort.studentCount} студ.</span>
+                                            )}
+                                        </label>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => setSharingCallId(null)}
+                                    className="w-full mt-4 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:opacity-90 transition-opacity"
+                                >
+                                    Готово
+                                </button>
+                            </motion.div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

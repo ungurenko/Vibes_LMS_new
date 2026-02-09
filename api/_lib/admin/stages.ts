@@ -97,11 +97,15 @@ async function handleTasks(req: VercelRequest, res: VercelResponse) {
 
 // GET - Получить все стадии с задачами
 async function getStages(req: VercelRequest, res: VercelResponse) {
-    // Получаем стадии
+    const cohortId = req.query.cohortId;
+
+    // Получаем стадии (с фильтром по когорте если указан)
     const { rows: stages } = await query(
-        `SELECT id, title, subtitle, description, week_label, is_active, sort_order
+        `SELECT id, title, subtitle, description, week_label, is_active, sort_order, cohort_id
      FROM dashboard_stages
-     ORDER BY sort_order`
+     ${cohortId ? 'WHERE cohort_id = $1' : ''}
+     ORDER BY sort_order`,
+        cohortId ? [cohortId] : []
     );
 
     // Получаем задачи для всех стадий
@@ -133,6 +137,7 @@ async function getStages(req: VercelRequest, res: VercelResponse) {
         weekLabel: stage.week_label,
         isActive: stage.is_active,
         sortOrder: stage.sort_order,
+        cohortId: stage.cohort_id,
         tasks: tasksByStage.get(stage.id) || [],
     }));
 
@@ -141,22 +146,24 @@ async function getStages(req: VercelRequest, res: VercelResponse) {
 
 // POST - Создать стадию
 async function createStage(req: VercelRequest, res: VercelResponse) {
-    const { title, subtitle, description, weekLabel, isActive, sortOrder } = req.body;
+    const { title, subtitle, description, weekLabel, isActive, sortOrder, cohortId } = req.body;
 
     if (!title) {
         return res.status(400).json(errorResponse('Название стадии обязательно'));
     }
 
-    // Если создаём активную стадию, сбрасываем флаг у всех остальных
-    if (isActive) {
+    // Если создаём активную стадию, сбрасываем флаг у остальных (в пределах когорты)
+    if (isActive && cohortId) {
+        await query(`UPDATE dashboard_stages SET is_active = FALSE WHERE cohort_id = $1`, [cohortId]);
+    } else if (isActive) {
         await query(`UPDATE dashboard_stages SET is_active = FALSE`);
     }
 
     const { rows } = await query(
-        `INSERT INTO dashboard_stages (title, subtitle, description, week_label, is_active, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO dashboard_stages (title, subtitle, description, week_label, is_active, sort_order, cohort_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
-        [title, subtitle, description, weekLabel, isActive || false, sortOrder || 0]
+        [title, subtitle, description, weekLabel, isActive || false, sortOrder || 0, cohortId || null]
     );
 
     const stage = {
@@ -167,6 +174,7 @@ async function createStage(req: VercelRequest, res: VercelResponse) {
         weekLabel: rows[0].week_label,
         isActive: rows[0].is_active,
         sortOrder: rows[0].sort_order,
+        cohortId: rows[0].cohort_id,
         tasks: [],
     };
 
@@ -181,9 +189,13 @@ async function updateStage(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json(errorResponse('ID стадии обязателен'));
     }
 
-    // Если делаем стадию активной, сбрасываем флаг у всех остальных
+    // Если делаем стадию активной, сбрасываем флаг у всех остальных в той же когорте
     if (isActive === true) {
-        await query(`UPDATE dashboard_stages SET is_active = FALSE WHERE id != $1`, [id]);
+        await query(
+            `UPDATE dashboard_stages SET is_active = FALSE
+             WHERE id != $1 AND cohort_id = (SELECT cohort_id FROM dashboard_stages WHERE id = $1)`,
+            [id]
+        );
     }
 
     const { rows, rowCount } = await query(
@@ -212,6 +224,7 @@ async function updateStage(req: VercelRequest, res: VercelResponse) {
         weekLabel: rows[0].week_label,
         isActive: rows[0].is_active,
         sortOrder: rows[0].sort_order,
+        cohortId: rows[0].cohort_id,
     };
 
     return res.status(200).json(successResponse(stage));

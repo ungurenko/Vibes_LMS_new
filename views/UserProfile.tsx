@@ -338,6 +338,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                                   {email}
                               </div>
                           </div>
+                          {user.cohortName && (
+                              <div className="md:col-span-2">
+                                  <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Поток</label>
+                                  <div className="text-lg font-medium text-zinc-900 dark:text-white flex items-center gap-2">
+                                      <User size={16} className="text-zinc-400" />
+                                      {user.cohortName}
+                                  </div>
+                              </div>
+                          )}
                           <div className="md:col-span-2">
                               <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Моя ниша</label>
                               <div className="text-lg font-medium text-zinc-900 dark:text-white flex items-center gap-2">

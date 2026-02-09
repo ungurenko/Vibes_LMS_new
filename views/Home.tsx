@@ -19,7 +19,7 @@ import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 interface HomeProps {
    onNavigate: (tab: TabId) => void;
    userName?: string;
-
+   userCohort?: { id: string; name: string } | null;
 }
 
 // Animation Variants
@@ -76,7 +76,7 @@ const QUICK_ACTIONS = [
    { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500/30 to-teal-500/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
 ];
 
-const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) => {
+const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', userCohort }) => {
    const [stages, setStages] = useState<DashboardStage[]>([]);
 
    const [activeStageId, setActiveStageId] = useState<string | null>(null);
@@ -239,6 +239,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент' }) 
                               <span className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 rounded-lg">
                                  {activeStage?.weekLabel || 'WEEK 01'}
                               </span>
+                              {userCohort && (
+                                 <span className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-500/10 px-2.5 py-1 rounded-lg">
+                                    {userCohort.name}
+                                 </span>
+                              )}
                               <span className="text-stone-400 dark:text-stone-500 text-sm">
                                  Этап {currentStageNumber} из {totalStages || '—'}
                               </span>

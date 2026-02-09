@@ -38,6 +38,7 @@ export default async function handler(
     }
 
     // Оптимизированный единый запрос с JOIN (вместо 4 отдельных)
+    // Фильтрация по когорте текущего пользователя
     const { rows } = await query(
       `SELECT
           ds.id AS stage_id, ds.title AS stage_title,
@@ -51,6 +52,7 @@ export default async function handler(
       LEFT JOIN stage_tasks st ON st.stage_id = ds.id
       LEFT JOIN user_stage_progress usp ON usp.stage_id = ds.id AND usp.user_id = $1
       LEFT JOIN user_stage_task_progress ustp ON ustp.task_id = st.id AND ustp.user_id = $1
+      WHERE ds.cohort_id = (SELECT cohort_id FROM users WHERE id = $1)
       ORDER BY ds.sort_order, st.sort_order`,
       [tokenData.userId]
     );

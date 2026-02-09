@@ -33,6 +33,7 @@ interface AdminStudentsProps {
     onUpdateStudent: (student: Student) => void;
     onAddStudent: (student: Student) => void;
     onDeleteStudent: (id: string) => void;
+    selectedCohortId?: string | null;
 }
 
 // --- Sub-components ---
@@ -55,16 +56,16 @@ const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'githu
   );
 };
 
-const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent }) => {
+const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId }) => {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  
+
   // Profile Data State
   const [detailedProfile, setDetailedProfile] = useState<StudentProfileType | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-  
+
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Student['status']>('all');
@@ -73,7 +74,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
   // Add/Edit Student Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  
+
   // Deletion State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
@@ -93,7 +94,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       email: '',
       password: ''
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
 
   // --- Logic ---
@@ -124,7 +125,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
     setSelectedStudentId(student.id);
     setViewMode('profile');
     setIsLoadingProfile(true);
-    
+
     try {
         const data = await fetchWithAuthGet<StudentProfileType>(`/api/admin?resource=students&id=${student.id}`);
         setDetailedProfile(data);
@@ -164,7 +165,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       e.stopPropagation(); // Prevent row click
       setModalMode('edit');
       setSelectedStudentId(student.id);
-      
+
       const names = student.name.split(' ');
       setFormData({
           firstName: names[0] || '',
@@ -194,7 +195,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
 
   const handleFormSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      
+
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
 
       if (modalMode === 'add') {
@@ -280,10 +281,11 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
 
   // Filter & Sort Data
   const filteredStudents = useMemo(() => {
-    let result = students.filter(student => 
-      (student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    let result = students.filter(student =>
+      (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
        student.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (statusFilter === 'all' || student.status === statusFilter)
+      (statusFilter === 'all' || student.status === statusFilter) &&
+      (!selectedCohortId || student.cohortId === selectedCohortId)
     );
 
     return result.sort((a, b) => {
@@ -293,16 +295,16 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       if (sortConfig.field === 'joinedDate') return (new Date(a.joinedDate).getTime() - new Date(b.joinedDate).getTime()) * order;
       return 0;
     });
-  }, [students, searchTerm, statusFilter, sortConfig]);
+  }, [students, searchTerm, statusFilter, sortConfig, selectedCohortId]);
 
   return (
     <div className="relative max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32 min-h-screen">
-      
+
       {/* --- LIST VIEW --- */}
       <motion.div
         initial={{ opacity: 1, x: 0 }}
-        animate={{ 
-            opacity: viewMode === 'list' ? 1 : 0, 
+        animate={{
+            opacity: viewMode === 'list' ? 1 : 0,
             x: viewMode === 'list' ? 0 : -20,
             pointerEvents: viewMode === 'list' ? 'auto' : 'none'
         }}
@@ -315,22 +317,22 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
             <h2 className="font-display text-3xl font-bold text-zinc-900 dark:text-white mb-2">Студенты</h2>
             <p className="text-zinc-500 dark:text-zinc-400">Управление пользователями и доступами.</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
              {/* Search */}
              <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                <input 
-                   type="text" 
-                   placeholder="Поиск..." 
+                <input
+                   type="text"
+                   placeholder="Поиск..."
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-violet-500 shadow-sm transition-colors"
                 />
              </div>
-             
+
              {/* Add Button */}
-             <button 
+             <button
                 onClick={openAddModal}
                 className="px-4 py-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black font-bold flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap"
              >
@@ -347,8 +349,8 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                 <thead>
                    <tr className="bg-zinc-50 dark:bg-white/5 border-b border-zinc-200 dark:border-white/5 text-xs uppercase tracking-wider text-zinc-500 font-bold">
                       <th className="px-6 py-4 w-12">
-                         <input 
-                            type="checkbox" 
+                         <input
+                            type="checkbox"
                             className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
                             checked={selectedRowIds.size === filteredStudents.length && filteredStudents.length > 0}
                             onChange={handleSelectAll}
@@ -367,16 +369,16 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
                    {filteredStudents.map((student) => (
-                      <motion.tr 
+                      <motion.tr
                         layout
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        key={student.id} 
+                        key={student.id}
                         className={`group transition-colors ${selectedRowIds.has(student.id) ? 'bg-violet-50/50 dark:bg-violet-900/10' : 'hover:bg-zinc-50 dark:hover:bg-white/[0.02]'}`}
                       >
                          <td className="px-6 py-4">
-                             <input 
-                                type="checkbox" 
+                             <input
+                                type="checkbox"
                                 className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
                                 checked={selectedRowIds.has(student.id)}
                                 onChange={() => handleRowSelect(student.id)}
@@ -384,13 +386,18 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                          </td>
                          <td className="px-6 py-4">
                             <button onClick={() => openProfile(student)} className="flex items-center gap-3 text-left group-hover:translate-x-1 transition-transform">
-                               <img 
-                                 src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=8b5cf6&color=fff`} 
-                                 alt="" 
-                                 className="w-10 h-10 rounded-full bg-zinc-200 object-cover" 
+                               <img
+                                 src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=8b5cf6&color=fff`}
+                                 alt=""
+                                 className="w-10 h-10 rounded-full bg-zinc-200 object-cover"
                                />
                                <div>
-                                  <div className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-violet-600 transition-colors">{student.name}</div>
+                                  <div className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-violet-600 transition-colors flex items-center gap-2">
+                                    {student.name}
+                                    {student.cohortName && (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400">{student.cohortName}</span>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-zinc-500">{student.email}</div>
                                </div>
                             </button>
@@ -403,7 +410,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                </div>
                                <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                   <div className={`h-full rounded-full ${
-                                     student.status === 'completed' ? 'bg-emerald-500' : 
+                                     student.status === 'completed' ? 'bg-emerald-500' :
                                      student.status === 'stalled' ? 'bg-amber-500' : 'bg-violet-600'
                                   }`} style={{ width: `${student.progress}%` }} />
                                </div>
@@ -480,8 +487,8 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
                  </div>
              ) : (
-                 <StudentProfile 
-                    student={detailedProfile} 
+                 <StudentProfile
+                    student={detailedProfile}
                     onBack={closeProfile}
                     onUpdate={handleProfileUpdate}
                  />
@@ -494,7 +501,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       <AnimatePresence>
         {isModalOpen && (
             <>
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -524,7 +531,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Имя</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             required
                                             autoFocus
@@ -536,7 +543,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Фамилия</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             required
                                             placeholder="Иванов"
@@ -548,7 +555,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Email</label>
-                                    <input 
+                                    <input
                                         type="email"
                                         required
                                         placeholder="student@example.com"
@@ -561,7 +568,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                     <div>
                                         <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Временный пароль</label>
                                         <div className="relative">
-                                            <input 
+                                            <input
                                                 type={showPassword ? "text" : "password"}
                                                 required
                                                 placeholder="vibes123"
@@ -582,14 +589,14 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                             </form>
 
                             <div className="p-6 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-900 flex justify-end gap-3">
-                                 <button 
+                                 <button
                                      type="button"
                                      onClick={() => setIsModalOpen(false)}
                                      className="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
                                  >
                                      Отмена
                                  </button>
-                                 <button 
+                                 <button
                                      type="submit"
                                      form="student-form"
                                      className="px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:opacity-90 transition-opacity"

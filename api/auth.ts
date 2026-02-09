@@ -69,6 +69,8 @@ interface UserData {
   niche: string | null;
   preferences: Record<string, any>;
   current_stage_title: string | null;
+  cohort_id: string | null;
+  cohort_name: string | null;
 }
 
 export default async function handler(
@@ -192,7 +194,7 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     await client.query('BEGIN');
 
     const inviteResult = await client.query(
-      `SELECT id, status, expires_at
+      `SELECT id, status, expires_at, cohort_id
        FROM invite_links
        WHERE token = $1`,
       [inviteCode]
@@ -230,10 +232,10 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     const userResult = await client.query(
       `INSERT INTO users (
         email, password_hash, first_name, last_name,
-        role, status, progress_percent, last_active_at
-      ) VALUES ($1, $2, $3, $4, 'student', 'active', 0, NOW())
+        role, status, progress_percent, last_active_at, cohort_id
+      ) VALUES ($1, $2, $3, $4, 'student', 'active', 0, NOW(), $5)
       RETURNING id, email, first_name, last_name, role`,
-      [email.toLowerCase(), passwordHash, firstName, lastName || null]
+      [email.toLowerCase(), passwordHash, firstName, lastName || null, invite.cohort_id || null]
     );
 
     const newUser = userResult.rows[0];
@@ -246,7 +248,10 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     );
 
     const stageResult = await client.query(
-      `SELECT id FROM dashboard_stages ORDER BY sort_order LIMIT 1`
+      `SELECT id FROM dashboard_stages
+       WHERE ($1::uuid IS NULL OR cohort_id = $1)
+       ORDER BY sort_order LIMIT 1`,
+      [invite.cohort_id || null]
     );
 
     if (stageResult.rows.length > 0) {
@@ -326,10 +331,13 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
         u.github_url,
         u.niche,
         u.preferences,
-        ds.title as current_stage_title
+        u.cohort_id,
+        ds.title as current_stage_title,
+        c.name as cohort_name
       FROM users u
       LEFT JOIN user_stage_progress usp ON usp.user_id = u.id AND usp.status = 'current'
       LEFT JOIN dashboard_stages ds ON ds.id = usp.stage_id
+      LEFT JOIN cohorts c ON c.id = u.cohort_id
       WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [tokenData.userId]
     );
@@ -363,6 +371,8 @@ async function handleGetMe(req: VercelRequest, res: VercelResponse) {
         niche: user.niche,
         preferences: user.preferences,
         currentStage: user.current_stage_title,
+        cohortId: user.cohort_id,
+        cohortName: user.cohort_name,
       })
     );
   } catch (error) {

@@ -24,7 +24,8 @@ const AdminContent = lazy(() => import('./views/AdminContent'));
 const AdminCalls = lazy(() => import('./views/AdminCalls'));
 const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
-import { TabId, InviteLink, Student, CourseModule, NavigationConfig } from './types';
+import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
+import CohortSelector from './components/admin/CohortSelector';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas' | null;
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,6 +57,11 @@ const AppContent: React.FC = () => {
     const [selectedTool, setSelectedTool] = useState<ToolType>(null);
     const [toolInitialMessage, setToolInitialMessage] = useState<string | null>(null);
     const [navConfig, setNavConfig] = useState<NavigationConfig | null>(null);
+
+    // --- Cohort State ---
+    const [cohorts, setCohorts] = useState<Cohort[]>([]);
+    const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null);
+    const [userCohort, setUserCohort] = useState<{ id: string; name: string } | null>(null);
 
     // Убрали сохранение modules в localStorage
 
@@ -95,13 +101,19 @@ const AppContent: React.FC = () => {
                             lastActive: 'Сейчас',
                             joinedDate: user.createdAt || new Date().toISOString(),
                             projects: {},
-                            niche: user.niche || undefined
+                            niche: user.niche || undefined,
+                            cohortId: user.cohortId,
+                            cohortName: user.cohortName,
                         });
+                        // Сохраняем когорту студента
+                        if (user.cohortId) {
+                            setUserCohort({ id: user.cohortId, name: user.cohortName || '' });
+                        }
                         if (user.role === 'admin') {
                             setMode('admin');
                             setActiveTab('admin-students');
-                            // Загрузить инвайты и студентов для админ-панели (параллельно)
-                            Promise.all([loadInvites(), loadStudents()]);
+                            // Загрузить инвайты, студентов и когорты для админ-панели (параллельно)
+                            Promise.all([loadInvites(), loadStudents(), loadCohorts()]);
                         } else {
                             setMode('student');
                             setActiveTab('dashboard');
@@ -280,7 +292,7 @@ const AppContent: React.FC = () => {
                     setMode('admin');
                     setActiveTab('admin-students');
                     // Загружаем данные для админки сразу после входа (параллельно)
-                    Promise.all([loadInvites(), loadStudents()]);
+                    Promise.all([loadInvites(), loadStudents(), loadCohorts()]);
                 } else {
                     setMode('student');
                     setActiveTab('dashboard');
@@ -346,6 +358,28 @@ const AppContent: React.FC = () => {
     const handleTransferToTZ = (idea: string) => {
         setToolInitialMessage(idea);
         setSelectedTool('tz_helper');
+    };
+
+    const loadCohorts = async () => {
+        const token = localStorage.getItem('vibes_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/admin?resource=cohorts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (result.success) {
+                setCohorts(result.data);
+                // Выбрать первую активную когорту по умолчанию
+                if (!selectedCohortId && result.data.length > 0) {
+                    const active = result.data.find((c: Cohort) => c.isActive);
+                    setSelectedCohortId(active?.id || result.data[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading cohorts:', error);
+        }
     };
 
     const loadInvites = async () => {
@@ -418,7 +452,8 @@ const AppContent: React.FC = () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        expiresInDays: daysValid
+                        expiresInDays: daysValid,
+                        cohortId: selectedCohortId
                     })
                 });
 
@@ -500,7 +535,7 @@ const AppContent: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
+            case 'dashboard': return <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} userCohort={userCohort} /></Suspense>;
             case 'lessons': return <Suspense fallback={<ViewSkeleton />}><Lessons /></Suspense>;
             case 'roadmaps': return <Suspense fallback={<ViewSkeleton />}><Roadmaps /></Suspense>;
             case 'styles': return <Suspense fallback={<ViewSkeleton />}><StyleLibrary /></Suspense>;
@@ -525,7 +560,7 @@ const AppContent: React.FC = () => {
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} />
                 </Suspense>
             );
             case 'admin-content': return (
@@ -535,7 +570,7 @@ const AppContent: React.FC = () => {
             );
             case 'admin-calls': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminCalls />
+                    <AdminCalls selectedCohortId={selectedCohortId} cohorts={cohorts} />
                 </Suspense>
             );
             case 'admin-tools': return (
@@ -545,13 +580,13 @@ const AppContent: React.FC = () => {
             );
             case 'admin-settings': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} />
+                    <AdminSettings invites={invites} onGenerateInvites={generateInvites} onDeleteInvite={deleteInvite} onDeactivateInvite={deactivateInvite} selectedCohortId={selectedCohortId} cohorts={cohorts} onCohortsChange={loadCohorts} />
                 </Suspense>
             );
 
             default: return mode === 'admin' ? (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} />
                 </Suspense>
             ) : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
         }
@@ -592,7 +627,10 @@ const AppContent: React.FC = () => {
                 </header>
 
                 {(activeTab === 'dashboard' || activeTab.startsWith('admin-')) && (
-                    <div className="hidden md:flex justify-end items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
+                    <div className="hidden md:flex justify-between items-center px-8 py-6 w-full max-w-[1600px] mx-auto">
+                        {mode === 'admin' && cohorts.length > 0 ? (
+                            <CohortSelector cohorts={cohorts} selectedId={selectedCohortId} onChange={setSelectedCohortId} />
+                        ) : <div />}
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
                                 <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>

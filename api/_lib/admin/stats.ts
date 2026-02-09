@@ -18,21 +18,29 @@ export async function handleStats(
     return res.status(405).json(errorResponse('Method not allowed'));
   }
 
+  const cohortId = req.query.cohortId as string | undefined;
+
   try {
     // Получаем статистику одним запросом
     const { rows } = await query(`
       SELECT
-        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL) as total_students,
-        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL AND status = 'active') as active_students,
         (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
-         AND last_active_at > NOW() - INTERVAL '7 days') as active_this_week,
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as total_students,
+        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL AND status = 'active'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as active_students,
+        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
+         AND last_active_at > NOW() - INTERVAL '7 days'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as active_this_week,
         (SELECT COALESCE(ROUND(AVG(progress_percent)), 0) FROM users
-         WHERE role = 'student' AND deleted_at IS NULL) as avg_progress,
+         WHERE role = 'student' AND deleted_at IS NULL
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as avg_progress,
         (SELECT COUNT(*) FROM showcase_projects WHERE deleted_at IS NULL AND status = 'published') as total_projects,
-        (SELECT COUNT(*) FROM admin_calls WHERE deleted_at IS NULL AND status = 'scheduled') as upcoming_calls,
+        (SELECT COUNT(*) FROM admin_calls WHERE deleted_at IS NULL AND status = 'scheduled'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as upcoming_calls,
         (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
-         AND created_at > NOW() - INTERVAL '7 days') as new_students_week
-    `);
+         AND created_at > NOW() - INTERVAL '7 days'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as new_students_week
+    `, [cohortId || null]);
 
     const stats = rows[0];
 
@@ -80,25 +88,31 @@ export async function handleDashboardStats(
     return res.status(405).json(errorResponse('Method not allowed'));
   }
 
+  const cohortId = req.query.cohortId as string | undefined;
+
   try {
     // Получаем все метрики одним оптимизированным запросом
     const { rows } = await query(`
       SELECT
         -- Основные метрики
-        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL) as total_students,
         (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
-         AND last_active_at > NOW() - INTERVAL '7 days') as active_week,
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as total_students,
+        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
+         AND last_active_at > NOW() - INTERVAL '7 days'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as active_week,
         (SELECT COALESCE(ROUND(AVG(progress_percent)), 0) FROM users
-         WHERE role = 'student' AND deleted_at IS NULL) as avg_progress,
+         WHERE role = 'student' AND deleted_at IS NULL
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as avg_progress,
         (SELECT COUNT(*) FROM showcase_projects
          WHERE deleted_at IS NULL AND status = 'published') as total_projects,
 
         -- Изменения за неделю
         (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
-         AND created_at > NOW() - INTERVAL '7 days') as new_students_week,
+         AND created_at > NOW() - INTERVAL '7 days'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as new_students_week,
         (SELECT COUNT(*) FROM showcase_projects
          WHERE deleted_at IS NULL AND created_at > NOW() - INTERVAL '7 days') as new_projects_week
-    `);
+    `, [cohortId || null]);
 
     const stats = rows[0];
 
@@ -112,9 +126,10 @@ export async function handleDashboardStats(
       FROM dashboard_stages ds
       LEFT JOIN user_stage_progress usp ON usp.stage_id = ds.id
         AND usp.status IN ('current', 'completed')
+      WHERE ($1::uuid IS NULL OR ds.cohort_id = $1)
       GROUP BY ds.id, ds.title, ds.sort_order
       ORDER BY ds.sort_order
-    `);
+    `, [cohortId || null]);
 
     // Получаем аватары для pipeline (до 5 для каждой стадии)
     const pipelineWithAvatars = await Promise.all(
