@@ -1,21 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Play,
     Lock,
     CheckCircle2,
     ChevronRight,
     ChevronLeft,
-    FileText,
     Download,
     ExternalLink,
     Layout,
-    Sparkles,
     Maximize2,
     Minimize2,
-    MoreVertical,
     Check,
-    PlayCircle
+    PlayCircle,
+    ChevronDown,
+    ListTree,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CourseModule, LessonStatus } from '../types';
@@ -24,17 +23,22 @@ import { getCached, setCache, removeCache, CACHE_KEYS, CACHE_TTL } from '../lib/
 import { fetchWithAuthGet, fetchWithAuthPost } from '../lib/fetchWithAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
-    // Regex to capture video ID from various YouTube URL formats
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
 
     if (match && match[2].length === 11) {
         const videoId = match[2];
-        // Use www.youtube.com instead of youtube-nocookie.com to avoid Error 153/150 on some videos
-        // Add origin parameter to prevent domain restriction errors
         const origin = window.location.origin;
         return `https://www.youtube.com/embed/${videoId}?autoplay=0&modestbranding=1&rel=0&origin=${origin}`;
     }
@@ -42,21 +46,18 @@ const getYouTubeEmbedUrl = (url: string) => {
 };
 
 const Lessons: React.FC = () => {
-    // State for modules from API
     const [modules, setModules] = useState<CourseModule[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    // Initialize with the first lesson of the first module if available
     const [activeModuleId, setActiveModuleId] = useState<string>('');
     const [activeLessonId, setActiveLessonId] = useState<string>('');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [activeTab, setActiveTab] = useState<'overview' | 'materials'>('overview');
+    const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+    const [isMobileProgramOpen, setIsMobileProgramOpen] = useState(false);
 
     // Load modules from API with caching (stale-while-revalidate)
     useEffect(() => {
         const fetchModules = async () => {
             try {
-                // Check cache first for instant display
                 const cachedData = getCached<CourseModule[]>(CACHE_KEYS.LESSONS, CACHE_TTL.LESSONS);
                 if (cachedData) {
                     setModules(cachedData);
@@ -87,11 +88,21 @@ const Lessons: React.FC = () => {
         fetchModules();
     }, []);
 
-    // Helper to get current objects
+    // Auto-expand module containing active lesson
+    useEffect(() => {
+        if (activeModuleId) {
+            setExpandedModules(prev => {
+                const next = new Set(prev);
+                next.add(activeModuleId);
+                return next;
+            });
+        }
+    }, [activeModuleId]);
+
     const activeModule = modules.find(m => m.id === activeModuleId);
     const activeLesson = activeModule?.lessons.find(l => l.id === activeLessonId);
 
-    // Sync state if modules change (e.g. initial load or updates)
+    // Sync state if modules change
     useEffect(() => {
         if ((!activeModule || !activeLesson) && modules.length > 0 && modules[0].lessons.length > 0) {
             setActiveModuleId(modules[0].id);
@@ -104,16 +115,33 @@ const Lessons: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [activeLessonId]);
 
-    // Navigation handlers
-    const handleNextLesson = () => {
+    // Dynamic progress
+    const progressData = useMemo(() => {
+        let completed = 0;
+        let total = 0;
+        for (const m of modules) {
+            for (const l of m.lessons) {
+                total++;
+                if (l.status === 'completed') completed++;
+            }
+        }
+        return { completed, total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+    }, [modules]);
+
+    // Current lesson index info
+    const lessonIndexInfo = useMemo(() => {
+        if (!activeModule || !activeLesson) return null;
+        const currentIndex = activeModule.lessons.findIndex(l => l.id === activeLessonId);
+        return { currentIndex, totalInModule: activeModule.lessons.length };
+    }, [activeModule, activeLesson, activeLessonId]);
+
+    const handleNextLesson = useCallback(() => {
         if (!activeModule || !activeLesson) return;
         const currentIndex = activeModule.lessons.findIndex(l => l.id === activeLessonId);
 
-        // If not last lesson in module
         if (currentIndex < activeModule.lessons.length - 1) {
             setActiveLessonId(activeModule.lessons[currentIndex + 1].id);
         } else {
-            // Check next module
             const currentModuleIndex = modules.findIndex(m => m.id === activeModuleId);
             if (currentModuleIndex < modules.length - 1) {
                 const nextModule = modules[currentModuleIndex + 1];
@@ -123,24 +151,41 @@ const Lessons: React.FC = () => {
                 }
             }
         }
-    };
+    }, [activeModule, activeLesson, activeLessonId, activeModuleId, modules]);
 
-    const handlePrevLesson = () => {
+    const handlePrevLesson = useCallback(() => {
         if (!activeModule || !activeLesson) return;
         const currentIndex = activeModule.lessons.findIndex(l => l.id === activeLessonId);
         if (currentIndex > 0) {
             setActiveLessonId(activeModule.lessons[currentIndex - 1].id);
         }
-    };
+    }, [activeModule, activeLesson, activeLessonId]);
 
-    const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+    const toggleSidebar = useCallback(() => setIsSidebarCollapsed(prev => !prev), []);
+
+    const toggleModule = useCallback((moduleId: string) => {
+        setExpandedModules(prev => {
+            const next = new Set(prev);
+            if (next.has(moduleId)) {
+                next.delete(moduleId);
+            } else {
+                next.add(moduleId);
+            }
+            return next;
+        });
+    }, []);
+
+    const selectLesson = useCallback((moduleId: string, lessonId: string) => {
+        setActiveModuleId(moduleId);
+        setActiveLessonId(lessonId);
+        setIsMobileProgramOpen(false);
+    }, []);
 
     const handleLessonCompletion = async () => {
         if (!activeLesson) return;
 
         const newCompletedStatus = activeLesson.status !== 'completed';
 
-        // Optimistic update
         const updatedModules = modules.map(m => ({
             ...m,
             lessons: m.lessons.map(l => {
@@ -151,7 +196,6 @@ const Lessons: React.FC = () => {
             })
         }));
         setModules(updatedModules);
-        // Update cache with new state
         setCache(CACHE_KEYS.LESSONS, updatedModules);
 
         try {
@@ -161,17 +205,147 @@ const Lessons: React.FC = () => {
             });
         } catch (error) {
             console.error('Error updating lesson status:', error);
-            // Revert cache on error
             removeCache(CACHE_KEYS.LESSONS);
         }
     };
 
     const embedUrl = activeLesson?.videoUrl ? getYouTubeEmbedUrl(activeLesson.videoUrl) : null;
 
+    // --- Sidebar content (reused in desktop sidebar & mobile Sheet) ---
+    const sidebarContent = (
+        <div className="space-y-1">
+            {isLoading ? (
+                <div className="space-y-4">
+                    {[3, 4].map((count, mIdx) => (
+                        <div key={mIdx}>
+                            <div className="h-3.5 w-28 bg-zinc-200 dark:bg-zinc-800 rounded mb-3" />
+                            <div className="space-y-0.5">
+                                {Array.from({ length: count }).map((_, idx) => (
+                                    <LessonItemSkeleton key={idx} />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                modules.map(module => {
+                    const isExpanded = expandedModules.has(module.id);
+                    const completedInModule = module.lessons.filter(l => l.status === 'completed').length;
+                    const totalInModule = module.lessons.length;
+                    const hasActiveLesson = module.lessons.some(l => l.id === activeLessonId);
+
+                    return (
+                        <div key={module.id}>
+                            {/* Module header — collapsible */}
+                            <button
+                                onClick={() => toggleModule(module.id)}
+                                className={cn(
+                                    "w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-left transition-colors",
+                                    "hover:bg-zinc-100/80 dark:hover:bg-white/5",
+                                    hasActiveLesson && "bg-zinc-100/50 dark:bg-white/[0.03]"
+                                )}
+                            >
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <ChevronDown
+                                        size={14}
+                                        className={cn(
+                                            "shrink-0 text-zinc-400 transition-transform duration-200",
+                                            !isExpanded && "-rotate-90"
+                                        )}
+                                    />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
+                                        {module.title}
+                                    </span>
+                                </div>
+                                <Badge variant="secondary" className="shrink-0 text-[10px] font-mono tabular-nums px-1.5 py-0">
+                                    {completedInModule}/{totalInModule}
+                                </Badge>
+                            </button>
+
+                            {/* Lessons list — animated collapse */}
+                            <AnimatePresence initial={false}>
+                                {isExpanded && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="py-0.5 space-y-0.5">
+                                            {module.lessons.map((lesson, lIdx) => {
+                                                const isActive = activeLessonId === lesson.id;
+                                                const isLocked = lesson.status === 'locked';
+                                                const isCompleted = lesson.status === 'completed';
+
+                                                return (
+                                                    <button
+                                                        key={lesson.id}
+                                                        onClick={() => {
+                                                            if (!isLocked) {
+                                                                selectLesson(module.id, lesson.id);
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            "relative w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-all group",
+                                                            isActive && "bg-primary/10",
+                                                            !isActive && !isLocked && "hover:bg-zinc-50 dark:hover:bg-white/[0.03]",
+                                                            isLocked && "opacity-40 cursor-not-allowed"
+                                                        )}
+                                                    >
+                                                        {/* Status indicator */}
+                                                        <div className={cn(
+                                                            "shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold transition-colors",
+                                                            isActive && "bg-primary text-primary-foreground",
+                                                            isCompleted && !isActive && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                                                            !isActive && !isCompleted && !isLocked && "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500",
+                                                            isLocked && "bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600"
+                                                        )}>
+                                                            {isLocked ? (
+                                                                <Lock size={12} />
+                                                            ) : isCompleted ? (
+                                                                <Check size={14} strokeWidth={2.5} />
+                                                            ) : isActive ? (
+                                                                <div className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
+                                                            ) : (
+                                                                <span>{lIdx + 1}</span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex-1 min-w-0">
+                                                            <span className={cn(
+                                                                "block text-sm font-medium leading-tight truncate transition-colors",
+                                                                isActive && "text-primary dark:text-primary",
+                                                                !isActive && "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white"
+                                                            )}>
+                                                                {lesson.title}
+                                                            </span>
+                                                            <span className="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
+                                                                {!isLocked && <PlayCircle size={10} />}
+                                                                {lesson.duration}
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    );
+                })
+            )}
+        </div>
+    );
+
     return (
         <div className="max-w-[1920px] mx-auto transition-all duration-500">
 
-            <div className={`grid transition-all duration-500 ease-in-out gap-6 lg:gap-0 ${isSidebarCollapsed ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-[1fr_400px]'}`}>
+            <div className={cn(
+                "grid transition-all duration-500 ease-in-out gap-6 lg:gap-0",
+                isSidebarCollapsed ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[1fr_320px]"
+            )}>
 
                 {/* === LEFT COLUMN: PLAYER & CONTENT === */}
                 <div className="min-w-0 px-4 md:px-8 py-6 md:py-8 lg:pr-8">
@@ -190,14 +364,37 @@ const Lessons: React.FC = () => {
                                     <span className="hidden md:inline">Курс</span>
                                     <ChevronRight size={14} className="hidden md:block opacity-50" />
                                     <span className="text-zinc-800 dark:text-zinc-300">{activeModule?.title}</span>
+                                    {lessonIndexInfo && (
+                                        <span className="text-zinc-400 text-xs font-mono tabular-nums">
+                                            {lessonIndexInfo.currentIndex + 1}/{lessonIndexInfo.totalInModule}
+                                        </span>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={toggleSidebar}
-                                    className="hidden lg:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                                >
-                                    {isSidebarCollapsed ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                                    {isSidebarCollapsed ? 'Показать меню' : 'Театр'}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {/* Mobile "Программа" button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsMobileProgramOpen(true)}
+                                        className="lg:hidden text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                                    >
+                                        <ListTree size={16} />
+                                        <span className="ml-1.5 text-xs font-bold uppercase tracking-wider">Программа</span>
+                                    </Button>
+                                    {/* Theater mode */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toggleSidebar}
+                                        className="hidden lg:flex text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                                        aria-label={isSidebarCollapsed ? 'Показать меню' : 'Режим театра'}
+                                    >
+                                        {isSidebarCollapsed ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                                        <span className="ml-1.5 text-xs font-bold uppercase tracking-wider">
+                                            {isSidebarCollapsed ? 'Меню' : 'Театр'}
+                                        </span>
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* 2. Video Player */}
@@ -212,7 +409,6 @@ const Lessons: React.FC = () => {
                                         allowFullScreen
                                     />
                                 ) : (
-                                    /* Placeholder Content if no video URL */
                                     <div className="absolute inset-0 bg-zinc-900 flex flex-col items-center justify-center">
                                         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/20 to-zinc-900 opacity-50" />
 
@@ -227,7 +423,6 @@ const Lessons: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Video Title Overlay */}
                                 {!embedUrl && (
                                     <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                                         <h2 className="text-white font-bold text-lg drop-shadow-md">{activeLesson.title}</h2>
@@ -235,16 +430,27 @@ const Lessons: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* 3. Action Bar (Unified) */}
-                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-200 dark:border-white/5 pb-6">
+                            {/* 3. Action Bar */}
+                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pb-6">
                                 <div className="flex-1">
                                     <h1 className="text-2xl font-display font-bold text-zinc-900 dark:text-white leading-tight mb-2">
                                         {activeLesson.title}
                                     </h1>
                                     <div className="flex items-center gap-3 text-sm text-zinc-500">
-                                        <span className="flex items-center gap-1.5"><Layout size={14} /> {activeModuleId === 'recorded' ? 'Записанные уроки' : 'Прямые эфиры'}</span>
-                                        <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                                        <span className="flex items-center gap-1.5">
+                                            <Layout size={14} />
+                                            {activeModuleId === 'recorded' ? 'Записанные уроки' : 'Прямые эфиры'}
+                                        </span>
+                                        <Separator orientation="vertical" className="h-3.5" />
                                         <span>{activeLesson.duration}</span>
+                                        {activeLesson.status === 'completed' && (
+                                            <>
+                                                <Separator orientation="vertical" className="h-3.5" />
+                                                <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
+                                                    Пройден
+                                                </Badge>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
@@ -254,18 +460,19 @@ const Lessons: React.FC = () => {
                                         size="icon"
                                         onClick={handlePrevLesson}
                                         disabled={activeModule?.lessons[0].id === activeLesson.id}
-                                        className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                                        aria-label="Предыдущий урок"
                                     >
                                         <ChevronLeft size={20} />
                                     </Button>
 
-                                    {/* Primary Action */}
                                     <Button
                                         onClick={handleLessonCompletion}
-                                        className={`flex-1 sm:flex-none ${activeLesson.status === 'completed'
+                                        className={cn(
+                                            "flex-1 sm:flex-none",
+                                            activeLesson.status === 'completed'
                                                 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
                                                 : 'hover:scale-105 active:scale-95 shadow-lg shadow-zinc-500/10'
-                                            }`}
+                                        )}
                                     >
                                         {activeLesson.status === 'completed' ? (
                                             <>
@@ -284,119 +491,112 @@ const Lessons: React.FC = () => {
                                         variant="outline"
                                         size="icon"
                                         onClick={handleNextLesson}
-                                        className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                                        aria-label="Следующий урок"
                                     >
                                         <ChevronRight size={20} />
                                     </Button>
                                 </div>
                             </div>
 
-                            {/* 4. Content Area (Smart Pills) */}
-                            <div className="mt-8">
-                                <div className="flex gap-4 mb-6 overflow-x-auto scrollbar-none">
-                                    <button
-                                        onClick={() => setActiveTab('overview')}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'overview'
-                                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-md'
-                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                            }`}
-                                    >
-                                        Описание
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('materials')}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'materials'
-                                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-md'
-                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                            }`}
-                                    >
-                                        Материалы и Задания
-                                        {activeLesson.materials.length > 0 && (
-                                            <span className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-600 text-xs flex items-center justify-center text-current opacity-80">
+                            <Separator />
+
+                            {/* 4. Content Tabs — shadcn line variant */}
+                            <Tabs defaultValue="overview" className="mt-6">
+                                <TabsList variant="line">
+                                    <TabsTrigger value="overview">Описание</TabsTrigger>
+                                    <TabsTrigger value="materials" className="flex items-center gap-1.5">
+                                        Материалы
+                                        {(activeLesson.materials.length + activeLesson.tasks.length) > 0 && (
+                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
                                                 {activeLesson.materials.length + activeLesson.tasks.length}
-                                            </span>
+                                            </Badge>
                                         )}
-                                    </button>
-                                </div>
+                                    </TabsTrigger>
+                                </TabsList>
 
-                                <div className="min-h-[300px]">
-                                    <AnimatePresence mode="wait">
-                                        {activeTab === 'overview' && (
-                                            <motion.div
-                                                key="overview"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="prose ppurple-zinc dark:ppurple-invert max-w-none"
-                                            >
-                                                <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
-                                                    {activeLesson.description}
-                                                </p>
-                                            </motion.div>
-                                        )}
+                                <div className="min-h-[300px] mt-6">
+                                    <TabsContent value="overview">
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="prose prose-zinc dark:prose-invert max-w-none"
+                                        >
+                                            <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                                                {activeLesson.description}
+                                            </p>
+                                        </motion.div>
+                                    </TabsContent>
 
-                                        {activeTab === 'materials' && (
-                                            <motion.div
-                                                key="materials"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="space-y-8"
-                                            >
-                                                {activeLesson.materials.length > 0 && (
-                                                    <div>
-                                                        <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                                                            <FileText size={18} className="text-purple-500" />
-                                                            Файлы и ссылки
-                                                        </h3>
-                                                        <div className="grid sm:grid-cols-2 gap-4">
-                                                            {activeLesson.materials.map(mat => (
-                                                                <a
-                                                                    key={mat.id}
-                                                                    href={mat.url}
-                                                                    className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30 bg-white dark:bg-zinc-900 hover:shadow-lg hover:shadow-purple-500/5 transition-all group"
-                                                                >
-                                                                    <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center text-zinc-400 group-hover:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-500/10 transition-colors">
-                                                                        {mat.type === 'pdf' ? <Download size={20} /> : <ExternalLink size={20} />}
-                                                                    </div>
-                                                                    <div>
-                                                                        <div className="font-bold text-sm text-zinc-900 dark:text-white">{mat.title}</div>
-                                                                        <div className="text-xs text-zinc-400 uppercase font-bold tracking-wider mt-0.5">{mat.type}</div>
-                                                                    </div>
-                                                                </a>
-                                                            ))}
-                                                        </div>
+                                    <TabsContent value="materials">
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-8"
+                                        >
+                                            {activeLesson.materials.length > 0 && (
+                                                <div>
+                                                    <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                                                        <Download size={18} className="text-purple-500" />
+                                                        Файлы и ссылки
+                                                    </h3>
+                                                    <div className="grid sm:grid-cols-2 gap-3">
+                                                        {activeLesson.materials.map(mat => (
+                                                            <Card key={mat.id} className="py-0 hover:border-primary/30 hover:shadow-sm transition-all group">
+                                                                <CardContent className="p-4 flex items-center gap-3">
+                                                                    <a
+                                                                        href={mat.url}
+                                                                        className="flex items-center gap-3 flex-1 min-w-0"
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                    >
+                                                                        <div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-50 dark:bg-white/5 flex items-center justify-center text-zinc-400 group-hover:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-500/10 transition-colors">
+                                                                            {mat.type === 'pdf' ? <Download size={18} /> : <ExternalLink size={18} />}
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <div className="font-bold text-sm text-zinc-900 dark:text-white truncate">{mat.title}</div>
+                                                                            <div className="text-xs text-zinc-400 uppercase font-bold tracking-wider mt-0.5">{mat.type}</div>
+                                                                        </div>
+                                                                    </a>
+                                                                </CardContent>
+                                                            </Card>
+                                                        ))}
                                                     </div>
-                                                )}
+                                                </div>
+                                            )}
 
-                                                {activeLesson.tasks.length > 0 && (
-                                                    <div>
-                                                        <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                                                            <CheckCircle2 size={18} className="text-emerald-500" />
-                                                            Практика
-                                                        </h3>
-                                                        <div className="space-y-3">
-                                                            {activeLesson.tasks.map(task => (
-                                                                <label key={task.id} className="flex items-start gap-4 p-4 rounded-2xl bg-zinc-50/50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors">
-                                                                    <div className="relative flex items-center justify-center w-5 h-5 mt-0.5">
-                                                                        <input type="checkbox" defaultChecked={task.completed} className="peer appearance-none w-5 h-5 rounded-md border-2 border-zinc-300 dark:border-zinc-600 checked:bg-emerald-500 checked:border-emerald-500 transition-colors" />
-                                                                        <Check size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
-                                                                    </div>
-                                                                    <span className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed pt-0.5">
-                                                                        {task.text}
-                                                                    </span>
-                                                                </label>
-                                                            ))}
-                                                        </div>
+                                            {activeLesson.tasks.length > 0 && (
+                                                <div>
+                                                    <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                                                        <CheckCircle2 size={18} className="text-emerald-500" />
+                                                        Практика
+                                                    </h3>
+                                                    <div className="space-y-2">
+                                                        {activeLesson.tasks.map(task => (
+                                                            <label
+                                                                key={task.id}
+                                                                className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50/50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <Checkbox
+                                                                    defaultChecked={task.completed}
+                                                                    className="mt-0.5"
+                                                                />
+                                                                <span className={cn(
+                                                                    "text-sm leading-relaxed pt-0.5",
+                                                                    task.completed ? "line-through text-muted-foreground" : "text-zinc-700 dark:text-zinc-300"
+                                                                )}>
+                                                                    {task.text}
+                                                                </span>
+                                                            </label>
+                                                        ))}
                                                     </div>
-                                                )}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    </TabsContent>
                                 </div>
-                            </div>
+                            </Tabs>
                         </motion.div>
                     ) : (
                         <div className="h-[60vh] flex flex-col items-center justify-center text-center">
@@ -409,120 +609,63 @@ const Lessons: React.FC = () => {
                     )}
                 </div>
 
-                {/* === RIGHT COLUMN: TIMELINE SIDEBAR === */}
-                <div className={`hidden lg:block border-l border-zinc-200 dark:border-white/5 bg-white dark:bg-zinc-950 transition-all duration-500 ${isSidebarCollapsed ? 'translate-x-full hidden w-0' : 'w-[400px]'}`}>
-                    <div className="sticky top-0 h-screen overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 p-6 pb-32">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="font-display text-xl font-bold text-zinc-900 dark:text-white">Программа</h2>
-                            <div className="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-zinc-500">
-                                {Math.round(14)}% Пройдено
+                {/* === RIGHT COLUMN: SIDEBAR === */}
+                <div className={cn(
+                    "hidden lg:block transition-all duration-500",
+                    isSidebarCollapsed ? "translate-x-full hidden w-0" : "w-[320px]"
+                )}>
+                    <div className="sticky top-0 h-screen bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border-l border-zinc-200/80 dark:border-white/5">
+                        <div className="flex flex-col h-full">
+                            {/* Header */}
+                            <div className="p-5 pb-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="font-display text-base font-bold text-zinc-900 dark:text-white">Программа</h2>
+                                    <span className="text-xs font-mono tabular-nums text-zinc-500">
+                                        {progressData.completed}/{progressData.total}
+                                    </span>
+                                </div>
+                                <Progress value={progressData.percent} className="h-1.5" />
                             </div>
-                        </div>
 
-                        {/* Progress Visual */}
-                        <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-8 overflow-hidden">
-                            <div className="h-full bg-purple-500 w-[14%]" />
-                        </div>
+                            <Separator />
 
-                        <div className="space-y-8">
-                            {isLoading ? (
-                                <div className="space-y-6">
-                                    {/* Модуль 1 */}
-                                    <div className="relative">
-                                        <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded mb-4" />
-                                        <div className="space-y-1">
-                                            {Array.from({ length: 3 }).map((_, idx) => (
-                                                <LessonItemSkeleton key={idx} />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Модуль 2 */}
-                                    <div className="relative">
-                                        <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded mb-4" />
-                                        <div className="space-y-1">
-                                            {Array.from({ length: 4 }).map((_, idx) => (
-                                                <LessonItemSkeleton key={idx} />
-                                            ))}
-                                        </div>
-                                    </div>
+                            {/* Scrollable content */}
+                            <ScrollArea className="flex-1">
+                                <div className="p-4">
+                                    {sidebarContent}
                                 </div>
-                            ) : (
-                                modules.map((module, mIdx) => (
-                                <div key={module.id} className="relative">
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-4 px-2">
-                                        {module.title}
-                                    </h3>
-
-                                    <div className="relative space-y-1">
-                                        {/* Timeline Line */}
-                                        <div className="absolute left-[31px] top-3 bottom-3 w-[2px] bg-zinc-100 dark:bg-zinc-800" />
-
-                                        {module.lessons.map((lesson, lIdx) => {
-                                            const isActive = activeLessonId === lesson.id;
-                                            const isLocked = lesson.status === 'locked';
-                                            const isCompleted = lesson.status === 'completed';
-
-                                            return (
-                                                <button
-                                                    key={lesson.id}
-                                                    onClick={() => {
-                                                        if (!isLocked) {
-                                                            setActiveModuleId(module.id);
-                                                            setActiveLessonId(lesson.id);
-                                                        }
-                                                    }}
-                                                    className={`relative w-full flex items-start gap-4 p-3 rounded-2xl text-left transition-all group ${isActive
-                                                            ? 'bg-zinc-100 dark:bg-white/5'
-                                                            : 'hover:bg-zinc-50 dark:hover:bg-white/[0.02]'
-                                                        } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                >
-                                                    {/* Timeline Node */}
-                                                    <div className={`relative z-10 shrink-0 w-10 h-10 rounded-full border-[3px] flex items-center justify-center transition-colors bg-white dark:bg-zinc-950 ${isActive
-                                                            ? 'border-purple-500 text-purple-600'
-                                                            : isCompleted
-                                                                ? 'border-emerald-500 text-emerald-500'
-                                                                : 'border-zinc-200 dark:border-zinc-800 text-zinc-300 dark:text-zinc-700'
-                                                        }`}>
-                                                        {isLocked ? (
-                                                            <Lock size={14} />
-                                                        ) : isCompleted ? (
-                                                            <Check size={16} strokeWidth={3} />
-                                                        ) : isActive ? (
-                                                            <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
-                                                        ) : (
-                                                            <span className="text-xs font-bold">{lIdx + 1}</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="pt-1.5 flex-1">
-                                                        <span className={`block text-sm font-bold leading-tight mb-1 transition-colors ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white'
-                                                            }`}>
-                                                            {lesson.title}
-                                                        </span>
-                                                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
-                                                            {!isLocked && <PlayCircle size={10} />}
-                                                            {lesson.duration}
-                                                        </div>
-                                                        {/* New Badge */}
-                                                        {!isLocked && !isCompleted && (
-                                                            <Badge variant="secondary" className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 dark:bg-red-500/10">
-                                                                Новый
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                                ))
-                            )}
+                            </ScrollArea>
                         </div>
                     </div>
                 </div>
 
             </div>
+
+            {/* === MOBILE SHEET === */}
+            <Sheet open={isMobileProgramOpen} onOpenChange={setIsMobileProgramOpen}>
+                <SheetContent side="right" className="w-[320px] sm:max-w-[320px] p-0">
+                    <SheetHeader className="p-5 pb-4">
+                        <SheetTitle className="flex items-center justify-between">
+                            <span>Программа</span>
+                            <span className="text-xs font-mono tabular-nums text-zinc-500 font-normal">
+                                {progressData.completed}/{progressData.total}
+                            </span>
+                        </SheetTitle>
+                        <SheetDescription className="sr-only">
+                            Навигация по урокам курса
+                        </SheetDescription>
+                        <Progress value={progressData.percent} className="h-1.5" />
+                    </SheetHeader>
+
+                    <Separator />
+
+                    <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+                        <div className="p-4">
+                            {sidebarContent}
+                        </div>
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 };

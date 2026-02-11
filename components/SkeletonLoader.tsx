@@ -52,19 +52,18 @@ export const PromptCardSkeleton: React.FC = () => (
   </motion.div>
 );
 
-// === Lesson Timeline Item Skeleton ===
+// === Lesson Item Skeleton (compact) ===
 export const LessonItemSkeleton: React.FC = () => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    className="relative w-full flex items-start gap-4 p-3"
+    className="relative w-full flex items-center gap-3 px-2.5 py-2"
   >
-    {/* Timeline Node */}
-    <Skeleton className="shrink-0 w-10 h-10 rounded-full" />
+    <Skeleton className="shrink-0 w-6 h-6 rounded-md" />
 
-    <div className="pt-1.5 flex-1 space-y-2">
-      <Skeleton className="w-3/4 h-4" />
-      <Skeleton className="w-1/4 h-3" />
+    <div className="flex-1 space-y-1.5">
+      <Skeleton className="w-3/4 h-3.5" />
+      <Skeleton className="w-1/4 h-2.5" />
     </div>
   </motion.div>
 );
