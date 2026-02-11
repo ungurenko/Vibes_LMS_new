@@ -6,7 +6,7 @@ paths: "api/**/*.ts, database/**/*"
 
 ## Connection
 
-`api/_lib/db.ts` — PostgreSQL pool (max 2 connections, serverless optimized).
+`api/_lib/db.ts` — PostgreSQL pool (max 1 connection, serverless optimized).
 - `query(text, params)` — single query
 - `getClient()` — for transactions (always release in finally block)
 

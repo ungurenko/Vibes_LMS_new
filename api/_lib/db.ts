@@ -7,6 +7,10 @@
 
 import { Pool } from 'pg';
 
+if (!process.env.DATABASE_URL) {
+  console.error('FATAL: DATABASE_URL is not set. Check Vercel Dashboard → Environment Variables → scope includes Preview.');
+}
+
 // Создаём пул соединений
 // В serverless функциях пул переиспользуется между вызовами
 const pool = new Pool({
@@ -14,7 +18,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production'
     ? { rejectUnauthorized: false } // Для Timeweb Cloud и других облачных БД
     : false,
-  max: 2, // Serverless: минимум соединений, Pool очередь обработает остальные
+  max: 1, // Serverless: 1 соединение, Pool очередь обработает остальные
   min: 0, // Не держать idle соединения в serverless
   idleTimeoutMillis: 10000, // Быстрее освобождать соединения
   connectionTimeoutMillis: 5000, // Быстрее фейлить при проблемах
@@ -23,7 +27,7 @@ const pool = new Pool({
 
 // Тестируем подключение при старте
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
+  console.error('Pool error:', err.message, '| code:', (err as any).code);
 });
 
 /**
