@@ -314,7 +314,7 @@ const Lessons: React.FC = () => {
 
                                                         <div className="flex-1 min-w-0">
                                                             <span className={cn(
-                                                                "block text-sm font-medium leading-tight truncate transition-colors",
+                                                                "block text-sm font-medium leading-tight transition-colors",
                                                                 isActive && "text-primary dark:text-primary",
                                                                 !isActive && "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white"
                                                             )}>
