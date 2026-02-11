@@ -340,7 +340,7 @@ const Lessons: React.FC = () => {
     );
 
     return (
-        <div className="max-w-[1920px] mx-auto transition-all duration-500">
+        <div className="transition-all duration-500">
 
             <div className={cn(
                 "grid transition-all duration-500 ease-in-out gap-6 lg:gap-0",

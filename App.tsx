@@ -25,6 +25,7 @@ const AdminCalls = lazy(() => import('./views/AdminCalls'));
 const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
 const AdminCohorts = lazy(() => import('./views/AdminCohorts'));
+import { cn } from '@/lib/utils';
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
 import CohortSelector from './components/admin/CohortSelector';
 
@@ -655,7 +656,7 @@ const AppContent: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex-1 w-full max-w-[1600px] mx-auto pt-0">
+                <div className={cn("flex-1 w-full pt-0", activeTab !== 'lessons' && "max-w-[1600px] mx-auto")}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
