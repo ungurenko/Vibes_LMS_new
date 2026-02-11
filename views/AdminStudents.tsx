@@ -53,7 +53,7 @@ const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'githu
   );
 
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 transition-colors shadow-sm" title={type}>
+    <a href={url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 transition-colors shadow-sm" title={type}>
        {type === 'landing' && <Layout size={14} />}
        {type === 'service' && <Globe size={14} />}
        {type === 'github' && <Github size={14} />}
@@ -335,7 +335,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                    placeholder="Поиск..."
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
-                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 shadow-sm transition-colors"
+                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 shadow-sm transition-colors"
                 />
              </div>
 
@@ -373,7 +373,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
               {filteredStudents.map((student) => (
                 <TableRow
                   key={student.id}
-                  className={`group transition-colors ${selectedRowIds.has(student.id) ? 'bg-rose-50/50 dark:bg-rose-900/10' : ''}`}
+                  className={`group transition-colors ${selectedRowIds.has(student.id) ? 'bg-purple-50/50 dark:bg-purple-900/10' : ''}`}
                 >
                   <TableCell className="px-6 py-4">
                     <Checkbox
@@ -389,10 +389,10 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                         className="w-10 h-10 rounded-full bg-zinc-200 object-cover"
                       />
                       <div>
-                        <div className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-rose-600 transition-colors flex items-center gap-2">
+                        <div className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-purple-600 transition-colors flex items-center gap-2">
                           {student.name}
                           {student.cohortName && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">{student.cohortName}</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">{student.cohortName}</span>
                           )}
                         </div>
                         <div className="text-xs text-zinc-500">{student.email}</div>
@@ -408,7 +408,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                       <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${
                           student.status === 'completed' ? 'bg-emerald-500' :
-                          student.status === 'stalled' ? 'bg-amber-500' : 'bg-rose-600'
+                          student.status === 'stalled' ? 'bg-amber-500' : 'bg-purple-600'
                         }`} style={{ width: `${student.progress}%` }} />
                       </div>
                     </div>
@@ -488,7 +488,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
           >
              {isLoadingProfile || !detailedProfile ? (
                  <div className="flex items-center justify-center h-full">
-                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
+                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
                  </div>
              ) : (
                  <StudentProfile
@@ -542,7 +542,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                             placeholder="Иван"
                                             value={formData.firstName}
                                             onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                                         />
                                     </div>
                                     <div>
@@ -553,7 +553,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                             placeholder="Иванов"
                                             value={formData.lastName}
                                             onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                                         />
                                     </div>
                                 </div>
@@ -565,7 +565,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                         placeholder="student@example.com"
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                                        className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                                     />
                                 </div>
                                 {modalMode === 'add' && (
@@ -578,7 +578,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                                 placeholder="vibes123"
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                                className="w-full pl-4 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors font-mono"
+                                                className="w-full pl-4 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors font-mono"
                                             />
                                             <button
                                                 type="button"
@@ -724,7 +724,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                             type="text"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors font-mono text-lg mb-3"
+                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors font-mono text-lg mb-3"
                             placeholder="Минимум 8 символов"
                           />
                           <div className="flex gap-2">

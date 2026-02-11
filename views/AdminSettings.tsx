@@ -234,9 +234,9 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                         <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-white/5 flex items-center justify-between">
                             <div>
                                 <div className="text-sm font-bold text-zinc-500 dark:text-zinc-400">Использовано</div>
-                                <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{stats.used}</div>
+                                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{stats.used}</div>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500">
+                            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-500">
                                 <Users size={20} />
                             </div>
                         </div>
@@ -297,7 +297,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                         <div className="text-xs text-zinc-400 mt-0.5 flex items-center gap-2">
                                             {window.location.host}/invite/...
                                             {invite.cohortName && (
-                                                <span className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-bold">{invite.cohortName}</span>
+                                                <span className="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold">{invite.cohortName}</span>
                                             )}
                                         </div>
                                     </TableCell>
@@ -402,7 +402,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                 {/* Sound Settings Card */}
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5 shadow-sm">
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                             <Music size={24} />
                         </div>
                         <div>
@@ -417,7 +417,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                             <span className="font-medium text-zinc-700 dark:text-zinc-300">Включить звуки</span>
                             <button
                                 onClick={toggleSound}
-                                className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 ${isEnabled ? 'bg-rose-600' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                                className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 ${isEnabled ? 'bg-purple-600' : 'bg-zinc-200 dark:bg-zinc-700'}`}
                             >
                                 <div className={`w-6 h-6 rounded-full bg-white shadow-sm transform transition-transform duration-300 ${isEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
                             </button>
@@ -438,7 +438,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                                     step="0.05"
                                     value={volume}
                                     onChange={(e) => setVolume(parseFloat(e.target.value))}
-                                    className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                                    className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-600"
                                 />
                                 <Volume2 size={20} className="text-zinc-400" />
                             </div>
@@ -540,8 +540,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
                             onClick={() => setGenCount(num)}
                             className={`py-3 rounded-xl text-sm font-bold border transition-all ${
                                 genCount === num
-                                ? 'bg-rose-600 text-white border-rose-600'
-                                : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-rose-300'
+                                ? 'bg-purple-600 text-white border-purple-600'
+                                : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-purple-300'
                             }`}
                         >
                             {num}
@@ -553,16 +553,16 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ invites, onGenerateInvite
             <div>
                 <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3">Срок действия</label>
                 <div className="space-y-2">
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === null ? 'bg-zinc-50 dark:bg-white/5 border-rose-500' : 'border-zinc-200 dark:border-white/10'}`}>
-                        <input type="radio" name="duration" checked={genDuration === null} onChange={() => setGenDuration(null)} className="accent-rose-600 w-5 h-5" />
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === null ? 'bg-zinc-50 dark:bg-white/5 border-purple-500' : 'border-zinc-200 dark:border-white/10'}`}>
+                        <input type="radio" name="duration" checked={genDuration === null} onChange={() => setGenDuration(null)} className="accent-purple-600 w-5 h-5" />
                         <span className="font-medium text-zinc-900 dark:text-white">Бессрочно</span>
                     </label>
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === 7 ? 'bg-zinc-50 dark:bg-white/5 border-rose-500' : 'border-zinc-200 dark:border-white/10'}`}>
-                        <input type="radio" name="duration" checked={genDuration === 7} onChange={() => setGenDuration(7)} className="accent-rose-600 w-5 h-5" />
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === 7 ? 'bg-zinc-50 dark:bg-white/5 border-purple-500' : 'border-zinc-200 dark:border-white/10'}`}>
+                        <input type="radio" name="duration" checked={genDuration === 7} onChange={() => setGenDuration(7)} className="accent-purple-600 w-5 h-5" />
                         <span className="font-medium text-zinc-900 dark:text-white">7 дней</span>
                     </label>
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === 30 ? 'bg-zinc-50 dark:bg-white/5 border-rose-500' : 'border-zinc-200 dark:border-white/10'}`}>
-                        <input type="radio" name="duration" checked={genDuration === 30} onChange={() => setGenDuration(30)} className="accent-rose-600 w-5 h-5" />
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${genDuration === 30 ? 'bg-zinc-50 dark:bg-white/5 border-purple-500' : 'border-zinc-200 dark:border-white/10'}`}>
+                        <input type="radio" name="duration" checked={genDuration === 30} onChange={() => setGenDuration(30)} className="accent-purple-600 w-5 h-5" />
                         <span className="font-medium text-zinc-900 dark:text-white">30 дней</span>
                     </label>
                 </div>

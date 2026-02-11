@@ -93,8 +93,8 @@ const toolsData: ToolCardData[] = [
     title: 'Ассистент',
     description: 'Универсальный помощник по вайб-кодингу',
     emoji: '🧑‍💻',
-    iconBg: 'bg-rose-500',
-    gradient: 'from-rose-500 to-pink-600'
+    iconBg: 'bg-purple-500',
+    gradient: 'from-purple-500 to-violet-600'
   },
   {
     type: 'tz_helper',
@@ -136,7 +136,7 @@ const toolTypeLabels: Record<ToolType, string> = {
 };
 
 const toolTypeBadgeColors: Record<ToolType, string> = {
-  assistant: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
+  assistant: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400',
   tz_helper: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   ideas: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
 };
@@ -246,7 +246,7 @@ const ToolConfigCard: React.FC<{
                         setModelId(e.target.value);
                       }
                     }}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white focus:outline-none focus:border-rose-500 transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
                   >
                     {popularModels.map(model => (
                       <option key={model.id} value={model.id}>
@@ -262,12 +262,12 @@ const ToolConfigCard: React.FC<{
                       value={modelId}
                       onChange={(e) => setModelId(e.target.value)}
                       placeholder="Введите ID модели (например: openai/gpt-4)"
-                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white focus:outline-none focus:border-rose-500 transition-colors font-mono text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors font-mono text-sm"
                     />
                   )}
                 </div>
                 <p className="text-xs text-zinc-400 mt-2">
-                  Модели OpenRouter: <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-rose-500 hover:underline">openrouter.ai/models</a>
+                  Модели OpenRouter: <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">openrouter.ai/models</a>
                 </p>
               </div>
 
@@ -280,7 +280,7 @@ const ToolConfigCard: React.FC<{
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={10}
-                  className="w-full bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 rounded-xl p-4 font-mono text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 transition-colors resize-y leading-relaxed"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 rounded-xl p-4 font-mono text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-purple-500 transition-colors resize-y leading-relaxed"
                   placeholder="Введите системный промпт..."
                 />
                 <p className="text-xs text-zinc-400 mt-2">
@@ -725,7 +725,7 @@ const AdminAssistant: React.FC = () => {
           onClick={() => setActiveTab('settings')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 -mb-px ${
             activeTab === 'settings'
-              ? 'border-rose-500 text-rose-600 dark:text-rose-400'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           }`}
         >
@@ -736,7 +736,7 @@ const AdminAssistant: React.FC = () => {
           onClick={() => setActiveTab('chats')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 -mb-px ${
             activeTab === 'chats'
-              ? 'border-rose-500 text-rose-600 dark:text-rose-400'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           }`}
         >

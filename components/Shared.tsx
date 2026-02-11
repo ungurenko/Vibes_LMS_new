@@ -66,7 +66,7 @@ export const Input: React.FC<InputProps> = ({ label, icon: Icon, className = '',
       <input
         {...props}
         className={cn(
-          'w-full pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors',
+          'w-full pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors',
           Icon ? 'pl-11' : 'px-4',
           props.className
         )}
@@ -86,7 +86,7 @@ export const Select: React.FC<SelectProps> = ({ label, options, className = '', 
       <select
         {...props}
         className={cn(
-          'w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors appearance-none',
+          'w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors appearance-none',
           props.className
         )}
       >

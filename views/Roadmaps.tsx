@@ -131,7 +131,7 @@ const Roadmaps: React.FC = () => {
                 particleCount: 150,
                 spread: 70,
                 origin: { y: 0.6 },
-                colors: ['#f43f5e', '#fb7185', '#ffffff']
+                colors: ['#a855f7', '#c084fc', '#ffffff']
             });
         }
     };
@@ -172,7 +172,7 @@ const Roadmaps: React.FC = () => {
 
                 {/* Header */}
                 <Card className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 py-6 md:py-8 border border-zinc-200 dark:border-white/5 shadow-xl shadow-zinc-200/50 dark:shadow-none mb-8 relative overflow-hidden gap-0">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                     <div className="relative z-10">
                         <div className="flex items-start justify-between gap-4 mb-4">
@@ -210,14 +210,14 @@ const Roadmaps: React.FC = () => {
                 <div className="sticky top-4 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl rounded-2xl border border-zinc-200 dark:border-white/5 p-4 mb-8 shadow-lg shadow-black/5">
                     <div className="flex justify-between items-center mb-2 text-sm font-bold">
                         <span className="text-zinc-700 dark:text-zinc-300">Прогресс</span>
-                        <span className="text-rose-600 dark:text-rose-400">{currentProgress}%</span>
+                        <span className="text-purple-600 dark:text-purple-400">{currentProgress}%</span>
                     </div>
                     <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${currentProgress}%` }}
                             transition={{ type: "spring", stiffness: 50, damping: 15 }}
-                            className="h-full bg-rose-600 rounded-full relative"
+                            className="h-full bg-purple-600 rounded-full relative"
                         >
                             <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)' }}></div>
                         </motion.div>
@@ -236,19 +236,19 @@ const Roadmaps: React.FC = () => {
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => toggleStep(step.id)}
                                 className={`group p-5 md:p-6 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${isCompleted
-                                        ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-500/30'
-                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/5'
+                                        ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-500/30'
+                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/5'
                                     }`}
                             >
                                 <div className="flex items-start gap-4 md:gap-6 relative z-10">
                                     <div className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 mt-0.5 ${isCompleted
-                                            ? 'bg-rose-600 border-rose-600 text-white scale-110'
-                                            : 'border-zinc-300 dark:border-zinc-600 text-transparent group-hover:border-rose-400'
+                                            ? 'bg-purple-600 border-purple-600 text-white scale-110'
+                                            : 'border-zinc-300 dark:border-zinc-600 text-transparent group-hover:border-purple-400'
                                         }`}>
                                         <CheckCircle2 size={16} strokeWidth={3} />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className={`font-bold text-lg mb-1 transition-colors ${isCompleted ? 'text-zinc-500 dark:text-zinc-400 line-through decoration-2 decoration-rose-300 dark:decoration-rose-700' : 'text-zinc-900 dark:text-white'
+                                        <h3 className={`font-bold text-lg mb-1 transition-colors ${isCompleted ? 'text-zinc-500 dark:text-zinc-400 line-through decoration-2 decoration-purple-300 dark:decoration-purple-700' : 'text-zinc-900 dark:text-white'
                                             }`}>
                                             {step.title}
                                         </h3>
@@ -264,7 +264,7 @@ const Roadmaps: React.FC = () => {
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline bg-rose-50 dark:bg-rose-500/10 px-2.5 py-1.5 rounded-lg border border-rose-100 dark:border-rose-500/20 hover:bg-rose-100 transition-colors"
+                                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline bg-purple-50 dark:bg-purple-500/10 px-2.5 py-1.5 rounded-lg border border-purple-100 dark:border-purple-500/20 hover:bg-purple-100 transition-colors"
                                                 >
                                                     <ExternalLink size={12} />
                                                     {step.linkText || 'Открыть ссылку'}
@@ -284,7 +284,7 @@ const Roadmaps: React.FC = () => {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            className="mt-12 p-8 rounded-3xl bg-gradient-to-br from-rose-600 to-pink-600 text-white text-center relative overflow-hidden shadow-2xl shadow-rose-500/40"
+                            className="mt-12 p-8 rounded-3xl bg-gradient-to-br from-purple-600 to-violet-600 text-white text-center relative overflow-hidden shadow-2xl shadow-purple-500/40"
                         >
                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
                             <div className="relative z-10">
@@ -292,12 +292,12 @@ const Roadmaps: React.FC = () => {
                                     <Trophy size={40} className="text-yellow-300 drop-shadow-md" />
                                 </div>
                                 <h2 className="font-display text-3xl font-bold mb-3">Поздравляем! 🎉</h2>
-                                <p className="text-rose-100 text-lg mb-8 max-w-md mx-auto">
+                                <p className="text-purple-100 text-lg mb-8 max-w-md mx-auto">
                                     Ты успешно прошел карту "{activeMap.title}". Это большой шаг вперед!
                                 </p>
                                 <Button
                                     onClick={() => setActiveMapId(null)}
-                                    className="px-8 bg-white text-rose-700 rounded-2xl hover:scale-105 active:scale-95 shadow-xl"
+                                    className="px-8 bg-white text-purple-700 rounded-2xl hover:scale-105 active:scale-95 shadow-xl"
                                 >
                                     Вернуться к списку
                                 </Button>
@@ -323,7 +323,7 @@ const Roadmaps: React.FC = () => {
                     </p>
                 </div>
                 <div className="hidden md:block">
-                    <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 rotate-3">
+                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 rotate-3">
                         <Map size={32} />
                     </div>
                 </div>
@@ -371,7 +371,7 @@ const Roadmaps: React.FC = () => {
                             >
                                 <Card className={`group cursor-pointer bg-white dark:bg-zinc-900 rounded-3xl p-6 py-6 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative overflow-hidden flex flex-col h-full gap-0 shadow-none ${isCompleted
                                         ? 'border-emerald-200 dark:border-emerald-500/30'
-                                        : 'border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30'
+                                        : 'border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30'
                                     }`}
                                 >
                                     {/* Status Badge */}
@@ -385,7 +385,7 @@ const Roadmaps: React.FC = () => {
                                     </div>
 
                                     <div className="mb-auto">
-                                        <CardTitle className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-2 leading-tight group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                                        <CardTitle className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-2 leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                                             {map.title}
                                         </CardTitle>
                                         <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-3 leading-relaxed">
@@ -405,7 +405,7 @@ const Roadmaps: React.FC = () => {
                                         </div>
                                         <div className="h-1.5 bg-zinc-100 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-rose-600'
+                                                className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-purple-600'
                                                     }`}
                                                 style={{ width: `${progress}%` }}
                                             />

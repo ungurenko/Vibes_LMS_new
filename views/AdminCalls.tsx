@@ -291,7 +291,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                             exit={{ opacity: 0, scale: 0.95 }}
                             className={`relative bg-white dark:bg-zinc-900 rounded-3xl border overflow-hidden transition-all ${call.status === 'live'
                                 ? 'border-red-500/50 shadow-xl shadow-red-500/10 ring-1 ring-red-500/20'
-                                : 'border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30'
+                                : 'border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30'
                                 }`}
                         >
                             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8">
@@ -354,7 +354,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                                 href={call.meetingUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="inline-flex items-center gap-2 text-sm font-bold text-rose-600 dark:text-rose-400 hover:underline bg-rose-50 dark:bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-500/20"
+                                                className="inline-flex items-center gap-2 text-sm font-bold text-purple-600 dark:text-purple-400 hover:underline bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-500/20"
                                             >
                                                 <Video size={16} />
                                                 Ссылка на встречу
@@ -421,7 +421,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => openShareModal(call.id)}
-                                            className="w-full justify-center lg:justify-start text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                            className="w-full justify-center lg:justify-start text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10"
                                         >
                                             <Share2 size={16} />
                                             Расшарить
@@ -601,7 +601,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                 </div>
                             ))}
 
-                            <label className="cursor-pointer flex items-center justify-center gap-2 w-full p-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/10 hover:border-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400">
+                            <label className="cursor-pointer flex items-center justify-center gap-2 w-full p-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/10 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400">
                                 <Upload size={18} />
                                 <span className="font-bold text-sm">Загрузить файл</span>
                                 <input type="file" className="hidden" onChange={handleFileUpload} />
@@ -650,8 +650,8 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                             key={cohort.id}
                                             className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                                                 sharedCohorts.includes(cohort.id)
-                                                    ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-300 dark:border-rose-500/30'
-                                                    : 'border-zinc-200 dark:border-white/10 hover:border-rose-200'
+                                                    ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-300 dark:border-purple-500/30'
+                                                    : 'border-zinc-200 dark:border-white/10 hover:border-purple-200'
                                             }`}
                                         >
                                             <Checkbox

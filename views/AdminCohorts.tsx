@@ -114,7 +114,7 @@ const AdminCohorts: React.FC<AdminCohortsProps> = ({ cohorts, onCohortsChange })
             animate={{ opacity: 1, y: 0 }}
             className={`bg-white dark:bg-zinc-900 rounded-2xl border p-6 transition-all ${
               cohort.isActive
-                ? 'border-rose-200 dark:border-rose-500/20 shadow-sm'
+                ? 'border-purple-200 dark:border-purple-500/20 shadow-sm'
                 : 'border-zinc-200 dark:border-white/5 opacity-60'
             }`}
           >
@@ -194,7 +194,7 @@ const AdminCohorts: React.FC<AdminCohortsProps> = ({ cohorts, onCohortsChange })
               value={cohortForm.name}
               onChange={(e) => setCohortForm({ ...cohortForm, name: e.target.value })}
               placeholder="Например: Поток 2"
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
               autoFocus
             />
           </div>
@@ -205,7 +205,7 @@ const AdminCohorts: React.FC<AdminCohortsProps> = ({ cohorts, onCohortsChange })
               value={cohortForm.description}
               onChange={(e) => setCohortForm({ ...cohortForm, description: e.target.value })}
               placeholder="Краткое описание потока"
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
           <div>
@@ -214,7 +214,7 @@ const AdminCohorts: React.FC<AdminCohortsProps> = ({ cohorts, onCohortsChange })
               type="date"
               value={cohortForm.startDate}
               onChange={(e) => setCohortForm({ ...cohortForm, startDate: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
           {!editingCohort?.id && cohorts.length > 0 && (
@@ -223,7 +223,7 @@ const AdminCohorts: React.FC<AdminCohortsProps> = ({ cohorts, onCohortsChange })
               <select
                 value={cohortForm.cloneStagesFrom}
                 onChange={(e) => setCohortForm({ ...cohortForm, cloneStagesFrom: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors appearance-none"
+                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors appearance-none"
               >
                 <option value="">Не клонировать</option>
                 {cohorts.map(c => (

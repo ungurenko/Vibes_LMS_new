@@ -161,9 +161,9 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-white/5">
                               <h3 className="font-bold text-zinc-900 dark:text-white mb-6">Статистика</h3>
                               <div className="space-y-4">
-                                  <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10">
+                                  <div className="flex items-center justify-between p-4 rounded-2xl bg-purple-50 dark:bg-purple-500/10">
                                       <div className="flex items-center gap-3">
-                                          <div className="p-2 bg-white dark:bg-white/10 rounded-lg text-rose-600">
+                                          <div className="p-2 bg-white dark:bg-white/10 rounded-lg text-purple-600">
                                               <CheckCircle size={20} />
                                           </div>
                                           <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Уроков пройдено</span>
@@ -199,8 +199,8 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                                     disabled={isPending}
                                     className={`p-2 rounded-lg transition-colors ${
                                         optimisticNotes !== noteInput 
-                                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20' 
-                                        : 'text-zinc-400 hover:text-rose-600 hover:bg-rose-50'
+                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+                                        : 'text-zinc-400 hover:text-purple-600 hover:bg-purple-50'
                                     }`}
                                   >
                                       <Save size={18} />
@@ -240,14 +240,14 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                                    <div>
                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Текущий модуль</label>
                                        <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-medium">
-                                           <PlayCircle size={16} className="text-rose-500" />
+                                           <PlayCircle size={16} className="text-purple-500" />
                                            {student.currentModule}
                                        </div>
                                    </div>
                                    <div>
                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1 block">GitHub</label>
                                        {student.projects.github ? (
-                                           <a href={student.projects.github} target="_blank" rel="noopener" className="flex items-center gap-2 text-rose-600 hover:underline font-medium">
+                                           <a href={student.projects.github} target="_blank" rel="noopener" className="flex items-center gap-2 text-purple-600 hover:underline font-medium">
                                                <Github size={16} />
                                                {student.projects.github.replace('https://github.com/', '')}
                                            </a>
@@ -262,7 +262,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5">
                                <div className="flex items-center justify-between mb-6">
                                    <h3 className="font-bold text-zinc-900 dark:text-white">Последняя активность</h3>
-                                   <button onClick={() => setActiveTab('activity')} className="text-sm text-rose-600 font-bold hover:underline">Смотреть все</button>
+                                   <button onClick={() => setActiveTab('activity')} className="text-sm text-purple-600 font-bold hover:underline">Смотреть все</button>
                                </div>
                                {/* Use the Activity Component here later */}
                                <div className="text-zinc-500 text-sm">Перейдите на вкладку "Активность" для полной истории.</div>
@@ -304,7 +304,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                                           >
                                               <div className={`mt-0.5 ${
                                                   lesson.status === 'completed' ? 'text-emerald-500' : 
-                                                  lesson.status === 'locked' ? 'text-zinc-300' : 'text-rose-500'
+                                                  lesson.status === 'locked' ? 'text-zinc-300' : 'text-purple-500'
                                               }`}>
                                                   {lesson.status === 'completed' ? <CheckCircle size={18} /> : 
                                                    lesson.status === 'locked' ? <Lock size={18} /> : <PlayCircle size={18} />}
@@ -360,7 +360,7 @@ const ActivityFeed: React.FC<{ userId: string }> = ({ userId }) => {
                     <div key={item.id} className="relative flex gap-6">
                         <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-white dark:border-zinc-900 flex items-center justify-center shrink-0 ${
                            item.iconType === 'lesson' ? 'bg-emerald-100 text-emerald-600' : 
-                           item.iconType === 'chat' ? 'bg-rose-100 text-rose-600' : 
+                           item.iconType === 'chat' ? 'bg-purple-100 text-purple-600' : 
                            item.iconType === 'project' ? 'bg-blue-100 text-blue-600' : 'bg-zinc-100 text-zinc-500'
                         }`}>
                            {item.iconType === 'lesson' && <CheckCircle size={16} />}
@@ -374,7 +374,7 @@ const ActivityFeed: React.FC<{ userId: string }> = ({ userId }) => {
                                  <span className="text-xs text-zinc-400">{item.date}</span>
                              </div>
                              {item.target && (
-                                 <div className="text-sm text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/10 px-3 py-1.5 rounded-lg w-fit">
+                                 <div className="text-sm text-purple-600 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-lg w-fit">
                                      {item.target}
                                  </div>
                              )}

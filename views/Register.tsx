@@ -98,7 +98,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
       {/* Background Ambient */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] bg-rose-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-500/10 rounded-full blur-[120px]" />
       </div>
 
       <motion.div 
@@ -125,11 +125,11 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                 {/* Avatar Picker */}
                 <div className="flex flex-col items-center mb-6">
                     <div className="relative group cursor-pointer">
-                        <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center overflow-hidden transition-colors hover:border-rose-500">
+                        <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center overflow-hidden transition-colors hover:border-purple-500">
                             {avatar ? (
                                 <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                <Camera size={32} className="text-zinc-400 group-hover:text-rose-500 transition-colors" />
+                                <Camera size={32} className="text-zinc-400 group-hover:text-purple-500 transition-colors" />
                             )}
                         </div>
                         <input 
@@ -142,7 +142,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                         <button 
                             type="button"
                             onClick={generateRandomAvatar}
-                            className="absolute -bottom-1 -right-1 p-2 bg-white dark:bg-zinc-800 rounded-full shadow-md border border-zinc-200 dark:border-white/10 hover:text-rose-600 transition-colors"
+                            className="absolute -bottom-1 -right-1 p-2 bg-white dark:bg-zinc-800 rounded-full shadow-md border border-zinc-200 dark:border-white/10 hover:text-purple-600 transition-colors"
                             title="Случайный аватар"
                         >
                             <RefreshCw size={14} />
@@ -160,7 +160,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                             placeholder="Как тебя зовут?"
                         />
                     </div>
@@ -175,7 +175,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                             placeholder="name@example.com"
                         />
                     </div>
@@ -191,7 +191,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             minLength={8}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 transition-colors"
+                            className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                             placeholder="Минимум 8 символов"
                         />
                         <button
@@ -216,7 +216,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             className={`w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border focus:outline-none transition-colors ${
                                 confirmPassword && password !== confirmPassword 
                                 ? 'border-red-500 focus:border-red-500' 
-                                : 'border-zinc-200 dark:border-white/10 focus:border-rose-500'
+                                : 'border-zinc-200 dark:border-white/10 focus:border-purple-500'
                             }`}
                             placeholder="••••••••"
                         />
@@ -236,10 +236,10 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                         id="agree"
                         checked={agreed}
                         onChange={(e) => setAgreed(e.target.checked)}
-                        className="mt-1 rounded border-zinc-300 text-rose-600 focus:ring-rose-500"
+                        className="mt-1 rounded border-zinc-300 text-purple-600 focus:ring-purple-500"
                     />
                     <label htmlFor="agree" className="text-sm text-zinc-500 dark:text-zinc-400 cursor-pointer">
-                        Я согласен с <a href="#" className="underline hover:text-rose-600">условиями использования</a>.
+                        Я согласен с <a href="#" className="underline hover:text-purple-600">условиями использования</a>.
                     </label>
                 </div>
 
@@ -282,7 +282,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
         </div>
 
         <div className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            Уже есть аккаунт? <button onClick={onNavigateLogin} className="text-rose-600 dark:text-rose-400 font-bold hover:underline">Войти</button>
+            Уже есть аккаунт? <button onClick={onNavigateLogin} className="text-purple-600 dark:text-purple-400 font-bold hover:underline">Войти</button>
         </div>
       </motion.div>
     </div>

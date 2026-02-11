@@ -17,7 +17,7 @@ const StylesTab: React.FC<StylesTabProps> = ({ styles, onEdit, onDelete }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {styles.map((style) => (
-        <div key={style.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden group hover:border-rose-300 dark:hover:border-rose-500/30 transition-all shadow-sm">
+        <div key={style.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden group hover:border-purple-300 dark:hover:border-purple-500/30 transition-all shadow-sm">
           <div className="h-40 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
             {style.image ? (
               <img src={style.image} alt={style.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

@@ -10,13 +10,13 @@ const SplashScreen: React.FC = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-rose-500/10 rounded-full blur-[120px]"
+          className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-500/10 rounded-full blur-[120px]"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-          className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-pink-500/10 rounded-full blur-[120px]"
+          className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-violet-500/10 rounded-full blur-[120px]"
         />
       </div>
 
@@ -40,7 +40,7 @@ const SplashScreen: React.FC = () => {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-2.5 h-2.5 rounded-full bg-rose-500/60 dark:bg-rose-400/60"
+              className="w-2.5 h-2.5 rounded-full bg-purple-500/60 dark:bg-purple-400/60"
               initial={{ opacity: 0.4, scale: 0.8 }}
               animate={{
                 opacity: [0.4, 1, 0.4],

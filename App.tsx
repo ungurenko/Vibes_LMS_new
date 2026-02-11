@@ -601,14 +601,14 @@ const AppContent: React.FC = () => {
     };
 
     return (
-        <div className={`min-h-[100dvh] bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden selection:bg-rose-500/30 selection:text-rose-900 dark:selection:text-white transition-colors duration-300 ${mode === 'admin' ? 'admin-mode' : ''}`}>
+        <div className={`min-h-[100dvh] bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden selection:bg-purple-500/30 selection:text-purple-900 dark:selection:text-white transition-colors duration-300 ${mode === 'admin' ? 'admin-mode' : ''}`}>
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden gpu-accelerated">
                 {mode === 'student' ? (
                     <>
-                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-600/12 dark:bg-rose-900/12 rounded-full blur-[120px] animate-blob" />
-                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-pink-600/12 dark:bg-pink-900/12 rounded-full blur-[100px] animate-blob animation-delay-2000" />
-                        <div className="absolute top-[30%] right-[-5%] w-[25%] h-[25%] bg-pink-600/8 dark:bg-pink-900/12 rounded-full blur-[80px] animate-blob animation-delay-4000" />
-                        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 20%, rgba(244,63,94,0.05) 0%, transparent 50%)' }} />
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/12 dark:bg-purple-900/12 rounded-full blur-[120px] animate-blob" />
+                        <div className="absolute bottom-[10%] right-[0%] w-[30%] h-[30%] bg-violet-600/12 dark:bg-violet-900/12 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+                        <div className="absolute top-[30%] right-[-5%] w-[25%] h-[25%] bg-violet-600/8 dark:bg-violet-900/12 rounded-full blur-[80px] animate-blob animation-delay-4000" />
+                        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 20%, rgba(168,85,247,0.05) 0%, transparent 50%)' }} />
                     </>
                 ) : (
                     <>
@@ -644,11 +644,11 @@ const AppContent: React.FC = () => {
                                 <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>
                                 <button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 transition-colors">Выйти</button>
                             </div>
-                            <button onClick={() => setActiveTab('profile')} className={`w-10 h-10 rounded-full p-0.5 transition-transform hover:scale-105 ${mode === 'admin' ? 'bg-gradient-to-tr from-emerald-500 to-cyan-500' : 'bg-gradient-to-tr from-rose-500 to-pink-500'}`}>
+                            <button onClick={() => setActiveTab('profile')} className={`w-10 h-10 rounded-full p-0.5 transition-transform hover:scale-105 ${mode === 'admin' ? 'bg-gradient-to-tr from-emerald-500 to-cyan-500' : 'bg-gradient-to-tr from-purple-500 to-violet-500'}`}>
                                 {currentUser?.avatar && !currentUser.avatar.includes('ui-avatars') ? (
                                     <img src={currentUser.avatar} alt="Profile" className="w-full h-full rounded-full object-cover border-2 border-white dark:border-zinc-900" />
                                 ) : (
-                                    <div className="w-full h-full rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center font-bold text-rose-600">{currentUser?.name?.[0]}</div>
+                                    <div className="w-full h-full rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center font-bold text-purple-600">{currentUser?.name?.[0]}</div>
                                 )}
                             </button>
                         </div>

@@ -57,7 +57,7 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
                     const name = cohortMap.get(cid);
                     if (!name) return null;
                     return (
-                      <span key={cid} className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                      <span key={cid} className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 whitespace-nowrap">
                         {name}
                       </span>
                     );
@@ -71,7 +71,7 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
               </span>
               <button
                 onClick={(e) => { e.stopPropagation(); onEditModule(module); }}
-                className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
                 title="Редактировать модуль"
               >
                 <Edit size={16} />
@@ -107,12 +107,12 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
                   <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
                     <span className="flex items-center gap-1"><Video size={12} /> {lesson.duration}</span>
                     <span className="flex items-center gap-1"><Eye size={12} /> {(lesson as any).views || 0}</span>
-                    {lesson.videoUrl && <span className="flex items-center gap-1 text-rose-500"><LinkIcon size={12} /> URL</span>}
+                    {lesson.videoUrl && <span className="flex items-center gap-1 text-purple-500"><LinkIcon size={12} /> URL</span>}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onEditLesson(lesson)} className="p-2 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                  <button onClick={() => onEditLesson(lesson)} className="p-2 rounded-lg text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors">
                     <Edit size={16} />
                   </button>
                   <button onClick={() => onDeleteLesson(lesson.id)} className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
@@ -124,7 +124,7 @@ const LessonsTab: React.FC<LessonsTabProps> = ({
           </Reorder.Group>
 
           <div className="bg-zinc-50 dark:bg-zinc-800/30 px-4 py-2 text-center">
-            <button onClick={() => onAddLessonToModule(module.id)} className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline py-2 w-full">
+            <button onClick={() => onAddLessonToModule(module.id)} className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline py-2 w-full">
               + Добавить урок в модуль
             </button>
           </div>

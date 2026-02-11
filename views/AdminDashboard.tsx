@@ -51,7 +51,7 @@ interface DashboardStats {
 // --- Цвета для pipeline стадий ---
 const STAGE_COLORS: Record<string, string> = {
   'База': 'bg-zinc-200 dark:bg-zinc-700',
-  'Лендинг': 'bg-rose-500',
+  'Лендинг': 'bg-purple-500',
   'Веб-сервис': 'bg-indigo-500',
   'Финал': 'bg-emerald-500',
 };
@@ -211,10 +211,10 @@ const AdminDashboard: React.FC = () => {
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0 }}
-               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-rose-300 dark:hover:border-rose-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-500/5"
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-purple-300 dark:hover:border-purple-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-purple-500/5"
              >
                <div className="flex justify-between items-start mb-4 relative z-10">
-                 <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-500">
+                 <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500">
                    <Users size={20} />
                  </div>
                  <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
@@ -233,7 +233,7 @@ const AdminDashboard: React.FC = () => {
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0.1 }}
-               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-rose-300 dark:hover:border-rose-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-500/5"
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-purple-300 dark:hover:border-purple-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-purple-500/5"
              >
                <div className="flex justify-between items-start mb-4 relative z-10">
                  <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
@@ -254,7 +254,7 @@ const AdminDashboard: React.FC = () => {
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0.2 }}
-               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-rose-300 dark:hover:border-rose-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-500/5"
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-purple-300 dark:hover:border-purple-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-purple-500/5"
              >
                <div className="flex justify-between items-start mb-4 relative z-10">
                  <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
@@ -275,10 +275,10 @@ const AdminDashboard: React.FC = () => {
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0.3 }}
-               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-rose-300 dark:hover:border-rose-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-500/5"
+               className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-white/5 relative overflow-hidden group hover:border-purple-300 dark:hover:border-purple-500/30 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-purple-500/5"
              >
                <div className="flex justify-between items-start mb-4 relative z-10">
-                 <div className="p-3 rounded-2xl bg-pink-500/10 text-pink-500">
+                 <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-500">
                    <Layout size={20} />
                  </div>
                  <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
@@ -323,7 +323,7 @@ const AdminDashboard: React.FC = () => {
             >
                 <div className="flex justify-between items-center mb-8">
                    <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">Поток студентов</h3>
-                   <button className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">
+                   <button className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline">
                       Все студенты <ArrowRight size={12} className="inline" />
                    </button>
                 </div>
@@ -464,7 +464,7 @@ const AdminDashboard: React.FC = () => {
                 transition={{ delay: 0.4 }}
                 className="relative group perspective-1000"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-rose-600 to-pink-600 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-violet-600 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
                 <div className="relative bg-zinc-900 dark:bg-white text-white dark:text-black rounded-3xl overflow-hidden shadow-2xl">
                     {/* Noise & Texture */}
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
@@ -527,7 +527,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                     {[
                         { label: 'Добавить ученика', icon: Users, color: 'text-blue-500' },
-                        { label: 'Создать контент', icon: Layout, color: 'text-rose-500' },
+                        { label: 'Создать контент', icon: Layout, color: 'text-purple-500' },
                         { label: 'Настройки доступа', icon: Server, color: 'text-zinc-500' },
                         { label: 'Экспорт данных', icon: Save, color: 'text-emerald-500' },
                     ].map((action, i) => (

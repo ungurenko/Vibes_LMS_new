@@ -31,10 +31,10 @@ import { Button } from '@/components/ui/button';
 // --- Constants & Types ---
 
 const CATEGORY_COLORS: Record<string, string> = {
-    'Лендинг': 'text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
+    'Лендинг': 'text-purple-500 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20',
     'Веб-сервис': 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
     'Базовые': 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
-    'Дизайн': 'text-pink-500 bg-pink-50 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/20',
+    'Дизайн': 'text-violet-500 bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20',
     'Фиксы': 'text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
     'Функции': 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
     'API': 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
@@ -52,7 +52,7 @@ const WORK_STAGE_CONFIG: Record<WorkStage, { label: string; icon: React.ReactNod
     design: {
         label: 'Дизайн',
         icon: <Palette size={14} />,
-        color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20'
+        color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20'
     },
     functionality: {
         label: 'Функционал',
@@ -300,7 +300,7 @@ const PromptBase: React.FC = () => {
                         {/* Wizard Button */}
                         <Button
                             onClick={handleWizardStart}
-                            className="px-5 py-4 h-auto rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                            className="px-5 py-4 h-auto rounded-2xl bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
                         >
                             <Compass size={18} />
                             <span>Помоги выбрать</span>
@@ -313,7 +313,7 @@ const PromptBase: React.FC = () => {
                                 placeholder="Найти промпт..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-rose-500 transition-colors shadow-sm focus:ring-4 focus:ring-rose-500/10"
+                                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-purple-500 transition-colors shadow-sm focus:ring-4 focus:ring-purple-500/10"
                             />
                         </div>
                         {/* Favorites Button */}
@@ -321,7 +321,7 @@ const PromptBase: React.FC = () => {
                             variant="outline"
                             onClick={() => { playSound('click'); setShowFavoritesOnly(!showFavoritesOnly); }}
                             className={`px-4 py-4 h-auto rounded-2xl whitespace-nowrap ${showFavoritesOnly
-                                ? 'bg-pink-50 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/30 text-pink-600 dark:text-pink-400'
+                                ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30 text-violet-600 dark:text-violet-400'
                                 : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5'
                             }`}
                         >
@@ -329,7 +329,7 @@ const PromptBase: React.FC = () => {
                             <span className="hidden sm:inline">Избранное</span>
                             {favorites.size > 0 && (
                                 <Badge variant="secondary" className={`px-2 py-0.5 text-xs font-bold ${showFavoritesOnly
-                                    ? 'bg-pink-200 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300'
+                                    ? 'bg-violet-200 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
                                     : 'bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-400'
                                 }`}>
                                     {favorites.size}
@@ -438,10 +438,10 @@ const PromptBase: React.FC = () => {
                             <Card
                                 key={prompt.id}
                                 onClick={() => { playSound('click'); setSelectedPrompt(prompt); }}
-                                className="group cursor-pointer bg-white dark:bg-zinc-900 rounded-3xl p-6 py-6 border border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-rose-500/10 flex flex-col h-full relative overflow-hidden gap-0 shadow-none"
+                                className="group cursor-pointer bg-white dark:bg-zinc-900 rounded-3xl p-6 py-6 border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 flex flex-col h-full relative overflow-hidden gap-0 shadow-none"
                             >
                                 {/* Hover Glow */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/0 to-rose-500/0 group-hover:from-rose-500/5 group-hover:to-pink-500/5 transition-colors duration-500" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:to-violet-500/5 transition-colors duration-500" />
 
                                 <div className="relative z-10">
                                     {/* Navigation badges row */}
@@ -478,7 +478,7 @@ const PromptBase: React.FC = () => {
                                                 {prompt.category}
                                             </Badge>
                                             {isStack && (
-                                                <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider rounded-lg border-rose-200 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:border-rose-500/30 dark:text-rose-300">
+                                                <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider rounded-lg border-purple-200 bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:border-purple-500/30 dark:text-purple-300">
                                                     <Layers size={10} />
                                                     {prompt.steps?.length} шага
                                                 </Badge>
@@ -490,7 +490,7 @@ const PromptBase: React.FC = () => {
                                             <button
                                                 onClick={(e) => handleToggleFavorite(prompt.id, e)}
                                                 className={`p-2 rounded-full transition-all ${favorites.has(prompt.id)
-                                                    ? 'bg-pink-50 dark:bg-pink-500/10 text-pink-500'
+                                                    ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-500'
                                                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100'
                                                 }`}
                                                 title={favorites.has(prompt.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
@@ -501,7 +501,7 @@ const PromptBase: React.FC = () => {
                                             {!isStack && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); if (prompt.content) handleCopy(prompt.id, prompt.content); }}
-                                                    className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+                                                    className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 transition-all opacity-0 group-hover:opacity-100"
                                                     title="Быстрое копирование"
                                                 >
                                                     {copiedId === prompt.id ? <Check size={16} /> : <Copy size={16} />}
@@ -510,7 +510,7 @@ const PromptBase: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                                    <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                                         {prompt.title}
                                     </h3>
                                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 line-clamp-3 leading-relaxed">
@@ -569,7 +569,7 @@ const PromptBase: React.FC = () => {
                                                     {selectedPrompt.category}
                                                 </Badge>
                                                 {selectedPrompt.steps && (
-                                                    <Badge variant="outline" className="rounded-lg text-xs font-bold uppercase tracking-wider border-rose-200 bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:border-rose-500/30 dark:text-rose-300">
+                                                    <Badge variant="outline" className="rounded-lg text-xs font-bold uppercase tracking-wider border-purple-200 bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:border-purple-500/30 dark:text-purple-300">
                                                         <Layers size={12} />
                                                         Цепочка промптов
                                                     </Badge>
@@ -737,7 +737,7 @@ const PromptBase: React.FC = () => {
                         className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-4 px-6 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-2xl shadow-2xl border border-zinc-700 dark:border-zinc-200"
                     >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${favoriteToast.action === 'added'
-                            ? 'bg-pink-500 text-white'
+                            ? 'bg-violet-500 text-white'
                             : 'bg-zinc-500 text-white'
                         }`}>
                             <Heart size={20} strokeWidth={3} className={favoriteToast.action === 'added' ? 'fill-current' : ''} />
@@ -773,10 +773,10 @@ const PromptBase: React.FC = () => {
                                 className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl"
                             >
                                 {/* Header */}
-                                <div className="p-6 border-b border-zinc-100 dark:border-white/5 bg-gradient-to-r from-rose-500/10 to-pink-500/10">
+                                <div className="p-6 border-b border-zinc-100 dark:border-white/5 bg-gradient-to-r from-purple-500/10 to-violet-500/10">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center text-white">
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center text-white">
                                                 <Compass size={24} />
                                             </div>
                                             <div>
@@ -898,7 +898,7 @@ const PromptBase: React.FC = () => {
                                                 </h4>
                                                 {wizardLoading ? (
                                                     <div className="flex justify-center py-8">
-                                                        <div className="w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
                                                     </div>
                                                 ) : wizardResults.length > 0 ? (
                                                     <div className="space-y-3 max-h-80 overflow-y-auto">
@@ -906,7 +906,7 @@ const PromptBase: React.FC = () => {
                                                             <button
                                                                 key={prompt.id}
                                                                 onClick={() => handleWizardSelectPrompt(prompt)}
-                                                                className="w-full text-left p-4 rounded-2xl border border-zinc-200 dark:border-white/10 hover:border-rose-300 dark:hover:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                                                className="w-full text-left p-4 rounded-2xl border border-zinc-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all"
                                                             >
                                                                 <div className="flex items-start gap-3">
                                                                     <div className={`shrink-0 px-2 py-1 rounded text-[10px] font-bold border ${CATEGORY_COLORS[prompt.category] || 'text-zinc-500 bg-zinc-50 border-zinc-200'}`}>

@@ -65,7 +65,7 @@ const TOOL_CONFIG: Record<ToolType, {
     title: 'Ассистент',
     subtitle: 'Помощник по вайб-кодингу',
     emoji: '🧑‍💻',
-    gradient: 'from-rose-600 to-pink-600',
+    gradient: 'from-purple-600 to-violet-600',
     welcomeMessage: 'Привет! Я твой ИИ-ментор по вайб-кодингу. Готов помочь с кодом, ошибками или объяснить сложные штуки простыми словами. **С чего начнем?**'
   },
   tz_helper: {
@@ -126,11 +126,11 @@ const parseMarkers = (text: string): {
 
 const FormattedText = memo(function FormattedText({ text }: { text: string }) {
   return (
-    <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none prose-p:leading-[1.6] prose-p:mb-3 prose-pre:m-0 prose-pre:p-0 prose-pre:bg-transparent text-[13px] md:text-[15px] break-words">
+    <div className="markdown-body prose ppurple-zinc dark:ppurple-invert max-w-none ppurple-p:leading-[1.6] ppurple-p:mb-3 ppurple-pre:m-0 ppurple-pre:p-0 ppurple-pre:bg-transparent text-[13px] md:text-[15px] break-words">
       <ReactMarkdown
         components={{
           a: ({ node, ...props }) => (
-            <a target="_blank" rel="noopener noreferrer" className="text-rose-600 dark:text-rose-400 hover:underline font-bold break-all" {...props} />
+            <a target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 hover:underline font-bold break-all" {...props} />
           ),
           code: ({ node, inline, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || '');
@@ -139,16 +139,16 @@ const FormattedText = memo(function FormattedText({ text }: { text: string }) {
             return isBlock ? (
               <CodeBlock code={String(children).replace(/\n$/, '')} language={match ? match[1] : 'text'} />
             ) : (
-              <code className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded px-1.5 py-0.5 font-mono text-xs md:text-sm text-rose-700 dark:text-rose-300 break-words" {...props}>
+              <code className="bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 rounded px-1.5 py-0.5 font-mono text-xs md:text-sm text-purple-700 dark:text-purple-300 break-words" {...props}>
                 {children}
               </code>
             );
           },
           ul: ({ node, ...props }) => (
-            <ul className="list-disc list-outside ml-4 mb-3 space-y-0.5 marker:text-rose-500" {...props} />
+            <ul className="list-disc list-outside ml-4 mb-3 space-y-0.5 marker:text-purple-500" {...props} />
           ),
           ol: ({ node, ...props }) => (
-            <ol className="list-decimal list-outside ml-4 mb-3 space-y-0.5 marker:text-rose-500 font-medium" {...props} />
+            <ol className="list-decimal list-outside ml-4 mb-3 space-y-0.5 marker:text-purple-500 font-medium" {...props} />
           ),
           li: ({ node, ...props }) => (
             <li className="pl-1" {...props} />
@@ -162,7 +162,7 @@ const FormattedText = memo(function FormattedText({ text }: { text: string }) {
           strong: ({ node, ...props }) => <strong className="font-bold text-zinc-900 dark:text-white" {...props} />,
           em: ({ node, ...props }) => <em className="italic text-zinc-800 dark:text-zinc-300" {...props} />,
           blockquote: ({ node, ...props }) => (
-            <blockquote className="border-l-3 border-rose-500 pl-3 py-1.5 my-3 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
+            <blockquote className="border-l-3 border-purple-500 pl-3 py-1.5 my-3 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
           )
         }}
       >
@@ -258,9 +258,9 @@ const QuickPrompts = memo(function QuickPrompts({ toolType, onSelect, gradient }
             bg-zinc-100 dark:bg-white/5
             border border-zinc-200 dark:border-white/10
             text-zinc-600 dark:text-zinc-400
-            hover:bg-rose-50 dark:hover:bg-rose-500/10
-            hover:border-rose-300 dark:hover:border-rose-500/30
-            hover:text-rose-700 dark:hover:text-rose-300
+            hover:bg-purple-50 dark:hover:bg-purple-500/10
+            hover:border-purple-300 dark:hover:border-purple-500/30
+            hover:text-purple-700 dark:hover:text-purple-300
             transition-all duration-200
             hover:scale-105 active:scale-95
             flex items-center justify-center
@@ -556,9 +556,9 @@ const ToolChat: React.FC<ToolChatProps> = ({
     return (
       <div className="w-full h-[calc(100dvh-80px)] md:h-[calc(100vh-2rem)] flex items-center justify-center">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-rose-500 rounded-full animate-bounce" />
-          <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-          <div className="w-2 h-2 bg-rose-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
+          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+          <div className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
         </div>
       </div>
     );
@@ -624,7 +624,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
                   : 'bg-zinc-900 dark:bg-white text-white dark:text-black'
               }`}>
                 {msg.role === 'assistant'
-                  ? <Sparkles size={14} className="text-rose-600 dark:text-rose-400" />
+                  ? <Sparkles size={14} className="text-purple-600 dark:text-purple-400" />
                   : <User size={14} />
                 }
               </div>
@@ -634,7 +634,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
                 <div className={`relative px-3.5 py-2.5 md:px-4 md:py-3 pb-6 rounded-xl md:rounded-2xl shadow-sm text-[13px] md:text-[15px] leading-[1.6] overflow-hidden ${
                   msg.role === 'assistant'
                     ? 'bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-xl shadow-zinc-200/50 dark:shadow-none'
-                    : 'bg-gradient-to-br from-rose-600 to-pink-600 text-white rounded-tr-sm shadow-lg shadow-rose-500/30 border border-white/10'
+                    : 'bg-gradient-to-br from-purple-600 to-violet-600 text-white rounded-tr-sm shadow-lg shadow-purple-500/30 border border-white/10'
                 }`}>
                   {msg.role === 'assistant' && (
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${config.gradient} opacity-30`} />
@@ -667,12 +667,12 @@ const ToolChat: React.FC<ToolChatProps> = ({
               className="flex items-start gap-3"
             >
               <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-md">
-                <Sparkles size={14} className="text-rose-600 dark:text-rose-400" />
+                <Sparkles size={14} className="text-purple-600 dark:text-purple-400" />
               </div>
               <div className="px-4 py-3 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl rounded-tl-sm border border-zinc-200 dark:border-white/5 flex items-center gap-2 shadow-sm">
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-rose-500 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-2 h-2 bg-rose-400 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-2 h-2 bg-rose-300 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-purple-500 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-2 h-2 bg-purple-400 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-2 h-2 bg-purple-300 rounded-full" />
               </div>
             </motion.div>
           )}
@@ -685,7 +685,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
         <div className="max-w-4xl mx-auto">
           <form
             onSubmit={onFormSubmit}
-            className="relative rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-white/10 focus-within:border-rose-400 dark:focus-within:border-rose-500/50 transition-all duration-200 ring-0 focus-within:ring-2 focus-within:ring-rose-500/20"
+            className="relative rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-white/10 focus-within:border-purple-400 dark:focus-within:border-purple-500/50 transition-all duration-200 ring-0 focus-within:ring-2 focus-within:ring-purple-500/20"
           >
 
             <div className="relative flex items-end p-1.5 md:p-2 bg-white dark:bg-zinc-900 rounded-2xl">

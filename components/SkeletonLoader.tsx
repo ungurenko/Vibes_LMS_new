@@ -143,9 +143,9 @@ export const ViewSkeleton: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px] w-full">
     <div className="flex flex-col items-center gap-4">
       <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-rose-500 rounded-full animate-bounce" />
-        <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-        <div className="w-2 h-2 bg-rose-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
+        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+        <div className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
       </div>
       <span className="text-sm text-zinc-400">Загрузка...</span>
     </div>

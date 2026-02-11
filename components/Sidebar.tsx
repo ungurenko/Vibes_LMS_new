@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                         alt="VIBES Logo" 
                         className="h-24 w-auto object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-sm dark:brightness-0 dark:invert"
                     />
-                    <div className="absolute -bottom-2 right-0 text-[9px] font-bold tracking-[0.2em] text-rose-500 uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute -bottom-2 right-0 text-[9px] font-bold tracking-[0.2em] text-purple-500 uppercase opacity-0 group-hover:opacity-100 transition-opacity">
                         Academy
                     </div>
                  </div>
@@ -171,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200`}
               >
-                <div className={`relative z-10 p-1.5 rounded-lg transition-colors duration-300 group-hover:text-rose-500 dark:group-hover:text-rose-300`}>
+                <div className={`relative z-10 p-1.5 rounded-lg transition-colors duration-300 group-hover:text-purple-500 dark:group-hover:text-purple-300`}>
                   <item.icon size={20} strokeWidth={2} />
                 </div>
                 <span className={`relative z-10 text-base font-medium tracking-wide`}>{item.label}</span>
@@ -207,16 +207,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
               )}
               <div className={`relative z-10 p-1.5 rounded-lg transition-colors duration-300 ${
                   isActive 
-                  ? 'text-rose-600 dark:text-rose-400' 
-                  : 'group-hover:text-rose-500 dark:group-hover:text-rose-300'
+                  ? 'text-purple-600 dark:text-purple-400' 
+                  : 'group-hover:text-purple-500 dark:group-hover:text-purple-300'
               }`}>
-                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]" : ""} />
+                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "drop-shadow-[0_0_8px_rgba(168,85,247,0.3)]" : ""} />
               </div>
               <span className={`relative z-10 text-base font-medium tracking-wide ${isActive ? 'font-bold' : ''}`}>{item.label}</span>
               {isActive && (
                   <motion.div
                     layoutId="activeTabIndicator"
-                    className="absolute left-0 w-0.5 h-4 bg-rose-600 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.4)]"
+                    className="absolute left-0 w-0.5 h-4 bg-purple-600 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.4)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -240,7 +240,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 uppercase tracking-wider">
                  {theme === 'dark' ? 'Тёмная' : 'Светлая'}
                </span>
-               <div className="p-1.5 rounded-lg bg-white dark:bg-black/40 text-rose-600 dark:text-rose-400 shadow-sm border border-zinc-100 dark:border-white/5 group-hover:scale-110 transition-transform">
+               <div className="p-1.5 rounded-lg bg-white dark:bg-black/40 text-purple-600 dark:text-purple-400 shadow-sm border border-zinc-100 dark:border-white/5 group-hover:scale-110 transition-transform">
                  {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
                </div>
             </Button>
@@ -250,7 +250,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
               variant="outline"
               size="icon"
               onClick={toggleSound}
-              className="rounded-2xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400"
+              className="rounded-2xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400"
               title={isEnabled ? "Выключить звук" : "Включить звук"}
             >
                {isEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}

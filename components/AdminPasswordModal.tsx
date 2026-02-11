@@ -95,7 +95,7 @@ const AdminPasswordModal: React.FC<AdminPasswordModalProps> = ({ isOpen, onClose
                       className={`w-full px-4 py-3.5 rounded-2xl border-2 bg-zinc-50 dark:bg-white/5 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none transition-colors ${
                         error
                           ? 'border-red-500 dark:border-red-500 focus:border-red-500'
-                          : 'border-zinc-200 dark:border-white/10 focus:border-rose-500 dark:focus:border-rose-500'
+                          : 'border-zinc-200 dark:border-white/10 focus:border-purple-500 dark:focus:border-purple-500'
                       }`}
                     />
                   </div>

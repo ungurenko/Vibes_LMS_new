@@ -37,7 +37,7 @@ export const STYLES_DATA: StyleCard[] = [
   {
     id: '2',
     name: 'Neobrutalism',
-    gradient: 'from-yellow-300 to-pink-500',
+    gradient: 'from-yellow-300 to-violet-500',
     image: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1000&auto=format&fit=crop',
     description: 'Яркий, честный, дерзкий',
     longDescription: 'Современная интерпретация брутализма. Высокий контраст, кислотные цвета, жесткие тени без размытия, толстые обводки. Эстетика "уродства", которая привлекает внимание. Подходит для стартапов, креативных агентств и смелых блогов.',
@@ -59,7 +59,7 @@ export const STYLES_DATA: StyleCard[] = [
   {
     id: '4',
     name: 'Anti-Design',
-    gradient: 'from-lime-400 to-pink-600',
+    gradient: 'from-lime-400 to-violet-600',
     image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop',
     description: 'Хаос и самовыражение',
     longDescription: 'Стиль, нарушающий правила. Конфликтующие цвета, растянутые шрифты, наложение элементов. Эстетика бунта и Gen Z энергии. Дизайн как высказывание: "Мы не пытаемся быть красивыми".',

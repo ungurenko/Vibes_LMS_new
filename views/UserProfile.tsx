@@ -302,7 +302,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUserUpdate }) => {
                               <Button
                                   onClick={handleSave}
                                   disabled={isSaving}
-                                  className="bg-rose-600 text-white hover:bg-rose-500 shadow-lg shadow-rose-500/20"
+                                  className="bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-500/20"
                               >
                                   {isSaving ? (
                                       <>

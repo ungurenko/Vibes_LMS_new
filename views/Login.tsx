@@ -71,8 +71,8 @@ const Login: React.FC<LoginProps> = ({
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
       {/* Background Ambient */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-rose-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-pink-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-violet-500/10 rounded-full blur-[120px]" />
       </div>
 
       <motion.div 
@@ -117,13 +117,13 @@ const Login: React.FC<LoginProps> = ({
                         <div>
                             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Email</label>
                             <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={18} />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                 <input 
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                                     placeholder="name@example.com"
                                 />
                             </div>
@@ -131,19 +131,19 @@ const Login: React.FC<LoginProps> = ({
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                     <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300">Пароль</label>
-                                    <button type="button" onClick={() => setView('forgot')} className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">
+                                    <button type="button" onClick={() => setView('forgot')} className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline">
                                         Забыл пароль?
                                     </button>
                             </div>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={18} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
                                     minLength={8}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
+                                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                                     placeholder="Минимум 8 символов"
                                 />
                                 <button
@@ -159,7 +159,7 @@ const Login: React.FC<LoginProps> = ({
                         <label className="flex items-center gap-3 mb-2 cursor-pointer group py-2">
                             <div className="relative w-6 h-6">
                                 <input type="checkbox" id="remember" className="peer sr-only" />
-                                <div className="absolute inset-0 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 peer-checked:bg-rose-600 peer-checked:border-rose-600 transition-all group-hover:border-rose-400" />
+                                <div className="absolute inset-0 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 peer-checked:bg-purple-600 peer-checked:border-purple-600 transition-all group-hover:border-purple-400" />
                                 <Check size={14} className="absolute inset-0 m-auto text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                             </div>
                             <span className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">Запомнить меня</span>
@@ -193,7 +193,7 @@ const Login: React.FC<LoginProps> = ({
                         className="space-y-4"
                     >
                         <div className="text-center mb-4">
-                            <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600 dark:text-rose-400">
+                            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
                                 <RefreshCcw size={32} />
                             </div>
                         </div>
@@ -204,14 +204,14 @@ const Login: React.FC<LoginProps> = ({
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
+                                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                                 placeholder="name@example.com"
                             />
                         </div>
                         <button 
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-4 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-500 transition-colors disabled:opacity-70 shadow-lg shadow-rose-500/20"
+                            className="w-full py-4 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-500 transition-colors disabled:opacity-70 shadow-lg shadow-purple-500/20"
                         >
                             {isLoading ? 'Отправка...' : 'Отправить ссылку'}
                         </button>
@@ -255,7 +255,7 @@ const Login: React.FC<LoginProps> = ({
                         <button 
                             type="button" 
                             onClick={() => setView('login')} 
-                            className="text-rose-600 dark:text-rose-400 font-bold hover:underline"
+                            className="text-purple-600 dark:text-purple-400 font-bold hover:underline"
                         >
                             Вернуться ко входу
                         </button>
@@ -275,14 +275,14 @@ const Login: React.FC<LoginProps> = ({
                         <div>
                             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Новый пароль</label>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={18} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                 <input 
                                     type={showNewPassword ? "text" : "password"}
                                     required
                                     minLength={8}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
+                                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                                     placeholder="Минимум 8 символов"
                                 />
                                 <button
@@ -297,7 +297,7 @@ const Login: React.FC<LoginProps> = ({
                         <div>
                             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Повторите пароль</label>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-rose-500 transition-colors" size={18} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-500 transition-colors" size={18} />
                                 <input 
                                     type={showConfirmPassword ? "text" : "password"}
                                     required
@@ -306,7 +306,7 @@ const Login: React.FC<LoginProps> = ({
                                     className={`w-full pl-11 pr-12 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border transition-all focus:outline-none focus:ring-2 ${
                                         confirmNewPassword && newPassword !== confirmNewPassword 
                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                                        : 'border-zinc-200 dark:border-white/10 focus:border-rose-500 focus:ring-rose-500/20'
+                                        : 'border-zinc-200 dark:border-white/10 focus:border-purple-500 focus:ring-purple-500/20'
                                     }`}
                                     placeholder="••••••••"
                                 />
@@ -335,7 +335,7 @@ const Login: React.FC<LoginProps> = ({
         {view === 'login' && (
             <div className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
                 Нет аккаунта? Доступ выдаётся после покупки курса.<br/>
-                <a href="#" className="text-rose-600 dark:text-rose-400 font-bold hover:underline">Узнать о курсе VIBES</a>
+                <a href="#" className="text-purple-600 dark:text-purple-400 font-bold hover:underline">Узнать о курсе VIBES</a>
             </div>
         )}
       </motion.div>

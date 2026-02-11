@@ -45,7 +45,7 @@ const StyleLibrary: React.FC = () => {
       <div className="mb-12">
         <h2 className="font-display text-4xl md:text-6xl font-bold text-zinc-900 dark:text-white mb-6 leading-tight">
           Библиотека <br />
-          <span className="text-rose-600 dark:text-rose-400">Стилей</span>
+          <span className="text-purple-600 dark:text-purple-400">Стилей</span>
         </h2>
         <p className="text-zinc-500 dark:text-zinc-400 max-w-xl text-lg md:text-xl font-light">
           Выбери визуальный стиль для своего проекта. Кликни на карточку, чтобы посмотреть детали и скопировать промпт.
@@ -61,7 +61,7 @@ const StyleLibrary: React.FC = () => {
             { step: '03', title: 'Создавай', text: 'Вставь промпт в AI Studio вместе с описанием задачи.', icon: Sparkles },
           ].map((item) => (
             <div key={item.step} className="flex items-start gap-4 p-5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5">
-              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
                 <item.icon size={20} />
               </div>
               <div>
@@ -120,7 +120,7 @@ const StyleLibrary: React.FC = () => {
               key={style.id}
               onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
             >
-              <Card className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-rose-900/10 dark:hover:shadow-rose-900/20 flex flex-col h-[400px] cursor-pointer p-0 py-0 gap-0 shadow-none">
+              <Card className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-purple-900/10 dark:hover:shadow-purple-900/20 flex flex-col h-[400px] cursor-pointer p-0 py-0 gap-0 shadow-none">
                 {/* Image Area */}
                 <div className="relative h-[65%] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                   <img
@@ -148,7 +148,7 @@ const StyleLibrary: React.FC = () => {
                         e.stopPropagation();
                         handleCopy(style.id, style.prompt);
                       }}
-                      className="rounded-full bg-rose-600 border border-rose-500 text-white hover:bg-rose-500 hover:scale-110 shadow-lg"
+                      className="rounded-full bg-purple-600 border border-purple-500 text-white hover:bg-purple-500 hover:scale-110 shadow-lg"
                       title="Скопировать промпт"
                     >
                       {copiedId === style.id ? <Check size={24} /> : <Copy size={24} />}
@@ -164,7 +164,7 @@ const StyleLibrary: React.FC = () => {
                 {/* Content Area */}
                 <CardContent className="flex-1 p-6 flex flex-col justify-between relative bg-white dark:bg-zinc-900">
                   <div>
-                    <h3 className="font-display text-2xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                    <h3 className="font-display text-2xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                       {style.name}
                     </h3>
                     <p className="text-zinc-500 dark:text-zinc-400 text-xs md:text-sm leading-relaxed line-clamp-2 mb-3">
@@ -190,7 +190,7 @@ const StyleLibrary: React.FC = () => {
                           e.stopPropagation();
                           handleCopy(style.id, style.prompt);
                         }}
-                        className="bg-rose-600 text-white hover:bg-rose-500 active:scale-95"
+                        className="bg-purple-600 text-white hover:bg-purple-500 active:scale-95"
                         title="Скопировать промпт"
                       >
                         {copiedId === style.id ? <Check size={20} /> : <Copy size={20} />}
@@ -257,7 +257,7 @@ const StyleLibrary: React.FC = () => {
                 <div className="w-full md:w-2/5 p-8 md:p-12 flex flex-col bg-white dark:bg-zinc-900 overflow-y-auto">
                   <div className="hidden md:block">
                     <div className="flex items-center gap-3 mb-4">
-                      <Badge variant="secondary" className="rounded-full bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-xs font-bold uppercase tracking-wider">
+                      <Badge variant="secondary" className="rounded-full bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300 text-xs font-bold uppercase tracking-wider">
                         {selectedStyle.category}
                       </Badge>
                     </div>
@@ -266,7 +266,7 @@ const StyleLibrary: React.FC = () => {
                     </h3>
                   </div>
 
-                  <div className="prose prose-zinc dark:prose-invert mb-8">
+                  <div className="prose ppurple-zinc dark:ppurple-invert mb-8">
                     <h4 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-2">Описание</h4>
                     <p className={`text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
                       {selectedStyle.longDescription || selectedStyle.description}
@@ -274,7 +274,7 @@ const StyleLibrary: React.FC = () => {
                     {(selectedStyle.longDescription || selectedStyle.description).length > 150 && (
                       <button
                         onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                        className="text-rose-600 dark:text-rose-400 text-sm font-medium mt-2 hover:underline"
+                        className="text-purple-600 dark:text-purple-400 text-sm font-medium mt-2 hover:underline"
                       >
                         {isDescriptionExpanded ? 'Свернуть' : 'Показать ещё'}
                       </button>

@@ -17,7 +17,7 @@ const RoadmapsTab: React.FC<RoadmapsTabProps> = ({ roadmaps, onEdit, onDelete })
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {roadmaps.map((map) => (
-        <div key={map.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 p-6 hover:border-rose-300 dark:hover:border-rose-500/30 transition-all shadow-sm group">
+        <div key={map.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 p-6 hover:border-purple-300 dark:hover:border-purple-500/30 transition-all shadow-sm group">
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">
               {map.icon}

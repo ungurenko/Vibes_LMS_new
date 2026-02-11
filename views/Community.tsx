@@ -129,7 +129,7 @@ const Community: React.FC = () => {
                      placeholder="Поиск..."
                      value={search}
                      onChange={(e) => setSearch(e.target.value)}
-                     className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-rose-500 text-sm"
+                     className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-purple-500 text-sm"
                    />
                 </div>
                 <div className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl flex">
@@ -142,7 +142,7 @@ const Community: React.FC = () => {
                    </button>
                    <button 
                      onClick={() => setSortBy('new')}
-                     className={`p-1.5 rounded-lg transition-all ${sortBy === 'new' ? 'bg-white dark:bg-zinc-700 shadow-sm text-rose-500' : 'text-zinc-400'}`}
+                     className={`p-1.5 rounded-lg transition-all ${sortBy === 'new' ? 'bg-white dark:bg-zinc-700 shadow-sm text-purple-500' : 'text-zinc-400'}`}
                      title="Новое"
                    >
                      <Clock size={18} />
@@ -163,7 +163,7 @@ const Community: React.FC = () => {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   key={project.id}
-                  className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30 hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-500"
+                  className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500"
                >
                   {/* Image Area */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -199,7 +199,7 @@ const Community: React.FC = () => {
                   <div className="p-5">
                      <div className="flex justify-between items-start mb-3">
                         <div>
-                           <h3 className="font-display font-bold text-zinc-900 dark:text-white text-lg leading-tight mb-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                           <h3 className="font-display font-bold text-zinc-900 dark:text-white text-lg leading-tight mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                              {project.title}
                            </h3>
                            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">{project.description}</p>
@@ -281,32 +281,32 @@ const Community: React.FC = () => {
                      <form onSubmit={handleAddProject} className="space-y-5">
                         <div>
                            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Название проекта</label>
-                           <input type="text" placeholder="Мой крутой лендинг" className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500" required />
+                           <input type="text" placeholder="Мой крутой лендинг" className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500" required />
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                            <div>
                               <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Категория</label>
-                              <select className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500">
+                              <select className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500">
                                  {CATEGORIES.filter(c => c.id !== 'Все').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                               </select>
                            </div>
                            <div>
                               <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Ссылка на демо</label>
-                              <input type="url" placeholder="https://..." className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500" required />
+                              <input type="url" placeholder="https://..." className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500" required />
                            </div>
                         </div>
 
                         <div>
                            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Краткое описание</label>
-                           <textarea rows={3} placeholder="О чем этот проект? Какие технологии использовал?" className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500 resize-none" required></textarea>
+                           <textarea rows={3} placeholder="О чем этот проект? Какие технологии использовал?" className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 resize-none" required></textarea>
                         </div>
 
                         <div>
                            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Скриншот</label>
-                           <label className="flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer group">
-                              <Upload size={24} className="text-zinc-400 group-hover:text-rose-500 mb-2" />
-                              <span className="text-sm font-bold text-zinc-500 group-hover:text-rose-600 dark:text-zinc-400">Загрузить изображение</span>
+                           <label className="flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors cursor-pointer group">
+                              <Upload size={24} className="text-zinc-400 group-hover:text-purple-500 mb-2" />
+                              <span className="text-sm font-bold text-zinc-500 group-hover:text-purple-600 dark:text-zinc-400">Загрузить изображение</span>
                               <input type="file" className="hidden" accept="image/*" />
                            </label>
                         </div>

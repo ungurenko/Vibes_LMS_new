@@ -33,11 +33,11 @@ const DEFAULT_QUICK_QUESTIONS = [
 
 const FormattedText: React.FC<{ text: string }> = ({ text }) => {
   return (
-    <div className="markdown-body prose prose-zinc dark:prose-invert max-w-none prose-p:leading-7 prose-p:mb-4 prose-pre:m-0 prose-pre:p-0 prose-pre:bg-transparent text-sm md:text-base break-words">
+    <div className="markdown-body prose ppurple-zinc dark:ppurple-invert max-w-none ppurple-p:leading-7 ppurple-p:mb-4 ppurple-pre:m-0 ppurple-pre:p-0 ppurple-pre:bg-transparent text-sm md:text-base break-words">
       <ReactMarkdown
         components={{
           a: ({ node, ...props }) => (
-            <a target="_blank" rel="noopener noreferrer" className="text-rose-600 dark:text-rose-400 hover:underline font-bold break-all" {...props} />
+            <a target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 hover:underline font-bold break-all" {...props} />
           ),
           code: ({ node, inline, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || '');
@@ -46,16 +46,16 @@ const FormattedText: React.FC<{ text: string }> = ({ text }) => {
             return isBlock ? (
               <CodeBlock code={String(children).replace(/\n$/, '')} language={match ? match[1] : 'text'} />
             ) : (
-              <code className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded px-1.5 py-0.5 font-mono text-xs md:text-sm text-rose-700 dark:text-rose-300 break-words" {...props}>
+              <code className="bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 rounded px-1.5 py-0.5 font-mono text-xs md:text-sm text-purple-700 dark:text-purple-300 break-words" {...props}>
                 {children}
               </code>
             );
           },
           ul: ({ node, ...props }) => (
-            <ul className="list-disc list-outside ml-4 mb-4 space-y-1 marker:text-rose-500" {...props} />
+            <ul className="list-disc list-outside ml-4 mb-4 space-y-1 marker:text-purple-500" {...props} />
           ),
           ol: ({ node, ...props }) => (
-            <ol className="list-decimal list-outside ml-4 mb-4 space-y-1 marker:text-rose-500 font-medium" {...props} />
+            <ol className="list-decimal list-outside ml-4 mb-4 space-y-1 marker:text-purple-500 font-medium" {...props} />
           ),
           li: ({ node, ...props }) => (
             <li className="pl-1" {...props} />
@@ -69,7 +69,7 @@ const FormattedText: React.FC<{ text: string }> = ({ text }) => {
           strong: ({ node, ...props }) => <strong className="font-bold text-zinc-900 dark:text-white" {...props} />,
           em: ({ node, ...props }) => <em className="italic text-zinc-800 dark:text-zinc-300" {...props} />,
           blockquote: ({ node, ...props }) => (
-            <blockquote className="border-l-4 border-rose-500 pl-4 py-2 my-4 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
+            <blockquote className="border-l-4 border-purple-500 pl-4 py-2 my-4 bg-zinc-50 dark:bg-white/5 rounded-r-lg italic text-zinc-600 dark:text-zinc-400" {...props} />
           )
         }}
       >
@@ -334,7 +334,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
       <header className="hidden md:flex px-8 py-4 items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 z-20 shrink-0">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Bot size={20} className="text-white" />
             </div>
             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse"></div>
@@ -386,7 +386,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
                   : 'bg-zinc-900 dark:bg-white text-white dark:text-black'
                 }`}>
                 {msg.role === 'assistant'
-                  ? <Sparkles size={16} className="text-rose-600 dark:text-rose-400" />
+                  ? <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
                   : <User size={16} />
                 }
               </div>
@@ -395,10 +395,10 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
               <div className={`flex flex-col max-w-[85%] md:max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`relative px-4 py-3 md:px-6 md:py-5 rounded-2xl md:rounded-3xl shadow-sm text-sm md:text-base leading-relaxed overflow-hidden ${msg.role === 'assistant'
                     ? 'bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-xl shadow-zinc-200/50 dark:shadow-none'
-                    : 'bg-gradient-to-br from-rose-600 to-pink-600 text-white rounded-tr-sm shadow-lg shadow-rose-500/30 border border-white/10'
+                    : 'bg-gradient-to-br from-purple-600 to-violet-600 text-white rounded-tr-sm shadow-lg shadow-purple-500/30 border border-white/10'
                   }`}>
                   {msg.role === 'assistant' && (
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-transparent opacity-30"></div>
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-violet-500 to-transparent opacity-30"></div>
                   )}
 
                   {msg.role === 'assistant' ? (
@@ -421,12 +421,12 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
               className="flex items-start gap-4"
             >
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-md">
-                <Sparkles size={16} className="text-rose-600 dark:text-rose-400" />
+                <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
               </div>
               <div className="px-5 py-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-3xl rounded-tl-sm border border-zinc-200 dark:border-white/5 flex items-center gap-2 shadow-sm">
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-rose-500 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-2 h-2 bg-rose-400 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-2 h-2 bg-rose-300 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-purple-500 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-2 h-2 bg-purple-400 rounded-full" />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-2 h-2 bg-purple-300 rounded-full" />
               </div>
             </motion.div>
           )}
@@ -451,9 +451,9 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
                 <button
                   key={idx}
                   onClick={() => handleSend(q)}
-                  className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-rose-400 dark:hover:border-rose-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-300 transition-all shadow-sm hover:shadow-rose-500/10 flex items-center gap-2 group"
+                  className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-purple-400 dark:hover:border-purple-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-purple-600 dark:hover:text-purple-300 transition-all shadow-sm hover:shadow-purple-500/10 flex items-center gap-2 group"
                 >
-                  <Zap size={14} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
+                  <Zap size={14} className="text-purple-400 group-hover:text-purple-500 transition-colors" />
                   {q}
                 </button>
               ))}
@@ -463,10 +463,10 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
           {/* Input Field */}
           <form
             onSubmit={onFormSubmit}
-            className="relative group rounded-3xl bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 border border-zinc-200 dark:border-white/10 focus-within:border-rose-500/50 dark:focus-within:border-rose-500/50 transition-all duration-300 ring-0 focus-within:ring-4 focus-within:ring-rose-500/10"
+            className="relative group rounded-3xl bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 border border-zinc-200 dark:border-white/10 focus-within:border-purple-500/50 dark:focus-within:border-purple-500/50 transition-all duration-300 ring-0 focus-within:ring-4 focus-within:ring-purple-500/10"
           >
             {/* Glow Effect */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-600 to-pink-600 rounded-3xl opacity-0 group-focus-within:opacity-30 blur-md transition-opacity duration-500 pointer-events-none" />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-violet-600 rounded-3xl opacity-0 group-focus-within:opacity-30 blur-md transition-opacity duration-500 pointer-events-none" />
 
             <div className="relative flex items-end p-1.5 md:p-2 bg-white dark:bg-zinc-900 rounded-3xl">
               <textarea

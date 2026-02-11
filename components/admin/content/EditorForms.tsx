@@ -96,7 +96,7 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ editingItem, updateField
                   key={cohort.id}
                   className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                     isChecked
-                      ? 'border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10'
+                      ? 'border-purple-300 dark:border-purple-500/30 bg-purple-50 dark:bg-purple-500/10'
                       : 'border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20'
                   }`}
                 >
@@ -104,7 +104,7 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ editingItem, updateField
                     checked={isChecked}
                     onCheckedChange={() => toggleCohort(cohort.id)}
                   />
-                  <span className={`text-sm font-medium ${isChecked ? 'text-rose-700 dark:text-rose-300' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                  <span className={`text-sm font-medium ${isChecked ? 'text-purple-700 dark:text-purple-300' : 'text-zinc-700 dark:text-zinc-300'}`}>
                     {cohort.name}
                   </span>
                   {cohort.studentCount !== undefined && (
@@ -193,7 +193,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
     <div className="pt-6 border-t border-zinc-100 dark:border-white/5">
       <div className="flex items-center justify-between mb-4">
         <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-          <LinkIcon size={16} className="text-rose-500" />
+          <LinkIcon size={16} className="text-purple-500" />
           Материалы урока
         </label>
         <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full">
@@ -212,7 +212,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
                 <select
                   value={material.type || 'link'}
                   onChange={(e) => updateMaterial(index, 'type', e.target.value)}
-                  className="px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500"
+                  className="px-2 py-1.5 text-xs rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500"
                 >
                   <option value="link">Ссылка</option>
                   <option value="pdf">Документ</option>
@@ -225,17 +225,17 @@ export const LessonForm: React.FC<LessonFormProps> = ({
                   placeholder="Название"
                   value={material.title || ''}
                   onChange={(e) => updateMaterial(index, 'title', e.target.value)}
-                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500"
+                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500"
                 />
                 <input
                   type="text"
                   placeholder="URL"
                   value={material.url || ''}
                   onChange={(e) => updateMaterial(index, 'url', e.target.value)}
-                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500"
+                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500"
                 />
                 {material.type === 'pdf' && (
-                  <label className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${isUploadingImage ? 'bg-zinc-200 dark:bg-zinc-600 cursor-not-allowed' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30 cursor-pointer'}`}>
+                  <label className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${isUploadingImage ? 'bg-zinc-200 dark:bg-zinc-600 cursor-not-allowed' : 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30 cursor-pointer'}`}>
                     <Upload size={12} className={isUploadingImage ? 'animate-spin' : ''} />
                     {isUploadingImage ? '...' : 'Файл'}
                     <input
@@ -304,7 +304,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
                   placeholder="Текст задания..."
                   value={task.text || ''}
                   onChange={(e) => updateTask(index, e.target.value)}
-                  className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-rose-500"
+                  className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500"
                 />
                 <button
                   type="button"
@@ -401,7 +401,7 @@ export const StyleForm: React.FC<StyleFormProps> = ({ editingItem, updateField, 
       label="Градиент (Tailwind классы)"
       value={editingItem?.gradient || ''}
       onChange={(e) => updateField('gradient', e.target.value)}
-      placeholder="from-amber-50 to-rose-50"
+      placeholder="from-amber-50 to-purple-50"
     />
     <Input
       label="Теги (через запятую)"
@@ -608,7 +608,7 @@ export const RoadmapForm: React.FC<EditorFormProps> = ({ editingItem, updateFiel
                   newSteps[index] = { ...step, title: e.target.value };
                   updateField('steps', newSteps);
                 }}
-                className="flex-1 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-rose-500 focus:outline-none px-2 py-1 font-medium transition-colors"
+                className="flex-1 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-purple-500 focus:outline-none px-2 py-1 font-medium transition-colors"
               />
 
               {/* Actions */}
@@ -665,13 +665,13 @@ export const RoadmapForm: React.FC<EditorFormProps> = ({ editingItem, updateFiel
                   newSteps[index] = { ...step, description: e.target.value };
                   updateField('steps', newSteps);
                 }}
-                className="w-full bg-white dark:bg-zinc-900/50 rounded-lg p-2 text-sm border border-zinc-200 dark:border-white/5 focus:outline-none focus:border-rose-500/50"
+                className="w-full bg-white dark:bg-zinc-900/50 rounded-lg p-2 text-sm border border-zinc-200 dark:border-white/5 focus:outline-none focus:border-purple-500/50"
               />
             </div>
 
             {/* Row 3: Links */}
             <div className="pl-9 flex gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-white dark:bg-zinc-900/50 rounded-lg px-2 border border-zinc-200 dark:border-white/5 focus-within:border-rose-500/50">
+              <div className="flex-1 flex items-center gap-2 bg-white dark:bg-zinc-900/50 rounded-lg px-2 border border-zinc-200 dark:border-white/5 focus-within:border-purple-500/50">
                 <LinkIcon size={14} className="text-zinc-400" />
                 <input
                   type="text"
@@ -685,7 +685,7 @@ export const RoadmapForm: React.FC<EditorFormProps> = ({ editingItem, updateFiel
                   className="flex-1 bg-transparent py-1.5 text-xs focus:outline-none"
                 />
               </div>
-              <div className="flex-1 flex items-center gap-2 bg-white dark:bg-zinc-900/50 rounded-lg px-2 border border-zinc-200 dark:border-white/5 focus-within:border-rose-500/50">
+              <div className="flex-1 flex items-center gap-2 bg-white dark:bg-zinc-900/50 rounded-lg px-2 border border-zinc-200 dark:border-white/5 focus-within:border-purple-500/50">
                 <span className="text-xs font-bold text-zinc-400">Текст:</span>
                 <input
                   type="text"

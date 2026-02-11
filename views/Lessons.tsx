@@ -214,7 +214,7 @@ const Lessons: React.FC = () => {
                                 ) : (
                                     /* Placeholder Content if no video URL */
                                     <div className="absolute inset-0 bg-zinc-900 flex flex-col items-center justify-center">
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-rose-900/20 to-zinc-900 opacity-50" />
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/20 to-zinc-900 opacity-50" />
 
                                         <motion.button
                                             whileHover={{ scale: 1.1 }}
@@ -328,7 +328,7 @@ const Lessons: React.FC = () => {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="prose prose-zinc dark:prose-invert max-w-none"
+                                                className="prose ppurple-zinc dark:ppurple-invert max-w-none"
                                             >
                                                 <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
                                                     {activeLesson.description}
@@ -348,7 +348,7 @@ const Lessons: React.FC = () => {
                                                 {activeLesson.materials.length > 0 && (
                                                     <div>
                                                         <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                                                            <FileText size={18} className="text-rose-500" />
+                                                            <FileText size={18} className="text-purple-500" />
                                                             Файлы и ссылки
                                                         </h3>
                                                         <div className="grid sm:grid-cols-2 gap-4">
@@ -356,9 +356,9 @@ const Lessons: React.FC = () => {
                                                                 <a
                                                                     key={mat.id}
                                                                     href={mat.url}
-                                                                    className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30 bg-white dark:bg-zinc-900 hover:shadow-lg hover:shadow-rose-500/5 transition-all group"
+                                                                    className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30 bg-white dark:bg-zinc-900 hover:shadow-lg hover:shadow-purple-500/5 transition-all group"
                                                                 >
-                                                                    <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center text-zinc-400 group-hover:text-rose-500 group-hover:bg-rose-50 dark:group-hover:bg-rose-500/10 transition-colors">
+                                                                    <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center text-zinc-400 group-hover:text-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-500/10 transition-colors">
                                                                         {mat.type === 'pdf' ? <Download size={20} /> : <ExternalLink size={20} />}
                                                                     </div>
                                                                     <div>
@@ -421,7 +421,7 @@ const Lessons: React.FC = () => {
 
                         {/* Progress Visual */}
                         <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full mb-8 overflow-hidden">
-                            <div className="h-full bg-rose-500 w-[14%]" />
+                            <div className="h-full bg-purple-500 w-[14%]" />
                         </div>
 
                         <div className="space-y-8">
@@ -479,7 +479,7 @@ const Lessons: React.FC = () => {
                                                 >
                                                     {/* Timeline Node */}
                                                     <div className={`relative z-10 shrink-0 w-10 h-10 rounded-full border-[3px] flex items-center justify-center transition-colors bg-white dark:bg-zinc-950 ${isActive
-                                                            ? 'border-rose-500 text-rose-600'
+                                                            ? 'border-purple-500 text-purple-600'
                                                             : isCompleted
                                                                 ? 'border-emerald-500 text-emerald-500'
                                                                 : 'border-zinc-200 dark:border-zinc-800 text-zinc-300 dark:text-zinc-700'
@@ -489,14 +489,14 @@ const Lessons: React.FC = () => {
                                                         ) : isCompleted ? (
                                                             <Check size={16} strokeWidth={3} />
                                                         ) : isActive ? (
-                                                            <div className="w-3 h-3 bg-rose-500 rounded-full animate-pulse" />
+                                                            <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
                                                         ) : (
                                                             <span className="text-xs font-bold">{lIdx + 1}</span>
                                                         )}
                                                     </div>
 
                                                     <div className="pt-1.5 flex-1">
-                                                        <span className={`block text-sm font-bold leading-tight mb-1 transition-colors ${isActive ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white'
+                                                        <span className={`block text-sm font-bold leading-tight mb-1 transition-colors ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white'
                                                             }`}>
                                                             {lesson.title}
                                                         </span>

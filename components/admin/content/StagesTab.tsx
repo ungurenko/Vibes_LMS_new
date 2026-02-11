@@ -36,8 +36,8 @@ const StagesTab: React.FC<StagesTabProps> = ({
           {/* Stage Header */}
           <div className="p-6 flex items-center justify-between border-b border-zinc-100 dark:border-white/5">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
-                <Target className="text-rose-600 dark:text-rose-400" size={20} />
+              <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                <Target className="text-purple-600 dark:text-purple-400" size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ const StagesTab: React.FC<StagesTabProps> = ({
               {!stage.isActive && (
                 <button
                   onClick={() => onSetActive(stage.id)}
-                  className="px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
                 >
                   Сделать активным
                 </button>
@@ -123,11 +123,11 @@ const StagesTab: React.FC<StagesTabProps> = ({
                 <input
                   type="text"
                   placeholder="Новая задача..."
-                  className="flex-1 px-4 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-transparent focus:border-rose-500 rounded-xl outline-none transition-colors"
+                  className="flex-1 px-4 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-transparent focus:border-purple-500 rounded-xl outline-none transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-500 transition-colors"
+                  className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-500 transition-colors"
                 >
                   <Plus size={16} />
                 </button>

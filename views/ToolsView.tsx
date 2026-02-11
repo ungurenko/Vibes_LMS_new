@@ -38,7 +38,7 @@ const tools: ToolCardData[] = [
     title: 'Ассистент',
     description: 'Универсальный помощник по вайб-кодингу. Ответит на вопросы, поможет с кодом и ошибками.',
     illustration: '/tools/assistant.png',
-    gradient: 'from-rose-600/30 via-pink-600/20 to-transparent',
+    gradient: 'from-purple-600/30 via-violet-600/20 to-transparent',
     glowColor: 'rose',
     size: 'large'
   },
@@ -71,19 +71,19 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelNa
       onClick={onClick}
       className="group w-full text-left"
     >
-      <Card className="relative min-h-[200px] h-auto md:h-[220px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-rose-500/30 hover:border-rose-500/40 hover:-translate-y-1 p-0 py-0 gap-0">
+      <Card className="relative min-h-[200px] h-auto md:h-[220px] rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-purple-500/30 hover:border-purple-500/40 hover:-translate-y-1 p-0 py-0 gap-0">
         {/* Background gradient */}
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.gradient} opacity-70 group-hover:opacity-90 transition-opacity duration-500`} />
 
         {/* Animated glow */}
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-rose-500/30 rounded-full blur-[80px] group-hover:bg-rose-500/50 transition-all duration-700" />
+        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-purple-500/30 rounded-full blur-[80px] group-hover:bg-purple-500/50 transition-all duration-700" />
 
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col md:flex-row">
           {/* Text content */}
           <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 font-semibold">
+              <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 font-semibold">
                 AI Ментор
               </Badge>
               {modelName && (
@@ -97,7 +97,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelNa
               {tool.title}
               <ChevronRight
                 size={24}
-                className="text-rose-400 group-hover:translate-x-2 transition-transform duration-300"
+                className="text-purple-400 group-hover:translate-x-2 transition-transform duration-300"
               />
             </h3>
             <p className="text-sm text-zinc-200 leading-relaxed max-w-md group-hover:text-white transition-colors">
@@ -120,7 +120,7 @@ const LargeToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; modelNa
         </div>
 
         {/* Decorative corner glow */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/15 rounded-full blur-[60px] group-hover:bg-rose-500/25 transition-all duration-500" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/15 rounded-full blur-[60px] group-hover:bg-purple-500/25 transition-all duration-500" />
       </Card>
     </motion.button>
   );
@@ -222,7 +222,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/25">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
               <Sparkles size={20} className="text-white" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white font-display">

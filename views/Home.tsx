@@ -73,8 +73,8 @@ interface DashboardStage {
 }
 
 const QUICK_ACTIONS = [
-   { label: 'Уроки', tab: 'lessons' as TabId, icon: BookOpen, gradient: 'from-rose-500/30 to-pink-500/30', iconColor: 'text-rose-600 dark:text-rose-400' },
-   { label: 'Инструменты', tab: 'tools' as TabId, icon: Wrench, gradient: 'from-pink-500/30 to-pink-500/30', iconColor: 'text-pink-600 dark:text-pink-400' },
+   { label: 'Уроки', tab: 'lessons' as TabId, icon: BookOpen, gradient: 'from-purple-500/30 to-violet-500/30', iconColor: 'text-purple-600 dark:text-purple-400' },
+   { label: 'Инструменты', tab: 'tools' as TabId, icon: Wrench, gradient: 'from-violet-500/30 to-violet-500/30', iconColor: 'text-violet-600 dark:text-violet-400' },
    { label: 'Промпты', tab: 'prompts' as TabId, icon: MessageSquareText, gradient: 'from-indigo-500/30 to-blue-500/30', iconColor: 'text-indigo-600 dark:text-indigo-400' },
    { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500/30 to-teal-500/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
 ];
@@ -196,7 +196,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                particleCount: 120,
                spread: 80,
                origin: { y: 0.5 },
-               colors: ['#f43f5e', '#ec4899', '#fb7185', '#f9a8d4', '#ffffff']
+               colors: ['#a855f7', '#8b5cf6', '#c084fc', '#d8b4fe', '#ffffff']
             });
          }
       }
@@ -226,24 +226,24 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                className="col-span-12 relative"
             >
                {/* Glow behind hero card */}
-               <div className="absolute -inset-4 bg-gradient-to-r from-rose-500/10 via-pink-500/[0.08] to-indigo-500/10 rounded-[2rem] blur-2xl opacity-60 dark:opacity-40 pointer-events-none" />
-               <div className="relative p-[1px] rounded-3xl bg-gradient-to-r from-rose-500/60 via-pink-500/50 to-pink-500/60 dark:from-rose-400/60 dark:via-pink-400/50 dark:to-pink-400/60">
+               <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-violet-500/[0.08] to-indigo-500/10 rounded-[2rem] blur-2xl opacity-60 dark:opacity-40 pointer-events-none" />
+               <div className="relative p-[1px] rounded-3xl bg-gradient-to-r from-purple-500/60 via-violet-500/50 to-violet-500/60 dark:from-purple-400/60 dark:via-violet-400/50 dark:to-violet-400/60">
                   <div className="bg-white/70 dark:bg-[#0a0a0f]/90 backdrop-blur-2xl rounded-3xl p-6 md:p-8 border border-black/[0.03] dark:border-white/[0.05] shadow-[0_4px_8px_rgba(0,0,0,0.03),0_24px_48px_rgba(0,0,0,0.06)]">
                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                         {/* Left side */}
                         <div className="flex-1 min-w-0">
                            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-2">
                               <span className="text-stone-900 dark:text-stone-50">Привет, </span>
-                              <span className="bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">{userName}</span>
+                              <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{userName}</span>
                               <span className="text-stone-900 dark:text-stone-50">!</span>
                            </h1>
 
                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="secondary" className="text-xs font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 rounded-lg">
+                              <Badge variant="secondary" className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
                                  {activeStage?.weekLabel || 'WEEK 01'}
                               </Badge>
                               {userCohort && (
-                                 <Badge variant="secondary" className="text-xs font-bold text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-500/10 rounded-lg">
+                                 <Badge variant="secondary" className="text-xs font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 rounded-lg">
                                     {userCohort.name}
                                  </Badge>
                               )}
@@ -276,7 +276,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                            <div className="relative flex items-center justify-center">
                               {/* Glow behind ring at high progress */}
                               {overallProgress >= 80 && (
-                                 <div className="absolute inset-[-8px] rounded-full blur-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 animate-pulse-glow" />
+                                 <div className="absolute inset-[-8px] rounded-full blur-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 animate-pulse-glow" />
                               )}
                               <svg width="130" height="130" viewBox="0 0 130 130" className="rotate-[-90deg]">
                                  <circle cx="65" cy="65" r="56" fill="none"
@@ -291,8 +291,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                                     strokeDasharray={`${2 * Math.PI * 56}`} />
                                  <defs>
                                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                       <stop offset="0%" stopColor="#f43f5e" />
-                                       <stop offset="100%" stopColor="#ec4899" />
+                                       <stop offset="0%" stopColor="#a855f7" />
+                                       <stop offset="100%" stopColor="#8b5cf6" />
                                     </linearGradient>
                                  </defs>
                               </svg>
@@ -301,7 +301,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                                     initial={{ opacity: 0, scale: 0.5 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                    className="text-5xl md:text-6xl font-extrabold font-display bg-gradient-to-br from-rose-500 to-pink-500 bg-clip-text text-transparent">
+                                    className="text-5xl md:text-6xl font-extrabold font-display bg-gradient-to-br from-purple-500 to-violet-500 bg-clip-text text-transparent">
                                     {overallProgress}%
                                  </motion.div>
                               </div>
@@ -322,7 +322,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                                  <div className="text-xs text-stone-500">Задачи</div>
                               </div>
                               <div className="text-center">
-                                 <div className="font-mono text-base font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+                                 <div className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 tabular-nums">
                                     {stageProgress}%
                                  </div>
                                  <div className="text-xs text-stone-500">Прогресс</div>
@@ -337,22 +337,22 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
             {/* ===== UPCOMING CALL CARD (col-span-12) ===== */}
             {upcomingCall && (
                <motion.div variants={cardVariants} className="col-span-12">
-                  <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(244,63,94,0.06)] p-4 md:p-5">
+                  <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-4 md:p-5">
                      <div className="flex items-center gap-4">
                         {/* Calendar icon */}
-                        <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-500/15 dark:to-pink-500/15 rounded-2xl flex items-center justify-center flex-shrink-0">
-                           <Calendar size={22} className="text-rose-600 dark:text-rose-400" />
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/15 dark:to-violet-500/15 rounded-2xl flex items-center justify-center flex-shrink-0">
+                           <Calendar size={22} className="text-purple-600 dark:text-purple-400" />
                         </div>
                         {/* Text: label + topic */}
                         <div className="flex-1 min-w-0">
                            <div className="flex items-center gap-2 mb-0.5">
                               {isCallToday && (
                                  <span className="relative flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
                                  </span>
                               )}
-                              <Badge variant="ghost" className="text-xs font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400 px-0">
+                              <Badge variant="ghost" className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 px-0">
                                  Следующий созвон
                               </Badge>
                            </div>
@@ -366,7 +366,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                               <div className="text-sm font-bold text-stone-900 dark:text-stone-100">
                                  {upcomingCall.relativeDate}
                               </div>
-                              <div className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                              <div className="text-xs font-semibold text-purple-600 dark:text-purple-400">
                                  {upcomingCall.time} МСК
                               </div>
                            </div>
@@ -381,22 +381,22 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                variants={cardVariants}
                className={`col-span-12 ${completedCount === totalTasks && totalTasks > 0 ? 'lg:col-span-6' : 'lg:col-span-7'}`}
             >
-               <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(244,63,94,0.06)] p-5 md:p-6 flex flex-col h-full">
+               <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 flex flex-col h-full">
                   {/* Subtle inner glow */}
                   <div className="absolute inset-0 rounded-3xl pointer-events-none"
-                     style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(244,63,94,0.03) 0%, transparent 50%)' }} />
+                     style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(168,85,247,0.03) 0%, transparent 50%)' }} />
                   {/* Header */}
                   <div className="flex items-center justify-between mb-4">
                      <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-3">
                         <motion.span
                            animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                           className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"
+                           className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"
                         />
                         Задачи
                      </h3>
                      <div className="flex items-center gap-1.5 bg-stone-100/80 dark:bg-white/[0.06] px-3 py-1.5 rounded-xl">
-                        <span className="text-sm font-bold text-rose-600 dark:text-rose-400 tabular-nums">{completedCount}</span>
+                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400 tabular-nums">{completedCount}</span>
                         <span className="text-stone-300 dark:text-stone-600">/</span>
                         <span className="text-sm font-medium text-stone-400 dark:text-stone-500 tabular-nums">{totalTasks}</span>
                      </div>
@@ -409,13 +409,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex-1 flex flex-col items-center justify-center text-center py-8"
                      >
-                        <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-500/15 dark:to-pink-500/15 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-rose-200 dark:shadow-none animate-pulse-glow">
-                           <Sparkles size={36} className="text-rose-500" />
+                        <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/15 dark:to-violet-500/15 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-purple-200 dark:shadow-none animate-pulse-glow">
+                           <Sparkles size={36} className="text-purple-500" />
                         </div>
                         <p className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-2">
                            Всё готово!
                         </p>
-                        <p className="text-sm font-medium text-rose-600 dark:text-rose-400 mt-1">
+                        <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1">
                            {completedCount} из {totalTasks} задач выполнено
                         </p>
                         <p className="text-stone-500 dark:text-stone-400 text-sm max-w-[200px] mt-2">
@@ -440,14 +440,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                                        className={`group rounded-2xl border cursor-pointer p-3 transition-all duration-200 ${
                                           isDone
                                              ? 'bg-stone-50/50 dark:bg-white/[0.02] border-stone-100 dark:border-white/[0.04]'
-                                             : 'bg-white/50 dark:bg-white/[0.03] border-stone-200/60 dark:border-white/[0.06] hover:border-rose-300 dark:hover:border-rose-500/50 hover:shadow-sm'
+                                             : 'bg-white/50 dark:bg-white/[0.03] border-stone-200/60 dark:border-white/[0.06] hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-sm'
                                        }`}
                                     >
                                        <div className="flex items-start gap-3.5">
                                           <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                                              isDone
-                                                ? 'bg-gradient-to-br from-rose-500 to-pink-500 border-transparent shadow-[0_0_8px_rgba(244,63,94,0.3)]'
-                                                : 'border-stone-300 dark:border-stone-600 group-hover:border-rose-400 dark:group-hover:border-rose-500 group-hover:shadow-sm'
+                                                ? 'bg-gradient-to-br from-purple-500 to-violet-500 border-transparent shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                                                : 'border-stone-300 dark:border-stone-600 group-hover:border-purple-400 dark:group-hover:border-purple-500 group-hover:shadow-sm'
                                           }`}>
                                              <AnimatePresence>
                                                 {isDone && (
@@ -505,10 +505,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                variants={cardVariants}
                className={`col-span-12 ${completedCount === totalTasks && totalTasks > 0 ? 'lg:col-span-6' : 'lg:col-span-5'}`}
             >
-               <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(244,63,94,0.06)] p-5 md:p-6 flex flex-col h-full">
+               <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 flex flex-col h-full">
                   {/* Subtle inner glow */}
                   <div className="absolute inset-0 rounded-3xl pointer-events-none"
-                     style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(244,63,94,0.03) 0%, transparent 50%)' }} />
+                     style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(168,85,247,0.03) 0%, transparent 50%)' }} />
                   <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-4">
                      Быстрые действия
                   </h3>

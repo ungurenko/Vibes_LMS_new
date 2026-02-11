@@ -17,11 +17,11 @@ const CATEGORIES: GlossaryCategory[] = ['Все', 'Базовые', 'Код', '�
 // Color mapping for categories to add visual hierarchy
 const CATEGORY_COLORS: Record<string, string> = {
    'Базовые': 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
-   'Код': 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20',
+   'Код': 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20',
    'Инструменты': 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20',
    'API': 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20',
    'Ошибки': 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10 border-red-100 dark:border-red-500/20',
-   'Вайб-кодинг': 'text-pink-600 bg-pink-50 dark:text-pink-400 dark:bg-pink-500/10 border-pink-100 dark:border-pink-500/20',
+   'Вайб-кодинг': 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/10 border-violet-100 dark:border-violet-500/20',
 };
 
 interface GlossaryProps {
@@ -103,7 +103,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                className="mb-12"
             >
                <div className="relative overflow-hidden rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-black p-8 md:p-12 shadow-2xl shadow-zinc-500/20">
-                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-rose-500/30 to-pink-500/30 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-purple-500/30 to-violet-500/30 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
                   <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start justify-between">
                      <div className="max-w-2xl">
@@ -115,7 +115,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                            {randomTerm.term}
                         </h2>
                         {randomTerm.slang && (
-                           <p className="font-mono text-lg text-rose-400 dark:text-rose-600 mb-6 opacity-90">
+                           <p className="font-mono text-lg text-purple-400 dark:text-purple-600 mb-6 opacity-90">
                               a.k.a. {randomTerm.slang}
                            </p>
                         )}
@@ -151,7 +151,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
          <div className="sticky top-4 z-30 mb-8 space-y-4">
             {/* Search Bar */}
             <div className="relative group max-w-3xl mx-auto">
-               <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl opacity-20 group-focus-within:opacity-50 blur transition duration-500" />
+               <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl opacity-20 group-focus-within:opacity-50 blur transition duration-500" />
                <div className="relative bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-2xl flex items-center p-2 shadow-lg border border-zinc-200 dark:border-white/10">
                   <Search className="ml-4 text-zinc-400 shrink-0" size={20} />
                   <input
@@ -203,7 +203,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                            transition={{ duration: 0.2 }}
                            key={item.id}
                         >
-                           <Card className="break-inside-avoid group relative bg-white dark:bg-zinc-900 rounded-3xl p-0 py-0 border border-zinc-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30 transition-all hover:shadow-xl hover:shadow-rose-500/5 mb-6 gap-0 shadow-none">
+                           <Card className="break-inside-avoid group relative bg-white dark:bg-zinc-900 rounded-3xl p-0 py-0 border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/30 transition-all hover:shadow-xl hover:shadow-purple-500/5 mb-6 gap-0 shadow-none">
                               <CardHeader className="p-6 pb-0">
                                  <div className="flex justify-between items-start">
                                     <div>
@@ -234,7 +234,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                                           variant="ghost"
                                           size="icon-sm"
                                           onClick={() => handleCopy(item.id, item.definition)}
-                                          className="text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl"
+                                          className="text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-xl"
                                           title="Копировать определение"
                                        >
                                           {copiedId === item.id ? <CheckCircleIcon size={18} className="text-emerald-500" /> : <Copy size={18} />}
@@ -283,7 +283,7 @@ const Glossary: React.FC<GlossaryProps> = ({ onNavigate, onAskAI }) => {
                </p>
                <Button
                   onClick={() => handleAskAssistant(search)}
-                  className="px-8 bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                  className="px-8 bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20"
                >
                   <Sparkles size={18} />
                   Спросить у AI
