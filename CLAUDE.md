@@ -7,6 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 VIBES — full-stack educational platform for teaching "vibe coding" (AI-assisted web development). React 19 + TypeScript 5.8 + Vite 6 + PostgreSQL 15+, deployed on Vercel serverless.
 
 **Production:** https://vibes-navy.vercel.app/
+**Repository:** https://github.com/ungurenko/Vibes_LMS_new.git
+**Default branch for push:** `dev` (push to `main` only when explicitly requested)
 
 ## Commands
 
