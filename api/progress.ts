@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from './_lib/db';
-import { verifyToken } from './_lib/auth';
+import { query } from './_lib/db.js';
+import { verifyToken } from './_lib/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Auth Check
