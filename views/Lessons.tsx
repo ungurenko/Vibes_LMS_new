@@ -631,7 +631,7 @@ const Lessons: React.FC = () => {
 
                             {/* Scrollable content */}
                             <ScrollArea className="flex-1">
-                                <div className="py-4 pl-4 pr-6">
+                                <div className="py-4 pl-4 pr-8">
                                     {sidebarContent}
                                 </div>
                             </ScrollArea>
@@ -660,7 +660,7 @@ const Lessons: React.FC = () => {
                     <Separator />
 
                     <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
-                        <div className="py-4 pl-4 pr-6">
+                        <div className="py-4 pl-4 pr-8">
                             {sidebarContent}
                         </div>
                     </ScrollArea>
