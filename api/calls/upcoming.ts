@@ -43,7 +43,7 @@ export default async function handler(
         // - студент: свой поток + расшаренные + глобальные созвоны (cohort_id IS NULL)
         // - админ: режим превью (без когортного ограничения)
         const { rows } = await query(
-            `WITH current_user AS (
+            `WITH requesting_user AS (
         SELECT cohort_id
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
@@ -62,12 +62,15 @@ export default async function handler(
         AND (
           $2::text = 'admin'
           OR ac.cohort_id IS NULL
-          OR ac.cohort_id = (SELECT cohort_id FROM current_user)
+          OR (
+            (SELECT cohort_id FROM requesting_user) IS NOT NULL
+            AND ac.cohort_id = (SELECT cohort_id FROM requesting_user)
+          )
           OR ac.id IN (
             SELECT cca.call_id
             FROM cohort_call_access cca
-            JOIN current_user cu ON cu.cohort_id IS NOT NULL
-            WHERE cca.cohort_id = cu.cohort_id
+            WHERE cca.cohort_id = (SELECT cohort_id FROM requesting_user)
+              AND (SELECT cohort_id FROM requesting_user) IS NOT NULL
           )
         )
       ORDER BY ac.scheduled_date ASC, ac.scheduled_time ASC
@@ -117,7 +120,13 @@ export default async function handler(
 
         return res.status(200).json(successResponse(call));
     } catch (error) {
-        console.error('Get upcoming call error:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        console.error('Get upcoming call error:', {
+            message: err.message,
+            code: (error as any)?.code,
+            userId: tokenData?.userId,
+            role: tokenData?.role,
+        });
         return res.status(500).json(errorResponse('Ошибка сервера'));
     }
 }
