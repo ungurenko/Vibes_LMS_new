@@ -14,6 +14,15 @@ import {
     errorResponse,
 } from '../_lib/auth.js';
 
+function parseLocalDate(dateValue: string | Date): Date {
+    if (dateValue instanceof Date) {
+        return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+    }
+
+    const [year, month, day] = dateValue.slice(0, 10).split('-').map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+}
+
 export default async function handler(
     req: VercelRequest,
     res: VercelResponse
@@ -30,23 +39,40 @@ export default async function handler(
         }
 
         // Получаем ближайший созвон со статусом scheduled или live
-        // Фильтр по когорте студента + кросс-доступ через cohort_call_access
+        // Логика доступа:
+        // - студент: свой поток + расшаренные + глобальные созвоны (cohort_id IS NULL)
+        // - админ: режим превью (без когортного ограничения)
         const { rows } = await query(
-            `SELECT
-        id, topic, description,
-        scheduled_date, scheduled_time, duration, timezone,
-        status, meeting_url
-      FROM admin_calls
-      WHERE deleted_at IS NULL
-        AND status IN ('scheduled', 'live')
-        AND (scheduled_date > CURRENT_DATE
-             OR (scheduled_date = CURRENT_DATE AND scheduled_time >= CURRENT_TIME))
-        AND (cohort_id = (SELECT cohort_id FROM users WHERE id = $1)
-             OR id IN (SELECT call_id FROM cohort_call_access
-                       WHERE cohort_id = (SELECT cohort_id FROM users WHERE id = $1)))
-      ORDER BY scheduled_date ASC, scheduled_time ASC
+            `WITH current_user AS (
+        SELECT cohort_id
+        FROM users
+        WHERE id = $1 AND deleted_at IS NULL
+      )
+      SELECT
+        ac.id, ac.topic, ac.description,
+        ac.scheduled_date, ac.scheduled_time, ac.duration, ac.timezone,
+        ac.status, ac.meeting_url
+      FROM admin_calls ac
+      WHERE ac.deleted_at IS NULL
+        AND ac.status IN ('scheduled', 'live')
+        AND (
+          ac.scheduled_date > CURRENT_DATE
+          OR (ac.scheduled_date = CURRENT_DATE AND ac.scheduled_time >= CURRENT_TIME)
+        )
+        AND (
+          $2::text = 'admin'
+          OR ac.cohort_id IS NULL
+          OR ac.cohort_id = (SELECT cohort_id FROM current_user)
+          OR ac.id IN (
+            SELECT cca.call_id
+            FROM cohort_call_access cca
+            JOIN current_user cu ON cu.cohort_id IS NOT NULL
+            WHERE cca.cohort_id = cu.cohort_id
+          )
+        )
+      ORDER BY ac.scheduled_date ASC, ac.scheduled_time ASC
       LIMIT 1`,
-            [tokenData.userId]
+            [tokenData.userId, tokenData.role]
         );
 
         if (rows.length === 0) {
@@ -59,7 +85,7 @@ export default async function handler(
         // Вычисляем относительную дату для отображения
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const callDate = new Date(row.scheduled_date);
+        const callDate = parseLocalDate(row.scheduled_date);
         callDate.setHours(0, 0, 0, 0);
 
         const diffDays = Math.ceil((callDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));

@@ -2,6 +2,23 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { query } from '../db.js';
 import { successResponse, errorResponse } from '../auth.js';
 
+function normalizeCohortId(value: unknown): string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const normalized = value.trim();
+    if (!normalized || normalized.toLowerCase() === 'all') {
+        return null;
+    }
+
+    return normalized;
+}
+
 // GET - Получить все созвоны
 async function getCalls(req: VercelRequest, res: VercelResponse) {
     const cohortId = req.query.cohortId;
@@ -61,13 +78,15 @@ async function createCall(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json(errorResponse('Тема, дата и время обязательны'));
     }
 
+    const normalizedCohortId = normalizeCohortId(cohortId);
+
     const { rows } = await query(
         `INSERT INTO admin_calls (
       topic, description, scheduled_date, scheduled_time,
       duration, timezone, status, meeting_url, recording_url, reminders, cohort_id
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *`,
-        [topic, description, date, time, duration, timezone, status, meetingUrl, recordingUrl, reminders, cohortId || null]
+        [topic, description, date, time, duration, timezone, status, meetingUrl, recordingUrl, reminders, normalizedCohortId]
     );
 
     const row = rows[0];
@@ -105,11 +124,15 @@ async function updateCall(req: VercelRequest, res: VercelResponse) {
         meetingUrl,
         recordingUrl,
         reminders,
+        cohortId,
     } = req.body;
 
     if (!id) {
         return res.status(400).json(errorResponse('ID созвона обязателен'));
     }
+
+    const hasCohortIdField = Object.prototype.hasOwnProperty.call(req.body, 'cohortId');
+    const normalizedCohortId = hasCohortIdField ? normalizeCohortId(cohortId) : null;
 
     const { rows, rowCount } = await query(
         `UPDATE admin_calls SET
@@ -123,10 +146,28 @@ async function updateCall(req: VercelRequest, res: VercelResponse) {
       meeting_url = COALESCE($8, meeting_url),
       recording_url = COALESCE($9, recording_url),
       reminders = COALESCE($10, reminders),
+      cohort_id = CASE
+        WHEN $11::boolean THEN $12::uuid
+        ELSE cohort_id
+      END,
       updated_at = NOW()
-    WHERE id = $11 AND deleted_at IS NULL
+    WHERE id = $13 AND deleted_at IS NULL
     RETURNING *`,
-        [topic, description, date, time, duration, timezone, status, meetingUrl, recordingUrl, reminders, id]
+        [
+            topic,
+            description,
+            date,
+            time,
+            duration,
+            timezone,
+            status,
+            meetingUrl,
+            recordingUrl,
+            reminders,
+            hasCohortIdField,
+            normalizedCohortId,
+            id
+        ]
     );
 
     if (rowCount === 0) {
@@ -147,6 +188,7 @@ async function updateCall(req: VercelRequest, res: VercelResponse) {
         recordingUrl: row.recording_url,
         attendeesCount: row.attendees_count,
         reminders: row.reminders || [],
+        cohortId: row.cohort_id,
         updatedAt: row.updated_at,
     };
 

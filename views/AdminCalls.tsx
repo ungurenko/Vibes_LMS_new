@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Video,
     Clock,
@@ -50,8 +50,8 @@ interface AdminCall {
     materials?: CallMaterial[];
     attendeesCount?: number;
     reminders: ReminderType[];
-    cohortId?: string;
-    cohortName?: string;
+    cohortId?: string | null;
+    cohortName?: string | null;
 }
 
 const REMINDER_OPTIONS: { id: ReminderType; label: string }[] = [
@@ -59,6 +59,8 @@ const REMINDER_OPTIONS: { id: ReminderType; label: string }[] = [
     { id: '1h', label: 'За 1 час' },
     { id: '15m', label: 'За 15 минут' },
 ];
+
+const ALL_COHORTS_VALUE = '__all__';
 
 interface AdminCallsProps {
     selectedCohortId?: string | null;
@@ -80,6 +82,23 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
     // Cross-access sharing state
     const [sharingCallId, setSharingCallId] = useState<string | null>(null);
     const [sharedCohorts, setSharedCohorts] = useState<string[]>([]);
+    const cohortsById = useMemo(() => {
+        const map = new Map<string, string>();
+        cohorts.forEach(cohort => map.set(cohort.id, cohort.name));
+        return map;
+    }, [cohorts]);
+    const cohortSelectOptions = useMemo(
+        () => [
+            { value: ALL_COHORTS_VALUE, label: 'Все потоки' },
+            ...cohorts.map(cohort => ({ value: cohort.id, label: cohort.name })),
+        ],
+        [cohorts]
+    );
+    const sharingCall = useMemo(
+        () => calls.find(call => call.id === sharingCallId) || null,
+        [calls, sharingCallId]
+    );
+    const isSharingGlobalCall = !sharingCall?.cohortId;
 
     // --- API Functions ---
 
@@ -131,7 +150,10 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
 
     const openEditor = (call?: AdminCall) => {
         if (call) {
-            setEditingCall({ ...call });
+            setEditingCall({
+                ...call,
+                cohortId: call.cohortId ?? null,
+            });
         } else {
             setEditingCall({
                 date: new Date().toISOString().split('T')[0],
@@ -140,7 +162,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                 status: 'scheduled',
                 materials: [],
                 reminders: ['1h', '15m'],
-                cohortId: selectedCohortId || undefined,
+                cohortId: selectedCohortId || null,
             });
         }
         setIsEditorOpen(true);
@@ -152,9 +174,13 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
 
         try {
             const isUpdate = !!editingCall.id;
+            const payload: Partial<AdminCall> = {
+                ...editingCall,
+                cohortId: editingCall.cohortId ?? null,
+            };
             const saved = isUpdate
-                ? await fetchWithAuthPut<AdminCall>('/api/admin?resource=calls', editingCall)
-                : await fetchWithAuthPost<AdminCall>('/api/admin?resource=calls', editingCall);
+                ? await fetchWithAuthPut<AdminCall>('/api/admin?resource=calls', payload)
+                : await fetchWithAuthPost<AdminCall>('/api/admin?resource=calls', payload);
 
             if (isUpdate) {
                 setCalls(prev => prev.map(c => c.id === saved.id ? saved : c));
@@ -205,6 +231,12 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
     // --- Cross-access sharing ---
     const openShareModal = async (callId: string) => {
         setSharingCallId(callId);
+        const call = calls.find(item => item.id === callId);
+        if (!call || !call.cohortId) {
+            setSharedCohorts([]);
+            return;
+        }
+
         try {
             const data = await fetchWithAuthGet<{ cohortId: string }[]>(`/api/admin?resource=call-access&callId=${callId}`);
             setSharedCohorts(data.map(d => d.cohortId));
@@ -215,7 +247,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
     };
 
     const toggleCohortAccess = async (cohortId: string) => {
-        if (!sharingCallId) return;
+        if (!sharingCallId || !sharingCall?.cohortId) return;
 
         if (sharedCohorts.includes(cohortId)) {
             // Найти и удалить
@@ -259,6 +291,14 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
             case 'completed': return 'Завершён';
             default: return 'Запланирован';
         }
+    };
+
+    const getCohortLabel = (call: AdminCall) => {
+        if (!call.cohortId) {
+            return 'Все потоки';
+        }
+        const cohortName = call.cohortName || cohortsById.get(call.cohortId) || 'Без названия';
+        return `Поток: ${cohortName}`;
     };
 
     return (
@@ -324,6 +364,9 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border flex items-center gap-1.5 ${getStatusColor(call.status)}`}>
                                             {call.status === 'live' && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
                                             {getStatusLabel(call.status)}
+                                        </span>
+                                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold border bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-white/10">
+                                            {getCohortLabel(call)}
                                         </span>
 
                                         {call.status !== 'completed' && call.reminders.length > 0 && (
@@ -416,7 +459,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                         </Button>
                                     )}
 
-                                    {call.recordingUrl && cohorts.length > 1 && (
+                                    {call.status !== 'completed' && cohorts.length > 1 && (
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -424,7 +467,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                             className="w-full justify-center lg:justify-start text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10"
                                         >
                                             <Share2 size={16} />
-                                            Расшарить
+                                            Доступ
                                         </Button>
                                     )}
 
@@ -491,6 +534,13 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                             onChange={e => updateField('time', e.target.value)}
                         />
                     </div>
+
+                    <Select
+                        label="Поток"
+                        value={editingCall.cohortId || ALL_COHORTS_VALUE}
+                        onChange={e => updateField('cohortId', e.target.value === ALL_COHORTS_VALUE ? null : e.target.value)}
+                        options={cohortSelectOptions}
+                    />
 
                     {/* Info */}
                     <Input
@@ -619,7 +669,7 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                 message="Вы уверены, что хотите удалить этот созвон?"
             />
 
-            {/* Share Recording Modal */}
+            {/* Call Access Modal */}
             {sharingCallId && (
                 <>
                     <motion.div
@@ -638,17 +688,23 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                 className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-100 dark:border-white/10 p-6"
                             >
                                 <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-4">
-                                    Расшарить запись
+                                    Доступ к созвону
                                 </h3>
-                                <p className="text-sm text-zinc-500 mb-4">Выберите потоки для доступа к записи:</p>
+                                <p className="text-sm text-zinc-500 mb-4">Выберите потоки, которым открыть доступ:</p>
+                                {isSharingGlobalCall && (
+                                    <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                        Этот созвон уже доступен всем потокам.
+                                    </div>
+                                )}
                                 <div className="space-y-2">
-                                    {cohorts.filter(c => {
-                                        const call = calls.find(cl => cl.id === sharingCallId);
-                                        return c.id !== call?.cohortId;
-                                    }).map(cohort => (
+                                    {cohorts.filter(c => c.id !== sharingCall?.cohortId).map(cohort => (
                                         <label
                                             key={cohort.id}
-                                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                            className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                                                isSharingGlobalCall
+                                                    ? 'cursor-not-allowed opacity-60 border-zinc-200 dark:border-white/10'
+                                                    : 'cursor-pointer'
+                                            } ${
                                                 sharedCohorts.includes(cohort.id)
                                                     ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-300 dark:border-purple-500/30'
                                                     : 'border-zinc-200 dark:border-white/10 hover:border-purple-200'
@@ -656,7 +712,8 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
                                         >
                                             <Checkbox
                                                 checked={sharedCohorts.includes(cohort.id)}
-                                                onCheckedChange={() => toggleCohortAccess(cohort.id)}
+                                                disabled={isSharingGlobalCall}
+                                                onCheckedChange={() => !isSharingGlobalCall && toggleCohortAccess(cohort.id)}
                                             />
                                             <span className="font-medium text-zinc-900 dark:text-white">{cohort.name}</span>
                                             {cohort.studentCount !== undefined && (
