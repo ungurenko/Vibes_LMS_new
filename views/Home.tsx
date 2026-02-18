@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
    Calendar,
-   ArrowRight,
    BookOpen,
    Wrench,
    MessageSquareText,
@@ -55,11 +54,18 @@ const NEWS_ICONS: Record<NewsItem['type'], React.ElementType> = {
    update: Megaphone,
 };
 
-const NEWS_COLORS: Record<NewsItem['type'], string> = {
-   lesson: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/15',
-   style: 'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-500/15',
-   prompt: 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/15',
-   update: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15',
+const NEWS_ICON_STYLES: Record<NewsItem['type'], { gradient: string; shadow: string }> = {
+   lesson: { gradient: 'from-purple-500 to-violet-600', shadow: 'shadow-purple-500/25' },
+   style: { gradient: 'from-pink-500 to-rose-600', shadow: 'shadow-pink-500/25' },
+   prompt: { gradient: 'from-indigo-500 to-blue-600', shadow: 'shadow-indigo-500/25' },
+   update: { gradient: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/25' },
+};
+
+const NEWS_LABEL_COLORS: Record<NewsItem['type'], string> = {
+   lesson: 'text-purple-600 dark:text-purple-400',
+   style: 'text-pink-600 dark:text-pink-400',
+   prompt: 'text-indigo-600 dark:text-indigo-400',
+   update: 'text-amber-600 dark:text-amber-400',
 };
 
 const NEWS_LABELS: Record<NewsItem['type'], string> = {
@@ -69,12 +75,28 @@ const NEWS_LABELS: Record<NewsItem['type'], string> = {
    update: 'Обновление',
 };
 
+const NEWS_SUBTITLES: Record<NewsItem['type'], string> = {
+   lesson: 'Добавлен в программу курса',
+   style: 'Добавлен в библиотеку стилей',
+   prompt: 'Добавлен в базу промптов',
+   update: 'Обновление платформы',
+};
+
 const QUICK_ACTIONS = [
-   { label: 'Уроки', tab: 'lessons' as TabId, icon: BookOpen, gradient: 'from-purple-500/30 to-violet-500/30', iconColor: 'text-purple-600 dark:text-purple-400' },
-   { label: 'Инструменты', tab: 'tools' as TabId, icon: Wrench, gradient: 'from-violet-500/30 to-violet-500/30', iconColor: 'text-violet-600 dark:text-violet-400' },
-   { label: 'Промпты', tab: 'prompts' as TabId, icon: MessageSquareText, gradient: 'from-indigo-500/30 to-blue-500/30', iconColor: 'text-indigo-600 dark:text-indigo-400' },
-   { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500/30 to-teal-500/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+   { label: 'Уроки', tab: 'lessons' as TabId, icon: BookOpen, gradient: 'from-purple-500 to-violet-600', shadow: 'shadow-purple-500/25', bgGradient: 'from-purple-500/10 to-violet-500/10' },
+   { label: 'Инструменты', tab: 'tools' as TabId, icon: Wrench, gradient: 'from-violet-500 to-purple-600', shadow: 'shadow-violet-500/25', bgGradient: 'from-violet-500/10 to-purple-500/10' },
+   { label: 'Промпты', tab: 'prompts' as TabId, icon: MessageSquareText, gradient: 'from-indigo-500 to-blue-600', shadow: 'shadow-indigo-500/25', bgGradient: 'from-indigo-500/10 to-blue-500/10' },
+   { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/25', bgGradient: 'from-emerald-500/10 to-teal-500/10' },
 ];
+
+const PAGE_SIZE = 8;
+
+function getGreeting(): string {
+   const hour = new Date().getHours();
+   if (hour >= 5 && hour < 12) return 'Доброе утро';
+   if (hour >= 12 && hour < 18) return 'Добрый день';
+   return 'Добрый вечер';
+}
 
 function formatRelativeDate(dateStr: string): string {
    const date = new Date(dateStr);
@@ -92,6 +114,14 @@ function formatRelativeDate(dateStr: string): string {
    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 }
 
+function isRecent(dateStr: string): boolean {
+   const date = new Date(dateStr);
+   const now = new Date();
+   const diffMs = now.getTime() - date.getTime();
+   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+   return diffDays <= 1;
+}
+
 function pluralDays(n: number): string {
    if (n === 1) return 'день';
    if (n >= 2 && n <= 4) return 'дня';
@@ -104,10 +134,32 @@ function pluralWeeks(n: number): string {
    return 'недель';
 }
 
+function NewsSkeleton() {
+   return (
+      <div className="space-y-2">
+         {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] animate-pulse">
+               <div className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-700 flex-shrink-0" />
+               <div className="flex-1 space-y-2">
+                  <div className="h-3 w-20 bg-stone-200 dark:bg-stone-700 rounded" />
+                  <div className="h-4 w-3/4 bg-stone-200 dark:bg-stone-700 rounded" />
+                  <div className="h-3 w-1/2 bg-stone-100 dark:bg-stone-800 rounded" />
+               </div>
+               <div className="h-3 w-14 bg-stone-200 dark:bg-stone-700 rounded flex-shrink-0 mt-1" />
+            </div>
+         ))}
+      </div>
+   );
+}
+
 const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', userCohort }) => {
    const [news, setNews] = useState<NewsItem[]>([]);
    const [upcomingCall, setUpcomingCall] = useState<UpcomingCall | null>(null);
    const [isLoadingNews, setIsLoadingNews] = useState(true);
+   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+   const firstName = userName.split(' ')[0];
+   const greeting = useMemo(() => getGreeting(), []);
 
    // Load news feed
    useEffect(() => {
@@ -147,6 +199,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    }, []);
 
    const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
+   const visibleNews = news.slice(0, visibleCount);
+   const hasMore = news.length > visibleCount;
+   const remaining = news.length - visibleCount;
 
    return (
       <motion.div
@@ -158,10 +213,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
          {/* --- GREETING --- */}
          <motion.div variants={cardVariants} className="mb-6">
             <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-               <span className="text-stone-900 dark:text-stone-50">Привет, </span>
-               <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{userName}</span>
+               <span className="text-stone-900 dark:text-stone-50">{greeting}, </span>
+               <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{firstName}</span>
                <span className="text-stone-900 dark:text-stone-50">!</span>
             </h1>
+            <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+               Что будем изучать сегодня?
+            </p>
          </motion.div>
 
          {/* --- BENTO GRID --- */}
@@ -179,44 +237,73 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                   </h3>
 
                   {isLoadingNews ? (
-                     <div className="flex-1 flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
-                     </div>
+                     <NewsSkeleton />
                   ) : news.length === 0 ? (
                      <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-                        <Newspaper size={32} className="text-stone-300 dark:text-stone-600 mb-3" />
-                        <p className="text-sm text-stone-500 dark:text-stone-400">Пока нет новостей</p>
+                        <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+                           <Newspaper size={24} className="text-stone-400 dark:text-stone-500" />
+                        </div>
+                        <p className="text-base font-semibold text-stone-700 dark:text-stone-300 mb-1">Пока нет новостей</p>
+                        <p className="text-sm text-stone-400 dark:text-stone-500">Новые материалы появятся здесь</p>
                      </div>
                   ) : (
-                     <div className="flex-1 space-y-2 overflow-y-auto scrollbar-none">
-                        {news.map((item) => {
-                           const Icon = NEWS_ICONS[item.type];
-                           const colorClass = NEWS_COLORS[item.type];
-                           return (
-                              <div
-                                 key={`${item.type}-${item.id}`}
-                                 className="flex items-start gap-3 p-3 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.06] transition-colors"
-                              >
-                                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                                    <Icon size={16} />
-                                 </div>
-                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                       <span className="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                                          {NEWS_LABELS[item.type]}
-                                       </span>
+                     <>
+                        <div className="flex-1 space-y-2">
+                           {visibleNews.map((item) => {
+                              const Icon = NEWS_ICONS[item.type];
+                              const iconStyle = NEWS_ICON_STYLES[item.type];
+                              const labelColor = NEWS_LABEL_COLORS[item.type];
+                              const fresh = isRecent(item.created_at);
+                              const subtitle = item.type === 'update' && item.description
+                                 ? item.description
+                                 : NEWS_SUBTITLES[item.type];
+                              return (
+                                 <div
+                                    key={`${item.type}-${item.id}`}
+                                    className="flex items-start gap-3 p-3 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.06] transition-colors"
+                                 >
+                                    <div className="relative flex-shrink-0">
+                                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${iconStyle.gradient} shadow-lg ${iconStyle.shadow} flex items-center justify-center`}>
+                                          <Icon size={18} className="text-white" />
+                                       </div>
+                                       {fresh && (
+                                          <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                                          </span>
+                                       )}
                                     </div>
-                                    <p className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">
-                                       {item.label}
-                                    </p>
+                                    <div className="flex-1 min-w-0">
+                                       <div className="flex items-center justify-between gap-2 mb-0.5">
+                                          <span className={`text-xs font-bold uppercase tracking-wider ${labelColor}`}>
+                                             {NEWS_LABELS[item.type]}
+                                          </span>
+                                          <span className="text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
+                                             {formatRelativeDate(item.created_at)}
+                                          </span>
+                                       </div>
+                                       <p className="text-sm font-semibold text-stone-800 dark:text-stone-200 line-clamp-2">
+                                          {item.label}
+                                       </p>
+                                       <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2">
+                                          {subtitle}
+                                       </p>
+                                    </div>
                                  </div>
-                                 <span className="text-xs text-stone-400 dark:text-stone-500 flex-shrink-0 mt-1">
-                                    {formatRelativeDate(item.created_at)}
-                                 </span>
-                              </div>
-                           );
-                        })}
-                     </div>
+                              );
+                           })}
+                        </div>
+
+                        {/* Show more button */}
+                        {hasMore && (
+                           <button
+                              onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                              className="mt-3 w-full py-2.5 text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-50/50 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.06] rounded-2xl hover:bg-stone-100/50 dark:hover:bg-white/[0.06] transition-colors"
+                           >
+                              Показать ещё {Math.min(remaining, PAGE_SIZE)}
+                           </button>
+                        )}
+                     </>
                   )}
                </div>
             </motion.div>
@@ -268,25 +355,26 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                   <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 flex flex-col h-full">
                      <div className="absolute inset-0 rounded-3xl pointer-events-none"
                         style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(168,85,247,0.03) 0%, transparent 50%)' }} />
-                     <h3 className="font-display text-xl font-bold text-stone-900 dark:text-stone-50 mb-4">
-                        Быстрые действия
+                     <h3 className="text-base font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-4">
+                        Перейти к
                      </h3>
 
-                     <div className="space-y-2 flex-1">
+                     <div className="grid grid-cols-2 gap-3 flex-1">
                         {QUICK_ACTIONS.map((action) => {
                            const Icon = action.icon;
                            return (
-                              <button
+                              <motion.button
                                  key={action.tab}
                                  onClick={() => onNavigate(action.tab)}
-                                 className="group flex items-center gap-3 w-full p-3 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all duration-200"
+                                 whileHover={{ y: -2 }}
+                                 whileTap={{ scale: 0.97 }}
+                                 className={`flex flex-col items-center justify-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br ${action.bgGradient} border border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.08] dark:hover:border-white/[0.12] transition-colors`}
                               >
-                                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center`}>
-                                    <Icon size={18} className={action.iconColor} />
+                                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} shadow-lg ${action.shadow} flex items-center justify-center`}>
+                                    <Icon size={22} className="text-white" />
                                  </div>
                                  <span className="font-medium text-sm text-stone-700 dark:text-stone-200">{action.label}</span>
-                                 <ArrowRight size={16} className="ml-auto text-stone-400 group-hover:translate-x-1 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-all" />
-                              </button>
+                              </motion.button>
                            );
                         })}
                      </div>

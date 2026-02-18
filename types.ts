@@ -289,6 +289,7 @@ export interface NewsItem {
   id: string;
   label: string;
   created_at: string;
+  description?: string;
 }
 
 export interface Cohort {

@@ -534,7 +534,7 @@ async function getNews(req: VercelRequest, res: VercelResponse, tokenData: any) 
 
     const sql = cohortId
       ? `
-        SELECT 'lesson' as type, l.id, l.title as label, l.created_at
+        SELECT 'lesson' as type, l.id, l.title as label, l.created_at, NULL::text as description
         FROM lessons l
         JOIN course_modules m ON m.id = l.module_id
         JOIN module_cohorts mc ON mc.module_id = m.id
@@ -542,31 +542,31 @@ async function getNews(req: VercelRequest, res: VercelResponse, tokenData: any) 
           AND mc.cohort_id = $1
           AND l.status NOT IN ('draft', 'hidden')
         UNION ALL
-        SELECT 'style' as type, id, name as label, created_at
+        SELECT 'style' as type, id, name as label, created_at, NULL::text as description
         FROM style_cards WHERE deleted_at IS NULL
         UNION ALL
-        SELECT 'prompt' as type, id, title as label, created_at
+        SELECT 'prompt' as type, id, title as label, created_at, NULL::text as description
         FROM prompts WHERE deleted_at IS NULL AND status = 'published'
         UNION ALL
-        SELECT 'update' as type, id, title as label, created_at
+        SELECT 'update' as type, id, title as label, created_at, description
         FROM platform_updates WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 20
       `
       : `
-        SELECT 'lesson' as type, l.id, l.title as label, l.created_at
+        SELECT 'lesson' as type, l.id, l.title as label, l.created_at, NULL::text as description
         FROM lessons l
         JOIN course_modules m ON m.id = l.module_id
         WHERE l.deleted_at IS NULL AND m.deleted_at IS NULL
           AND l.status NOT IN ('draft', 'hidden')
         UNION ALL
-        SELECT 'style' as type, id, name as label, created_at
+        SELECT 'style' as type, id, name as label, created_at, NULL::text as description
         FROM style_cards WHERE deleted_at IS NULL
         UNION ALL
-        SELECT 'prompt' as type, id, title as label, created_at
+        SELECT 'prompt' as type, id, title as label, created_at, NULL::text as description
         FROM prompts WHERE deleted_at IS NULL AND status = 'published'
         UNION ALL
-        SELECT 'update' as type, id, title as label, created_at
+        SELECT 'update' as type, id, title as label, created_at, description
         FROM platform_updates WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 20
