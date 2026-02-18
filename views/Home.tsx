@@ -9,10 +9,11 @@ import {
    Megaphone,
    Newspaper
 } from 'lucide-react';
-import { TabId, NewsItem } from '../types';
+import { TabId, NewsItem, GlossaryTerm } from '../types';
 import { motion } from 'framer-motion';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
 import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
+import { useCachedFetch } from '../lib/hooks/useCachedFetch';
 import { Badge } from '@/components/ui/badge';
 
 interface HomeProps {
@@ -89,6 +90,15 @@ const QUICK_ACTIONS = [
    { label: 'Словарик', tab: 'glossary' as TabId, icon: BookA, gradient: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/25', bgGradient: 'from-emerald-500/10 to-teal-500/10' },
 ];
 
+const CATEGORY_COLORS_MAP: Record<string, string> = {
+   'Базовые': 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
+   'Код': 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20',
+   'Инструменты': 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
+   'API': 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
+   'Ошибки': 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
+   'Вайб-кодинг': 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20',
+};
+
 const PAGE_SIZE = 8;
 
 function getGreeting(): string {
@@ -157,6 +167,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    const [upcomingCall, setUpcomingCall] = useState<UpcomingCall | null>(null);
    const [isLoadingNews, setIsLoadingNews] = useState(true);
    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+   const [wordOfDay, setWordOfDay] = useState<GlossaryTerm | null>(null);
 
    const firstName = userName.split(' ')[0];
    const greeting = useMemo(() => getGreeting(), []);
@@ -197,6 +208,19 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
 
       fetchUpcomingCall();
    }, []);
+
+   // Load glossary for Word of the Day
+   const { data: glossaryTerms } = useCachedFetch<GlossaryTerm[]>(
+      '/api/content/glossary', [],
+      { cacheKey: CACHE_KEYS.GLOSSARY, cacheTTL: CACHE_TTL.GLOSSARY }
+   );
+
+   useEffect(() => {
+      if (glossaryTerms.length > 0 && !wordOfDay) {
+         const dayIndex = new Date().getDate() % glossaryTerms.length;
+         setWordOfDay(glossaryTerms[dayIndex]);
+      }
+   }, [glossaryTerms]);
 
    const isCallToday = upcomingCall?.relativeDate?.toLowerCase().includes('сегодня');
    const visibleNews = news.slice(0, visibleCount);
@@ -380,6 +404,49 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                      </div>
                   </div>
                </motion.div>
+
+               {/* ===== WORD OF THE DAY ===== */}
+               {wordOfDay && (
+                  <motion.div variants={cardVariants}>
+                     <div
+                        onClick={() => onNavigate('glossary')}
+                        className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 cursor-pointer hover:border-amber-200/50 dark:hover:border-amber-500/20 transition-colors group"
+                     >
+                        <div className="absolute inset-0 rounded-3xl pointer-events-none"
+                           style={{ background: 'radial-gradient(ellipse at 70% 0%, rgba(245,158,11,0.04) 0%, transparent 60%)' }} />
+
+                        <div className="flex items-center gap-2 mb-3">
+                           <div className="w-8 h-8 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-500/15 dark:to-orange-500/15 rounded-xl flex items-center justify-center">
+                              <BookOpen size={16} className="text-amber-600 dark:text-amber-400" />
+                           </div>
+                           <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+                              Слово дня
+                           </h3>
+                        </div>
+
+                        <p className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-0.5">
+                           {wordOfDay.term}
+                        </p>
+                        {wordOfDay.slang && (
+                           <p className="text-xs italic text-stone-400 dark:text-stone-500 mb-2">
+                              a.k.a. {wordOfDay.slang}
+                           </p>
+                        )}
+                        <p className="text-sm text-stone-600 dark:text-stone-400 line-clamp-3 leading-relaxed">
+                           {wordOfDay.definition}
+                        </p>
+
+                        <div className="mt-3 flex items-center justify-between">
+                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${CATEGORY_COLORS_MAP[wordOfDay.category] || 'text-stone-500 bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700'}`}>
+                              {wordOfDay.category}
+                           </span>
+                           <span className="text-xs text-stone-400 dark:text-stone-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                              Открыть словарик →
+                           </span>
+                        </div>
+                     </div>
+                  </motion.div>
+               )}
 
             </div>
 
