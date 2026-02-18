@@ -236,14 +236,56 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
       >
          {/* --- GREETING --- */}
          <motion.div variants={cardVariants} className="mb-6">
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-               <span className="text-stone-900 dark:text-stone-50">{greeting}, </span>
-               <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{firstName}</span>
-               <span className="text-stone-900 dark:text-stone-50">!</span>
-            </h1>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
-               Что будем изучать сегодня?
-            </p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+               <div className="min-w-0">
+                  <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+                     <span className="text-stone-900 dark:text-stone-50">{greeting}, </span>
+                     <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">{firstName}</span>
+                     <span className="text-stone-900 dark:text-stone-50">!</span>
+                  </h1>
+                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                     Что будем изучать сегодня?
+                  </p>
+               </div>
+
+               {upcomingCall && (
+                  <div className="w-full lg:w-auto lg:max-w-sm">
+                     <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-2xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_10px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_0_24px_rgba(168,85,247,0.06)] p-3.5">
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/15 dark:to-violet-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <Calendar size={18} className="text-purple-600 dark:text-purple-400" />
+                           </div>
+
+                           <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2 mb-0.5">
+                                 <div className="flex items-center gap-2 min-w-0">
+                                    {isCallToday && (
+                                       <span className="relative flex h-2 w-2 flex-shrink-0">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+                                       </span>
+                                    )}
+                                    <Badge variant="ghost" className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 px-0 truncate">
+                                       Следующий созвон
+                                    </Badge>
+                                 </div>
+                                 <span className="text-xs font-semibold text-stone-700 dark:text-stone-300 flex-shrink-0">
+                                    {upcomingCall.relativeDate}
+                                 </span>
+                              </div>
+
+                              <p className="text-sm font-medium text-stone-800 dark:text-stone-200 truncate">
+                                 {upcomingCall.topic}
+                              </p>
+                              <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                 {upcomingCall.time} МСК
+                              </p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               )}
+            </div>
          </motion.div>
 
          {/* --- BENTO GRID --- */}
@@ -334,45 +376,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
 
             {/* ===== RIGHT COLUMN (lg:col-span-5) ===== */}
             <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
-
-               {/* ===== UPCOMING CALL CARD ===== */}
-               {upcomingCall && (
-                  <motion.div variants={cardVariants}>
-                     <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-4 md:p-5">
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/15 dark:to-violet-500/15 rounded-2xl flex items-center justify-center flex-shrink-0">
-                              <Calendar size={22} className="text-purple-600 dark:text-purple-400" />
-                           </div>
-                           <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                 {isCallToday && (
-                                    <span className="relative flex h-2.5 w-2.5">
-                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
-                                    </span>
-                                 )}
-                                 <Badge variant="ghost" className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 px-0">
-                                    Следующий созвон
-                                 </Badge>
-                              </div>
-                              <p className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">
-                                 {upcomingCall.topic}
-                              </p>
-                           </div>
-                           <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="text-right">
-                                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                                    {upcomingCall.relativeDate}
-                                 </div>
-                                 <div className="text-xs font-semibold text-purple-600 dark:text-purple-400">
-                                    {upcomingCall.time} МСК
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </motion.div>
-               )}
 
                {/* ===== QUICK ACTIONS CARD ===== */}
                <motion.div variants={cardVariants}>
