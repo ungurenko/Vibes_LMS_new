@@ -348,7 +348,7 @@ const Lessons: React.FC = () => {
             )}>
 
                 {/* === LEFT COLUMN: PLAYER & CONTENT === */}
-                <div className="min-w-0 px-4 md:px-8 py-6 md:py-8 lg:pr-8">
+                <div className="min-w-0 px-4 md:px-6 py-3 md:py-4 lg:pr-6">
 
                     {activeLesson ? (
                         <motion.div
@@ -359,7 +359,7 @@ const Lessons: React.FC = () => {
                             className="flex flex-col h-full max-w-5xl mx-auto"
                         >
                             {/* 1. Header Breadcrumbs */}
-                            <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2 text-sm text-zinc-500 font-medium">
                                     <span className="hidden md:inline">Курс</span>
                                     <ChevronRight size={14} className="hidden md:block opacity-50" />
@@ -398,12 +398,12 @@ const Lessons: React.FC = () => {
                             </div>
 
                             {/* 2. Video Player */}
-                            <div className="max-h-[420px] w-full bg-black rounded-xl overflow-hidden relative group shadow-lg shadow-zinc-200/50 dark:shadow-none ring-1 ring-zinc-900/5 dark:ring-white/10 z-10">
+                            <div className="w-full max-w-[760px] mx-auto aspect-video bg-black rounded-xl overflow-hidden relative group shadow-lg shadow-zinc-200/50 dark:shadow-none ring-1 ring-zinc-900/5 dark:ring-white/10 z-10">
                                 {embedUrl ? (
                                     <iframe
                                         src={embedUrl}
                                         title={activeLesson.title}
-                                        className="w-full aspect-video object-contain"
+                                        className="w-full h-full"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                         referrerPolicy="strict-origin-when-cross-origin"
                                         allowFullScreen
@@ -431,7 +431,7 @@ const Lessons: React.FC = () => {
                             </div>
 
                             {/* 3. Action Bar — compact two-line layout */}
-                            <div className="mt-3 flex flex-col gap-2 pb-3">
+                            <div className="mt-2 flex flex-col gap-1 pb-2">
                                 <div className="flex items-center justify-between gap-3">
                                     <h1 className="text-xl font-display font-bold text-zinc-900 dark:text-white leading-tight truncate">
                                         {activeLesson.title}
@@ -499,10 +499,10 @@ const Lessons: React.FC = () => {
                                 </div>
                             </div>
 
-                            <Separator className="my-2" />
+                            <Separator className="my-1" />
 
                             {/* 4. Content Tabs — shadcn line variant */}
-                            <Tabs defaultValue="overview" className="mt-2">
+                            <Tabs defaultValue="overview" className="mt-1">
                                 <TabsList variant="line">
                                     <TabsTrigger value="overview" className="text-base">Описание</TabsTrigger>
                                     <TabsTrigger value="materials" className="text-base flex items-center gap-1.5">
@@ -515,7 +515,7 @@ const Lessons: React.FC = () => {
                                     </TabsTrigger>
                                 </TabsList>
 
-                                <div className="min-h-[300px] mt-3">
+                                <div className="mt-3">
                                     <TabsContent value="overview">
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
