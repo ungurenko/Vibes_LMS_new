@@ -344,7 +344,7 @@ const Lessons: React.FC = () => {
 
             <div className={cn(
                 "grid transition-all duration-500 ease-in-out gap-6 lg:gap-0",
-                isSidebarCollapsed ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[1fr_320px]"
+                isSidebarCollapsed ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[1fr_280px]"
             )}>
 
                 {/* === LEFT COLUMN: PLAYER & CONTENT === */}
@@ -359,7 +359,7 @@ const Lessons: React.FC = () => {
                             className="flex flex-col h-full max-w-5xl mx-auto"
                         >
                             {/* 1. Header Breadcrumbs */}
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2 text-sm text-zinc-500 font-medium">
                                     <span className="hidden md:inline">Курс</span>
                                     <ChevronRight size={14} className="hidden md:block opacity-50" />
@@ -398,12 +398,12 @@ const Lessons: React.FC = () => {
                             </div>
 
                             {/* 2. Video Player */}
-                            <div className="aspect-video bg-black rounded-2xl overflow-hidden relative group shadow-2xl shadow-zinc-200/50 dark:shadow-none ring-1 ring-zinc-900/5 dark:ring-white/10 z-10">
+                            <div className="max-h-[420px] w-full bg-black rounded-xl overflow-hidden relative group shadow-lg shadow-zinc-200/50 dark:shadow-none ring-1 ring-zinc-900/5 dark:ring-white/10 z-10">
                                 {embedUrl ? (
                                     <iframe
                                         src={embedUrl}
                                         title={activeLesson.title}
-                                        className="w-full h-full"
+                                        className="w-full aspect-video object-contain"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                         referrerPolicy="strict-origin-when-cross-origin"
                                         allowFullScreen
@@ -430,91 +430,92 @@ const Lessons: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* 3. Action Bar */}
-                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pb-6">
-                                <div className="flex-1">
-                                    <h1 className="text-2xl font-display font-bold text-zinc-900 dark:text-white leading-tight mb-2">
+                            {/* 3. Action Bar — compact two-line layout */}
+                            <div className="mt-3 flex flex-col gap-2 pb-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h1 className="text-xl font-display font-bold text-zinc-900 dark:text-white leading-tight truncate">
                                         {activeLesson.title}
                                     </h1>
-                                    <div className="flex items-center gap-3 text-sm text-zinc-500">
-                                        <span className="flex items-center gap-1.5">
-                                            <Layout size={14} />
-                                            {activeModuleId === 'recorded' ? 'Записанные уроки' : 'Прямые эфиры'}
-                                        </span>
-                                        <Separator orientation="vertical" className="h-3.5" />
-                                        <span>{activeLesson.duration}</span>
-                                        {activeLesson.status === 'completed' && (
-                                            <>
-                                                <Separator orientation="vertical" className="h-3.5" />
-                                                <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
-                                                    Пройден
-                                                </Badge>
-                                            </>
-                                        )}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={handlePrevLesson}
+                                            disabled={activeModule?.lessons[0].id === activeLesson.id}
+                                            aria-label="Предыдущий урок"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            onClick={handleLessonCompletion}
+                                            className={cn(
+                                                activeLesson.status === 'completed'
+                                                    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
+                                                    : 'hover:scale-105 active:scale-95 shadow-lg shadow-zinc-500/10'
+                                            )}
+                                        >
+                                            {activeLesson.status === 'completed' ? (
+                                                <>
+                                                    <Check size={16} />
+                                                    <span>Пройдено</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 size={16} />
+                                                    <span>Завершить</span>
+                                                </>
+                                            )}
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={handleNextLesson}
+                                            aria-label="Следующий урок"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </Button>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-3 w-full sm:w-auto">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={handlePrevLesson}
-                                        disabled={activeModule?.lessons[0].id === activeLesson.id}
-                                        aria-label="Предыдущий урок"
-                                    >
-                                        <ChevronLeft size={20} />
-                                    </Button>
-
-                                    <Button
-                                        onClick={handleLessonCompletion}
-                                        className={cn(
-                                            "flex-1 sm:flex-none",
-                                            activeLesson.status === 'completed'
-                                                ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20'
-                                                : 'hover:scale-105 active:scale-95 shadow-lg shadow-zinc-500/10'
-                                        )}
-                                    >
-                                        {activeLesson.status === 'completed' ? (
-                                            <>
-                                                <Check size={18} />
-                                                <span>Пройдено</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle2 size={18} />
-                                                <span>Завершить урок</span>
-                                            </>
-                                        )}
-                                    </Button>
-
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={handleNextLesson}
-                                        aria-label="Следующий урок"
-                                    >
-                                        <ChevronRight size={20} />
-                                    </Button>
+                                <div className="flex items-center gap-2 text-sm text-zinc-500">
+                                    <span className="flex items-center gap-1">
+                                        <Layout size={13} />
+                                        {activeModuleId === 'recorded' ? 'Записанные уроки' : 'Прямые эфиры'}
+                                    </span>
+                                    <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                                    <span>{activeLesson.duration}</span>
+                                    {activeLesson.status === 'completed' && (
+                                        <>
+                                            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                                            <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
+                                                Пройден
+                                            </Badge>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
-                            <Separator />
+                            <Separator className="my-2" />
 
                             {/* 4. Content Tabs — shadcn line variant */}
-                            <Tabs defaultValue="overview" className="mt-6">
+                            <Tabs defaultValue="overview" className="mt-2">
                                 <TabsList variant="line">
-                                    <TabsTrigger value="overview">Описание</TabsTrigger>
-                                    <TabsTrigger value="materials" className="flex items-center gap-1.5">
+                                    <TabsTrigger value="overview" className="text-base">Описание</TabsTrigger>
+                                    <TabsTrigger value="materials" className="text-base flex items-center gap-1.5">
                                         Материалы
                                         {(activeLesson.materials.length + activeLesson.tasks.length) > 0 && (
-                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                                            <Badge className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 font-mono">
                                                 {activeLesson.materials.length + activeLesson.tasks.length}
                                             </Badge>
                                         )}
                                     </TabsTrigger>
                                 </TabsList>
 
-                                <div className="min-h-[300px] mt-6">
+                                <div className="min-h-[300px] mt-3">
                                     <TabsContent value="overview">
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
@@ -612,13 +613,13 @@ const Lessons: React.FC = () => {
                 {/* === RIGHT COLUMN: SIDEBAR === */}
                 <div className={cn(
                     "hidden lg:block transition-all duration-500",
-                    isSidebarCollapsed ? "translate-x-full hidden w-0" : "w-[320px]"
+                    isSidebarCollapsed ? "translate-x-full hidden w-0" : "w-[280px]"
                 )}>
                     <div className="sticky top-0 h-screen bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border-l border-zinc-200/80 dark:border-white/5">
                         <div className="flex flex-col h-full">
                             {/* Header */}
-                            <div className="p-5 pb-4">
-                                <div className="flex items-center justify-between mb-3">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center justify-between mb-2">
                                     <h2 className="font-display text-base font-bold text-zinc-900 dark:text-white">Программа</h2>
                                     <span className="text-xs font-mono tabular-nums text-zinc-500">
                                         {progressData.completed}/{progressData.total}
@@ -643,7 +644,7 @@ const Lessons: React.FC = () => {
 
             {/* === MOBILE SHEET === */}
             <Sheet open={isMobileProgramOpen} onOpenChange={setIsMobileProgramOpen}>
-                <SheetContent side="right" className="w-[320px] sm:max-w-[320px] p-0">
+                <SheetContent side="right" className="w-[300px] sm:max-w-[300px] p-0">
                     <SheetHeader className="p-5 pb-4">
                         <SheetTitle className="flex items-center justify-between">
                             <span>Программа</span>
