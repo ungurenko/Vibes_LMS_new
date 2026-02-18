@@ -5,6 +5,7 @@ export { default as PromptCategoriesTab } from './PromptCategoriesTab';
 export { default as GlossaryTab } from './GlossaryTab';
 export { default as RoadmapsTab } from './RoadmapsTab';
 export { default as StagesTab } from './StagesTab';
+export { default as NewsTab } from './NewsTab';
 
 export type { AdminStyle } from './StylesTab';
 export type { AdminPrompt } from './PromptsTab';
@@ -20,5 +21,6 @@ export {
   GlossaryForm,
   RoadmapForm,
   StageForm,
+  NewsForm,
   StatusOrderFields,
 } from './EditorForms';

@@ -292,6 +292,13 @@ export interface NewsItem {
   description?: string;
 }
 
+export interface PlatformUpdate {
+  id: string;
+  title: string;
+  description?: string;
+  created_at: string;
+}
+
 export interface Cohort {
   id: string;
   name: string;

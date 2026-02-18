@@ -9,10 +9,11 @@ import {
   Save,
   Map,
   Target,
-  Layers
+  Layers,
+  Newspaper
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlossaryTerm, CourseModule, PromptCategoryItem, Cohort } from '../types';
+import { GlossaryTerm, CourseModule, PromptCategoryItem, Cohort, PlatformUpdate } from '../types';
 import { Drawer, PageHeader, Input, ConfirmModal } from '../components/Shared';
 import { removeCache, CACHE_KEYS } from '../lib/cache';
 import ScopeBanner from '../components/admin/ScopeBanner';
@@ -27,6 +28,7 @@ import {
   GlossaryTab,
   RoadmapsTab,
   StagesTab,
+  NewsTab,
   ModuleForm,
   LessonForm,
   StyleForm,
@@ -35,13 +37,14 @@ import {
   GlossaryForm,
   RoadmapForm,
   StageForm,
+  NewsForm,
   StatusOrderFields,
 } from '../components/admin/content';
 import type { AdminStyle, AdminPrompt, AdminRoadmap, AdminStage } from '../components/admin/content';
 
 // --- Types & Config ---
 
-type ContentTab = 'lessons' | 'styles' | 'prompts' | 'prompt-categories' | 'glossary' | 'roadmaps' | 'stages';
+type ContentTab = 'lessons' | 'styles' | 'prompts' | 'prompt-categories' | 'glossary' | 'roadmaps' | 'stages' | 'news';
 
 interface AdminContentProps {
   modules?: CourseModule[];
@@ -75,6 +78,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
     ? `/api/admin?resource=stages&cohortId=${selectedCohortId}`
     : '/api/admin?resource=stages';
   const { data: stages, reload: reloadStages } = useAdminFetch<AdminStage[]>(stagesUrl, []);
+  const { data: news, reload: reloadNews } = useAdminFetch<PlatformUpdate[]>('/api/admin?resource=platform-updates', []);
 
   // --- Helpers ---
 
@@ -149,6 +153,14 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
         });
         await reloadStages();
       }
+      else if (type === 'news') {
+        await fetch(`/api/admin?resource=platform-updates&id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await reloadNews();
+        removeCache(CACHE_KEYS.NEWS);
+      }
 
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
@@ -198,6 +210,11 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
           category: 'Анимации',
           imageUrl: '',
           previewUrl: ''
+        });
+      } else if (activeTab === 'news') {
+        setEditingItem({
+          title: '',
+          description: ''
         });
       } else if (activeTab === 'glossary') {
         setEditingItem({
@@ -366,6 +383,20 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
 
         if (!response.ok) throw new Error('Failed to save roadmap');
         await reloadRoadmaps();
+      }
+      else if (activeTab === 'news') {
+        const response = await fetch('/api/admin?resource=platform-updates', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(isUpdate ? { id: editingItem.id, title: editingItem.title, description: editingItem.description } : editingItem)
+        });
+
+        if (!response.ok) throw new Error('Failed to save news');
+        await reloadNews();
+        removeCache(CACHE_KEYS.NEWS);
       }
       else if (activeTab === 'stages') {
         const stagePayload = isUpdate ? editingItem : { ...editingItem, cohortId: selectedCohortId };
@@ -674,8 +705,12 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
           <StageForm editingItem={editingItem} updateField={updateField} />
         )}
 
+        {activeTab === 'news' && (
+          <NewsForm editingItem={editingItem} updateField={updateField} />
+        )}
+
         {/* Common Status/Order (for lessons, styles, prompts, categories) */}
-        {activeTab !== 'glossary' && activeTab !== 'roadmaps' && activeTab !== 'stages' && (
+        {activeTab !== 'glossary' && activeTab !== 'roadmaps' && activeTab !== 'stages' && activeTab !== 'news' && (
           <StatusOrderFields editingItem={editingItem} updateField={updateField} />
         )}
       </div>
@@ -701,7 +736,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
             )}
             <Button onClick={() => openEditor()}>
               <Plus size={18} />
-              <span>Добавить {activeTab === 'lessons' ? 'урок' : activeTab === 'styles' ? 'стиль' : activeTab === 'prompts' ? 'промпт' : activeTab === 'roadmaps' ? 'карту' : activeTab === 'stages' ? 'этап' : activeTab === 'prompt-categories' ? 'категорию' : 'термин'}</span>
+              <span>Добавить {activeTab === 'news' ? 'новость' : activeTab === 'lessons' ? 'урок' : activeTab === 'styles' ? 'стиль' : activeTab === 'prompts' ? 'промпт' : activeTab === 'roadmaps' ? 'карту' : activeTab === 'stages' ? 'этап' : activeTab === 'prompt-categories' ? 'категорию' : 'термин'}</span>
             </Button>
           </div>
         }
@@ -718,6 +753,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
             { id: 'prompts', label: 'Промпты', icon: Terminal },
             { id: 'prompt-categories', label: 'Категории', icon: Layers },
             { id: 'glossary', label: 'Словарь', icon: Book },
+            { id: 'news', label: 'Новости', icon: Newspaper },
           ].map((tab) => (
             <TabsTrigger
               key={tab.id}
@@ -733,6 +769,8 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
         {/* Scope Banner */}
         {activeTab === 'stages' ? (
           <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Стадии потока: ${selectedCohortName}` : undefined} />
+        ) : activeTab === 'news' ? (
+          <ScopeBanner type="shared" label="Новости видны всем студентам" />
         ) : activeTab === 'lessons' ? (
           <ScopeBanner type="shared" label="Модули привязаны к потокам индивидуально" />
         ) : (
@@ -800,6 +838,15 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
             />
           </motion.div>
         </TabsContent>
+        <TabsContent value="news">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <NewsTab
+              news={news}
+              onEdit={(item) => openEditor(item)}
+              onDelete={(id) => confirmDelete(id, 'news')}
+            />
+          </motion.div>
+        </TabsContent>
         <TabsContent value="stages">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
             <StagesTab
@@ -820,7 +867,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ selectedCohortId, selectedC
         onClose={() => { setIsEditorOpen(false); setEditingModuleMode(false); }}
         title={editingModuleMode
           ? `${editingItem?.id ? 'Редактировать' : 'Создать'} модуль`
-          : `${editingItem?.id ? 'Редактировать' : 'Создать'} ${activeTab === 'lessons' ? 'урок' : 'запись'}`
+          : `${editingItem?.id ? 'Редактировать' : 'Создать'} ${activeTab === 'news' ? 'новость' : activeTab === 'lessons' ? 'урок' : 'запись'}`
         }
         footer={
           <>

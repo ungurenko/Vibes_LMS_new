@@ -29,6 +29,33 @@ async function createUpdate(req: VercelRequest, res: VercelResponse) {
   return res.status(201).json(successResponse(rows[0]));
 }
 
+async function updateUpdate(req: VercelRequest, res: VercelResponse) {
+  const { id } = req.query;
+  const { title, description } = req.body;
+
+  if (!id) {
+    return res.status(400).json(errorResponse('ID обязателен'));
+  }
+
+  if (!title) {
+    return res.status(400).json(errorResponse('Заголовок обязателен'));
+  }
+
+  const { rows, rowCount } = await query(
+    `UPDATE platform_updates
+     SET title = $1, description = $2
+     WHERE id = $3 AND deleted_at IS NULL
+     RETURNING id, title, description, created_at`,
+    [title, description || null, id]
+  );
+
+  if (rowCount === 0) {
+    return res.status(404).json(errorResponse('Запись не найдена'));
+  }
+
+  return res.status(200).json(successResponse(rows[0]));
+}
+
 async function deleteUpdate(req: VercelRequest, res: VercelResponse) {
   const { id } = req.query;
 
@@ -59,6 +86,8 @@ export async function handlePlatformUpdates(
         return await getUpdates(req, res);
       case 'POST':
         return await createUpdate(req, res);
+      case 'PUT':
+        return await updateUpdate(req, res);
       case 'DELETE':
         return await deleteUpdate(req, res);
       default:

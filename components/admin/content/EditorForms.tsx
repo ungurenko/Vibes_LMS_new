@@ -772,6 +772,20 @@ export const StageForm: React.FC<EditorFormProps> = ({ editingItem, updateField 
   </>
 );
 
+// --- News Form ---
+
+export const NewsForm: React.FC<EditorFormProps> = ({ editingItem, updateField }) => (
+  <div>
+    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Описание</label>
+    <Textarea
+      rows={5}
+      value={editingItem?.description || ''}
+      onChange={(e) => updateField('description', e.target.value)}
+      placeholder="Расскажите студентам о новости..."
+    />
+  </div>
+);
+
 // --- Status/Order Footer (shared between lessons, styles, prompts, categories) ---
 
 export const StatusOrderFields: React.FC<EditorFormProps> = ({ editingItem, updateField }) => (
