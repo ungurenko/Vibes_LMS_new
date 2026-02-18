@@ -32,7 +32,7 @@ async function getCalls(req: VercelRequest, res: VercelResponse) {
       created_at, updated_at
     FROM admin_calls
     WHERE deleted_at IS NULL
-      ${cohortId ? 'AND cohort_id = $1' : ''}
+      ${cohortId ? 'AND (cohort_id = $1 OR cohort_id IS NULL)' : ''}
     ORDER BY scheduled_date DESC, scheduled_time DESC`,
         cohortId ? [cohortId] : []
     );

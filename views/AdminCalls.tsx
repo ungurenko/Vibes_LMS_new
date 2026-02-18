@@ -305,7 +305,11 @@ const AdminCalls: React.FC<AdminCallsProps> = ({ selectedCohortId, cohorts = [],
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-32">
 
             {/* Scope Banner */}
-            <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Созвоны потока: ${selectedCohortName}` : undefined} />
+            <ScopeBanner
+                type={selectedCohortName ? 'filtered' : 'shared'}
+                cohortName={selectedCohortName}
+                label={selectedCohortName ? `Созвоны потока: ${selectedCohortName} + общие` : 'Все созвоны'}
+            />
 
             {/* Header */}
             <PageHeader

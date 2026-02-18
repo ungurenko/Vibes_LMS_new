@@ -202,7 +202,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
             const data = await fetchWithAuthGet<UpcomingCall>('/api/calls/upcoming');
             setUpcomingCall(data);
          } catch (error) {
-            // No upcoming call — that's fine
+            setUpcomingCall(null);
+            console.error('Error fetching upcoming call:', error);
          }
       };
 
