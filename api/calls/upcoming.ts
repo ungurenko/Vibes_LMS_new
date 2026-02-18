@@ -31,9 +31,11 @@ export default async function handler(
         return res.status(405).json(errorResponse('Method not allowed'));
     }
 
+    let tokenData: { userId: string; role: string } | null = null;
+
     try {
         // Проверяем авторизацию
-        const tokenData = getUserFromRequest(req);
+        tokenData = getUserFromRequest(req);
         if (!tokenData) {
             return res.status(401).json(errorResponse('Не авторизован'));
         }
