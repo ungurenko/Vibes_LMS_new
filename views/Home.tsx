@@ -119,7 +119,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                setIsLoadingNews(false);
             }
 
-            const data = await fetchWithAuthGet<NewsItem[]>('/api/news');
+            const data = await fetchWithAuthGet<NewsItem[]>('/api/content/news');
             setNews(data);
             setCache(CACHE_KEYS.NEWS, data);
          } catch (error) {

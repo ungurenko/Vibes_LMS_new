@@ -15,6 +15,7 @@ import {
   successResponse,
   errorResponse,
 } from './_lib/auth.js';
+import { getUserCohortId } from './_lib/cohort.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -66,6 +67,8 @@ export default async function handler(
       if (req.method === 'POST') return addFavorite(req, res, tokenData);
       if (req.method === 'DELETE') return removeFavorite(req, res, tokenData);
       return res.status(405).json(errorResponse('Method not allowed'));
+    case 'news':
+      return getNews(req, res, tokenData);
     case 'content':
       return res.status(400).json(errorResponse('Content type required'));
     default:
@@ -520,6 +523,61 @@ async function removeFavorite(req: VercelRequest, res: VercelResponse, tokenData
     return res.status(200).json(successResponse({ removed: true }));
   } catch (error) {
     console.error('Remove favorite error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== NEWS FEED ====================
+async function getNews(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const cohortId = await getUserCohortId(tokenData.userId);
+
+    const sql = cohortId
+      ? `
+        SELECT 'lesson' as type, l.id, l.title as label, l.created_at
+        FROM lessons l
+        JOIN course_modules m ON m.id = l.module_id
+        JOIN module_cohorts mc ON mc.module_id = m.id
+        WHERE l.deleted_at IS NULL AND m.deleted_at IS NULL
+          AND mc.cohort_id = $1
+          AND l.status NOT IN ('draft', 'hidden')
+        UNION ALL
+        SELECT 'style' as type, id, name as label, created_at
+        FROM style_cards WHERE deleted_at IS NULL
+        UNION ALL
+        SELECT 'prompt' as type, id, title as label, created_at
+        FROM prompts WHERE deleted_at IS NULL AND status = 'published'
+        UNION ALL
+        SELECT 'update' as type, id, title as label, created_at
+        FROM platform_updates WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 20
+      `
+      : `
+        SELECT 'lesson' as type, l.id, l.title as label, l.created_at
+        FROM lessons l
+        JOIN course_modules m ON m.id = l.module_id
+        WHERE l.deleted_at IS NULL AND m.deleted_at IS NULL
+          AND l.status NOT IN ('draft', 'hidden')
+        UNION ALL
+        SELECT 'style' as type, id, name as label, created_at
+        FROM style_cards WHERE deleted_at IS NULL
+        UNION ALL
+        SELECT 'prompt' as type, id, title as label, created_at
+        FROM prompts WHERE deleted_at IS NULL AND status = 'published'
+        UNION ALL
+        SELECT 'update' as type, id, title as label, created_at
+        FROM platform_updates WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 20
+      `;
+
+    const params = cohortId ? [cohortId] : [];
+    const { rows } = await query(sql, params);
+
+    return res.status(200).json(successResponse(rows));
+  } catch (error: any) {
+    console.error('News feed error:', error.message, error.code);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }
