@@ -48,6 +48,18 @@ interface DashboardStats {
   lastUpdated: string;
 }
 
+interface NextCallData {
+  id: string;
+  topic: string;
+  description?: string;
+  date: string;
+  time: string;
+  duration?: number;
+  status: string;
+  meetingUrl?: string;
+  relativeDate: string;
+}
+
 // --- Цвета для pipeline стадий ---
 const STAGE_COLORS: Record<string, string> = {
   'База': 'bg-zinc-200 dark:bg-zinc-700',
@@ -62,13 +74,6 @@ const INITIAL_ALERTS = [
   { id: 3, type: 'info', title: 'Вопрос', message: 'Сложный вопрос в чате от Марии Д.', action: 'Ответить' },
 ];
 
-const NEXT_CALL = {
-  date: 'Сегодня',
-  time: '19:00',
-  topic: 'Разбор домашних заданий: Лендинг',
-  subtopic: 'Типичные ошибки в верстке и дизайне',
-  attendees: 142
-};
 
 // --- Components ---
 
@@ -108,17 +113,31 @@ const AdminDashboard: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Next call from API
+  const [nextCall, setNextCall] = useState<NextCallData | null>(null);
+
   // Call Editor State
   const [isEditCallOpen, setIsEditCallOpen] = useState(false);
-  const [callDetails, setCallDetails] = useState(NEXT_CALL);
+  const [callDetails, setCallDetails] = useState({ topic: '', subtopic: '', time: '' });
 
-  // Загрузка статистики из API
+  // Загрузка статистики и ближайшего созвона из API
   const fetchStats = useCallback(async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setIsRefreshing(true);
 
     try {
-      const data = await fetchWithAuthGet<DashboardStats>('/api/admin?resource=dashboard-stats');
-      setStats(data);
+      const [statsData, callData] = await Promise.all([
+        fetchWithAuthGet<DashboardStats>('/api/admin?resource=dashboard-stats'),
+        fetchWithAuthGet<NextCallData | null>('/api/calls/upcoming').catch(() => null),
+      ]);
+      setStats(statsData);
+      setNextCall(callData);
+      if (callData) {
+        setCallDetails({
+          topic: callData.topic,
+          subtopic: callData.description || '',
+          time: callData.time || '',
+        });
+      }
       setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
@@ -473,32 +492,55 @@ const AdminDashboard: React.FC = () => {
                     <div className="p-8 pb-10 relative z-10">
                         <div className="flex justify-between items-start mb-6">
                             <span className="px-3 py-1 bg-white/20 dark:bg-black/10 backdrop-blur-md rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                Live Event
+                                <span className={`w-2 h-2 rounded-full ${nextCall?.status === 'live' ? 'bg-red-500 animate-pulse' : 'bg-white/50 dark:bg-black/30'}`} />
+                                {nextCall?.status === 'live' ? 'Live Now' : 'Следующий эфир'}
                             </span>
                             <div className="w-10 h-10 rounded-full bg-white/10 dark:bg-black/5 flex items-center justify-center backdrop-blur-md">
                                 <Calendar size={18} />
                             </div>
                         </div>
-                        
-                        <h3 className="font-display text-3xl font-bold leading-tight mb-2">
-                            {callDetails.topic}
-                        </h3>
-                        <p className="text-white/70 dark:text-black/60 text-sm leading-relaxed mb-6">
-                            {callDetails.subtopic}
-                        </p>
 
-                        <div className="flex items-center gap-6">
-                            <div>
-                                <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Начало</div>
-                                <div className="text-xl font-mono font-bold">{callDetails.time}</div>
+                        {isLoading ? (
+                            <div className="animate-pulse space-y-3">
+                                <div className="h-9 w-3/4 bg-white/20 dark:bg-black/10 rounded-lg" />
+                                <div className="h-4 w-full bg-white/10 dark:bg-black/5 rounded mb-6" />
+                                <div className="flex gap-6 mt-6">
+                                    <div className="h-8 w-16 bg-white/20 dark:bg-black/10 rounded" />
+                                    <div className="h-8 w-16 bg-white/20 dark:bg-black/10 rounded" />
+                                </div>
                             </div>
-                            <div className="w-px h-8 bg-white/20 dark:bg-black/10" />
-                            <div>
-                                <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Участники</div>
-                                <div className="text-xl font-mono font-bold">{callDetails.attendees}</div>
-                            </div>
-                        </div>
+                        ) : nextCall ? (
+                            <>
+                                <h3 className="font-display text-3xl font-bold leading-tight mb-2">
+                                    {callDetails.topic || nextCall.topic}
+                                </h3>
+                                <p className="text-white/70 dark:text-black/60 text-sm leading-relaxed mb-6">
+                                    {callDetails.subtopic || nextCall.description || ''}
+                                </p>
+
+                                <div className="flex items-center gap-6">
+                                    <div>
+                                        <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Начало</div>
+                                        <div className="text-xl font-mono font-bold">{callDetails.time || nextCall.time}</div>
+                                    </div>
+                                    <div className="w-px h-8 bg-white/20 dark:bg-black/10" />
+                                    <div>
+                                        <div className="text-xs uppercase font-bold text-white/50 dark:text-black/40 tracking-wider">Дата</div>
+                                        <div className="text-xl font-mono font-bold">{nextCall.relativeDate}</div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="font-display text-2xl font-bold leading-tight mb-2 text-white/80 dark:text-black/70">
+                                    Нет созвонов
+                                </h3>
+                                <p className="text-white/50 dark:text-black/40 text-sm leading-relaxed mb-6">
+                                    Создайте созвон в разделе «Созвоны»
+                                </p>
+                                <div className="h-8" />
+                            </>
+                        )}
                     </div>
 
                     {/* Tear Line Visual */}
@@ -510,12 +552,19 @@ const AdminDashboard: React.FC = () => {
 
                     {/* Bottom Action Section */}
                     <div className="p-4 bg-black/20 dark:bg-black/5 backdrop-blur-sm">
-                        <button 
-                            onClick={() => setIsEditCallOpen(true)}
-                            className="w-full py-4 bg-white dark:bg-black text-black dark:text-white rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
+                        <button
+                            onClick={() => {
+                                if (nextCall?.meetingUrl) {
+                                    window.open(nextCall.meetingUrl, '_blank');
+                                } else {
+                                    setIsEditCallOpen(true);
+                                }
+                            }}
+                            disabled={!nextCall && !isLoading}
+                            className="w-full py-4 bg-white dark:bg-black text-black dark:text-white rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
                             <Play size={20} fill="currentColor" />
-                            Запустить эфир
+                            {nextCall?.meetingUrl ? 'Открыть эфир' : 'Запустить эфир'}
                         </button>
                     </div>
                 </div>
@@ -557,11 +606,8 @@ const AdminDashboard: React.FC = () => {
       >
          <div className="space-y-4">
             <Input label="Тема" value={callDetails.topic} onChange={(e) => setCallDetails({...callDetails, topic: e.target.value})} />
-            <Input label="Подзаголовок" value={callDetails.subtopic} onChange={(e) => setCallDetails({...callDetails, subtopic: e.target.value})} />
-            <div className="grid grid-cols-2 gap-4">
-                <Input type="time" label="Время" value={callDetails.time} onChange={(e) => setCallDetails({...callDetails, time: e.target.value})} />
-                <Input type="number" label="Ожидается" value={callDetails.attendees} onChange={(e) => setCallDetails({...callDetails, attendees: parseInt(e.target.value)})} />
-            </div>
+            <Input label="Описание" value={callDetails.subtopic} onChange={(e) => setCallDetails({...callDetails, subtopic: e.target.value})} />
+            <Input type="time" label="Время начала" value={callDetails.time} onChange={(e) => setCallDetails({...callDetails, time: e.target.value})} />
          </div>
       </Drawer>
 
