@@ -351,15 +351,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
                )}
 
                {/* ===== QUICK ACTIONS CARD ===== */}
-               <motion.div variants={cardVariants} className="flex-1">
-                  <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 flex flex-col h-full">
+               <motion.div variants={cardVariants}>
+                  <div className="relative bg-white/70 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.05] dark:border-white/[0.08] rounded-3xl shadow-[0_2px_4px_rgba(0,0,0,0.02),0_12px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_0_30px_rgba(168,85,247,0.06)] p-5 md:p-6 flex flex-col">
                      <div className="absolute inset-0 rounded-3xl pointer-events-none"
                         style={{ background: 'radial-gradient(ellipse at 30% 0%, rgba(168,85,247,0.03) 0%, transparent 50%)' }} />
                      <h3 className="text-base font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-4">
                         Перейти к
                      </h3>
 
-                     <div className="grid grid-cols-2 gap-3 flex-1">
+                     <div className="grid grid-cols-2 gap-3">
                         {QUICK_ACTIONS.map((action) => {
                            const Icon = action.icon;
                            return (
