@@ -33,7 +33,7 @@ INSERT INTO platform_settings (setting_key, setting_value) VALUES
   "styles": true,
   "prompts": true,
   "glossary": true,
-  "assistant": true
+  "tools": true
 }'::jsonb)
 ON CONFLICT (setting_key) DO NOTHING;
 

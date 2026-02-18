@@ -23,7 +23,7 @@ export async function handleNavigation(
           styles: true,
           prompts: true,
           glossary: true,
-          assistant: true,
+          tools: true,
         };
 
         // Создаём запись с дефолтными настройками
@@ -37,7 +37,19 @@ export async function handleNavigation(
         return res.status(200).json(successResponse(defaultConfig));
       }
 
-      return res.status(200).json(successResponse(rows[0].setting_value));
+      // Миграция: старый ключ "assistant" → "tools"
+      const config = rows[0].setting_value;
+      if ('assistant' in config && !('tools' in config)) {
+        config.tools = config.assistant;
+        delete config.assistant;
+        // Сохраняем исправленный конфиг в БД
+        await query(
+          `UPDATE platform_settings SET setting_value = $1 WHERE setting_key = 'navigation_config'`,
+          [JSON.stringify(config)]
+        );
+      }
+
+      return res.status(200).json(successResponse(config));
     }
 
     // POST - обновить настройки навигации
@@ -45,7 +57,7 @@ export async function handleNavigation(
       const config = req.body;
 
       // Валидация: проверяем что все ключи присутствуют и являются boolean
-      const requiredKeys = ['dashboard', 'lessons', 'roadmaps', 'styles', 'prompts', 'glossary', 'assistant'];
+      const requiredKeys = ['dashboard', 'lessons', 'roadmaps', 'styles', 'prompts', 'glossary', 'tools'];
       const missingKeys = requiredKeys.filter(key => !(key in config));
 
       if (missingKeys.length > 0) {
