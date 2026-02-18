@@ -16,6 +16,7 @@
  * - /api/admin?resource=ai-chats
  * - /api/admin?resource=cohorts
  * - /api/admin?resource=call-access
+ * - /api/admin?resource=platform-updates
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -34,6 +35,7 @@ import { handleQuickQuestions } from './_lib/admin/quick-questions.js';
 import { handleAiChats } from './_lib/admin/ai-chats.js';
 import { handleCohorts } from './_lib/admin/cohorts.js';
 import { handleCallAccess } from './_lib/admin/call-access.js';
+import { handlePlatformUpdates } from './_lib/admin/platform-updates.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -90,6 +92,8 @@ export default async function handler(
         return await handleCohorts(req, res, tokenData);
       case 'call-access':
         return await handleCallAccess(req, res, tokenData);
+      case 'platform-updates':
+        return await handlePlatformUpdates(req, res, tokenData);
       default:
         return res.status(400).json(errorResponse('Неверный resource'));
     }

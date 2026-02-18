@@ -137,6 +137,7 @@ export const CACHE_KEYS = {
   LESSONS: 'lessons',
   STAGES: 'stages',
   CATEGORIES: 'categories',
+  NEWS: 'news',
 } as const;
 
 // TTL для разных типов данных (в миллисекундах)
@@ -148,4 +149,5 @@ export const CACHE_TTL = {
   LESSONS: 5 * 60 * 1000,    // 5 минут - уроки с прогрессом
   STAGES: 5 * 60 * 1000,     // 5 минут - stages с прогрессом
   CATEGORIES: 30 * 60 * 1000, // 30 минут - категории почти статичны
+  NEWS: 5 * 60 * 1000,        // 5 минут - новости платформы
 } as const;

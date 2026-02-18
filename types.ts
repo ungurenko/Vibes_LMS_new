@@ -284,6 +284,13 @@ export interface QuickQuestion {
   isActive: boolean;
 }
 
+export interface NewsItem {
+  type: 'lesson' | 'style' | 'prompt' | 'update';
+  id: string;
+  label: string;
+  created_at: string;
+}
+
 export interface Cohort {
   id: string;
   name: string;
