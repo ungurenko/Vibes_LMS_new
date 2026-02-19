@@ -39,4 +39,4 @@ async function run() {
   }
 }
 
-run().catch(process.exit(1));
+run().catch(() => process.exit(1));
