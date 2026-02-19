@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { fetchWithAuthGet } from '../lib/fetchWithAuth';
+import { useAnalytics } from '../lib/hooks/useAnalytics';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -202,6 +203,7 @@ const MediumToolCard: React.FC<{ tool: ToolCardData; onClick: () => void; index:
 
 const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
   const [models, setModels] = useState<Record<ToolType, ToolModelInfo> | null>(null);
+  const { trackToolOpen } = useAnalytics();
 
   useEffect(() => {
     fetchWithAuthGet<Record<ToolType, ToolModelInfo>>('/api/tools/models')
@@ -246,7 +248,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
           {/* Large Card - Ассистент */}
           <LargeToolCard
             tool={largeTool}
-            onClick={() => onSelectTool(largeTool.type)}
+            onClick={() => { trackToolOpen(largeTool.type); onSelectTool(largeTool.type); }}
             modelName={models?.[largeTool.type]?.modelName}
           />
 
@@ -256,7 +258,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
               <MediumToolCard
                 key={tool.type}
                 tool={tool}
-                onClick={() => onSelectTool(tool.type)}
+                onClick={() => { trackToolOpen(tool.type); onSelectTool(tool.type); }}
                 index={index}
                 modelName={models?.[tool.type]?.modelName}
               />

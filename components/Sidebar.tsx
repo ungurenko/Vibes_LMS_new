@@ -21,7 +21,8 @@ import {
   VolumeX,
   Lock,
   Laptop,
-  Layers
+  Layers,
+  BarChart3
 } from 'lucide-react';
 import { NavItem, TabId, NavigationConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -70,6 +71,7 @@ const adminNavItems: NavItem[] = [
   { id: 'admin-calls', label: 'Созвоны', icon: Video },
   { id: 'admin-cohorts', label: 'Потоки', icon: Layers },
   { id: 'admin-tools', label: 'Инструменты', icon: Sparkles },
+  { id: 'admin-analytics', label: 'Аналитика', icon: BarChart3 },
   { id: 'admin-settings', label: 'Настройки', icon: Settings },
 ];
 

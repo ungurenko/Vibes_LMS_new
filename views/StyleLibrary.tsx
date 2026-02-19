@@ -10,6 +10,7 @@ import { CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 import { copyToClipboard } from '../lib/clipboard';
 import { useCachedFetch } from '../lib/hooks/useCachedFetch';
 import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
+import { useAnalytics } from '../lib/hooks/useAnalytics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,11 +27,16 @@ const StyleLibrary: React.FC = () => {
     '/api/content/styles', [], { cacheKey: CACHE_KEYS.STYLES, cacheTTL: CACHE_TTL.STYLES }
   );
   const { copiedId, triggerCopy } = useCopyFeedback(3000);
+  const { trackStyleView, trackStyleCopy } = useAnalytics();
 
   const handleCopy = async (id: string, prompt: string) => {
     playSound('copy');
     const success = await copyToClipboard(prompt);
-    if (success) triggerCopy(id);
+    if (success) {
+      triggerCopy(id);
+      const style = styles.find(s => s.id === id);
+      if (style) trackStyleCopy(id, style.name);
+    }
   };
 
   const filteredStyles = useMemo(() => {
@@ -118,7 +124,7 @@ const StyleLibrary: React.FC = () => {
                 opacity: { duration: 0.25 }
               }}
               key={style.id}
-              onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); }}
+              onClick={() => { playSound('click'); setSelectedStyle(style); setIsDescriptionExpanded(false); trackStyleView(style.id, style.name); }}
             >
               <Card className="group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-white/5 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors duration-500 hover:shadow-2xl hover:shadow-purple-900/10 dark:hover:shadow-purple-900/20 flex flex-col h-[400px] cursor-pointer p-0 py-0 gap-0 shadow-none">
                 {/* Image Area */}

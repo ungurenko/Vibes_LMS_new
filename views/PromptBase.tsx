@@ -24,6 +24,7 @@ import { fetchWithAuthGet, fetchWithAuthPost, fetchWithAuth } from '../lib/fetch
 import { GridSkeleton, PromptCardSkeleton } from '../components/SkeletonLoader';
 import { getCached, setCache, CACHE_KEYS, CACHE_TTL } from '../lib/cache';
 import { useCopyFeedback } from '../lib/hooks/useCopyFeedback';
+import { useAnalytics } from '../lib/hooks/useAnalytics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -109,6 +110,7 @@ const PromptBase: React.FC = () => {
     const [wizardLoading, setWizardLoading] = useState(false);
 
     const { copiedId, triggerCopy } = useCopyFeedback(2000);
+    const { trackPromptCopy, trackPromptFavorite } = useAnalytics();
 
     // Загрузка данных
     useEffect(() => {
@@ -163,6 +165,8 @@ const PromptBase: React.FC = () => {
         playSound('copy');
         navigator.clipboard.writeText(content);
         triggerCopy(id);
+        const prompt = prompts.find(p => p.id === id);
+        if (prompt) trackPromptCopy(id, prompt.title);
     };
 
     // Toggle favorite with optimistic update
@@ -178,6 +182,10 @@ const PromptBase: React.FC = () => {
             isFavorite ? next.delete(promptId) : next.add(promptId);
             return next;
         });
+
+        // Analytics
+        const prompt = prompts.find(p => p.id === promptId);
+        if (prompt) trackPromptFavorite(promptId, prompt.title, isFavorite ? 'remove' : 'add');
 
         // Toast
         setFavoriteToast({ action: isFavorite ? 'removed' : 'added' });

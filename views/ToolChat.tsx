@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import { useSound } from '../SoundContext';
 import CodeBlock from '../components/CodeBlock';
 import { formatTime } from '../lib/formatUtils';
+import { useAnalytics } from '../lib/hooks/useAnalytics';
 
 type ToolType = 'assistant' | 'tz_helper' | 'ideas';
 
@@ -282,6 +283,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
   initialMessage
 }) => {
   const { playSound } = useSound();
+  const { trackToolMessage, trackQuickQuestion } = useAnalytics();
   const config = TOOL_CONFIG[toolType];
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -385,6 +387,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
     if (!text.trim()) return;
 
     playSound('success');
+    trackToolMessage(toolType);
 
     const newUserMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -655,7 +658,7 @@ const ToolChat: React.FC<ToolChatProps> = ({
           {messages.length <= 1 && !isTyping && (
             <QuickPrompts
               toolType={toolType}
-              onSelect={handleSend}
+              onSelect={(prompt) => { trackQuickQuestion(prompt, toolType); handleSend(prompt); }}
               gradient={config.gradient}
             />
           )}

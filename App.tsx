@@ -25,6 +25,7 @@ const AdminCalls = lazy(() => import('./views/AdminCalls'));
 const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
 const AdminCohorts = lazy(() => import('./views/AdminCohorts'));
+const AdminAnalytics = lazy(() => import('./views/AdminAnalytics'));
 import { cn } from '@/lib/utils';
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
 import CohortSelector from './components/admin/CohortSelector';
@@ -34,6 +35,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SoundProvider } from './SoundContext';
 import { fetchWithAuth } from './lib/fetchWithAuth';
 import { setCache, CACHE_KEYS } from './lib/cache';
+import { useAnalytics } from './lib/hooks/useAnalytics';
 
 
 
@@ -66,6 +68,15 @@ const AppContent: React.FC = () => {
     const [userCohort, setUserCohort] = useState<{ id: string; name: string } | null>(null);
 
     // Убрали сохранение modules в localStorage
+
+    const { trackPageView } = useAnalytics();
+
+    // Track page views
+    useEffect(() => {
+        if (currentUser && view === 'app') {
+            trackPageView(activeTab);
+        }
+    }, [activeTab, currentUser, view]);
 
     // --- Effects ---
 
@@ -585,6 +596,11 @@ const AppContent: React.FC = () => {
             case 'admin-tools': return (
                 <Suspense fallback={<ViewSkeleton />}>
                     <AdminAssistant />
+                </Suspense>
+            );
+            case 'admin-analytics': return (
+                <Suspense fallback={<ViewSkeleton />}>
+                    <AdminAnalytics selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
                 </Suspense>
             );
             case 'admin-settings': return (

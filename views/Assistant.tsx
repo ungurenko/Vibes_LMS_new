@@ -19,6 +19,7 @@ import { useSound } from '../SoundContext';
 import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
 import CodeBlock from '../components/CodeBlock';
 import { formatTime } from '../lib/formatUtils';
+import { useAnalytics } from '../lib/hooks/useAnalytics';
 
 // --- Configuration ---
 
@@ -86,6 +87,7 @@ interface AssistantProps {
 
 const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled }) => {
   const { playSound } = useSound();
+  const { trackToolMessage, trackQuickQuestion } = useAnalytics();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -181,6 +183,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
     if (!text.trim()) return;
 
     playSound('success'); // Play sound for sent message
+    trackToolMessage('assistant');
 
     const newUserMsg: ChatMessage = {
       id: Date.now().toString(), // Временный ID для UI
@@ -450,7 +453,7 @@ const Assistant: React.FC<AssistantProps> = ({ initialMessage, onMessageHandled 
               {quickQuestions.map((q, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleSend(q)}
+                  onClick={() => { trackQuickQuestion(q, 'assistant'); handleSend(q); }}
                   className="whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-zinc-200 dark:border-white/10 hover:border-purple-400 dark:hover:border-purple-500/50 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-purple-600 dark:hover:text-purple-300 transition-all shadow-sm hover:shadow-purple-500/10 flex items-center gap-2 group"
                 >
                   <Zap size={14} className="text-purple-400 group-hover:text-purple-500 transition-colors" />
