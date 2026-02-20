@@ -430,6 +430,14 @@ const Lessons: React.FC = () => {
                                 )}
                             </div>
 
+                            {/* VPN Notice */}
+                            {embedUrl && (
+                                <div className="mt-3 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 text-sm">
+                                    <span className="text-base">🔒</span>
+                                    <span>Видео размещено на YouTube. Если урок не воспроизводится — <strong>включите VPN</strong>.</span>
+                                </div>
+                            )}
+
                             {/* 3. Action Bar */}
                             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pb-6">
                                 <div className="flex-1">
