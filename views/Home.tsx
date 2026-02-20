@@ -199,7 +199,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, userName = 'Студент', us
    useEffect(() => {
       const fetchUpcomingCall = async () => {
          try {
-            const data = await fetchWithAuthGet<UpcomingCall>('/api/calls/upcoming');
+            const data = await fetchWithAuthGet<UpcomingCall>('/api/content/upcoming-call');
             setUpcomingCall(data);
          } catch (error) {
             setUpcomingCall(null);

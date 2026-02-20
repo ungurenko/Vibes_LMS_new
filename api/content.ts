@@ -69,6 +69,8 @@ export default async function handler(
       return res.status(405).json(errorResponse('Method not allowed'));
     case 'news':
       return getNews(req, res, tokenData);
+    case 'upcoming-call':
+      return getUpcomingCall(req, res, tokenData);
     case 'content':
       return res.status(400).json(errorResponse('Content type required'));
     default:
@@ -523,6 +525,104 @@ async function removeFavorite(req: VercelRequest, res: VercelResponse, tokenData
     return res.status(200).json(successResponse({ removed: true }));
   } catch (error) {
     console.error('Remove favorite error:', error);
+    return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== UPCOMING CALL ====================
+
+function parseLocalDate(dateValue: string | Date): Date {
+  if (dateValue instanceof Date) {
+    return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+  }
+  const [year, month, day] = dateValue.slice(0, 10).split('-').map(Number);
+  return new Date(year, (month || 1) - 1, day || 1);
+}
+
+async function getUpcomingCall(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const { rows } = await query(
+      `WITH requesting_user AS (
+        SELECT cohort_id
+        FROM users
+        WHERE id = $1 AND deleted_at IS NULL
+      )
+      SELECT
+        ac.id, ac.topic, ac.description,
+        ac.scheduled_date, ac.scheduled_time, ac.duration, ac.timezone,
+        ac.status, ac.meeting_url
+      FROM admin_calls ac
+      WHERE ac.deleted_at IS NULL
+        AND ac.status IN ('scheduled', 'live')
+        AND (
+          ac.scheduled_date > CURRENT_DATE
+          OR (ac.scheduled_date = CURRENT_DATE AND ac.scheduled_time >= CURRENT_TIME)
+        )
+        AND (
+          $2::text = 'admin'
+          OR ac.cohort_id IS NULL
+          OR (
+            (SELECT cohort_id FROM requesting_user) IS NOT NULL
+            AND ac.cohort_id = (SELECT cohort_id FROM requesting_user)
+          )
+          OR ac.id IN (
+            SELECT cca.call_id
+            FROM cohort_call_access cca
+            WHERE cca.cohort_id = (SELECT cohort_id FROM requesting_user)
+              AND (SELECT cohort_id FROM requesting_user) IS NOT NULL
+          )
+        )
+      ORDER BY ac.scheduled_date ASC, ac.scheduled_time ASC
+      LIMIT 1`,
+      [tokenData.userId, tokenData.role]
+    );
+
+    if (rows.length === 0) {
+      return res.status(200).json(successResponse(null));
+    }
+
+    const row = rows[0];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const callDate = parseLocalDate(row.scheduled_date);
+    callDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.ceil((callDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    let relativeDate: string;
+    if (diffDays === 0) {
+      relativeDate = 'Сегодня';
+    } else if (diffDays === 1) {
+      relativeDate = 'Завтра';
+    } else if (diffDays < 7) {
+      const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+      relativeDate = days[callDate.getDay()];
+    } else {
+      relativeDate = callDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+
+    const call = {
+      id: row.id,
+      topic: row.topic,
+      description: row.description,
+      date: row.scheduled_date,
+      time: row.scheduled_time?.slice(0, 5),
+      duration: row.duration,
+      timezone: row.timezone,
+      status: row.status,
+      meetingUrl: row.meeting_url,
+      relativeDate,
+    };
+
+    return res.status(200).json(successResponse(call));
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Get upcoming call error:', {
+      message: err.message,
+      code: (error as any)?.code,
+      userId: tokenData?.userId,
+    });
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }

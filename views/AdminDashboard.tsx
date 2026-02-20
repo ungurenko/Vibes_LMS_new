@@ -127,7 +127,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const [statsData, callData] = await Promise.all([
         fetchWithAuthGet<DashboardStats>('/api/admin?resource=dashboard-stats'),
-        fetchWithAuthGet<NextCallData | null>('/api/calls/upcoming').catch(() => null),
+        fetchWithAuthGet<NextCallData | null>('/api/content/upcoming-call').catch(() => null),
       ]);
       setStats(statsData);
       setNextCall(callData);
