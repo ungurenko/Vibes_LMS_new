@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Student, StudentProfile as StudentProfileType } from '../types';
+import { Student, StudentProfile as StudentProfileType, Cohort } from '../types';
 import {
   Search,
   ArrowUpDown,
@@ -39,6 +39,7 @@ interface AdminStudentsProps {
     onDeleteStudent: (id: string) => void;
     selectedCohortId?: string | null;
     selectedCohortName?: string | null;
+    cohorts?: Cohort[];
 }
 
 // --- Sub-components ---
@@ -61,7 +62,7 @@ const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'githu
   );
 };
 
-const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId, selectedCohortName }) => {
+const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId, selectedCohortName, cohorts }) => {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -97,7 +98,8 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       firstName: '',
       lastName: '',
       email: '',
-      password: ''
+      password: '',
+      cohortId: ''
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -162,7 +164,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
 
   const openAddModal = () => {
       setModalMode('add');
-      setFormData({ firstName: '', lastName: '', email: '', password: '' });
+      setFormData({ firstName: '', lastName: '', email: '', password: '', cohortId: '' });
       setIsModalOpen(true);
   };
 
@@ -176,7 +178,8 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
           firstName: names[0] || '',
           lastName: names.slice(1).join(' ') || '',
           email: student.email,
-          password: '' // Don't show old password
+          password: '', // Don't show old password
+          cohortId: student.cohortId || ''
       });
       setIsModalOpen(true);
   };
@@ -198,7 +201,7 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -223,12 +226,16 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
           // Edit Mode
           const studentToUpdate = students.find(s => s.id === selectedStudentId);
           if (studentToUpdate) {
-              const updatedStudent = {
+              const updatedStudent: Student = {
                   ...studentToUpdate,
                   name: fullName,
                   email: formData.email,
-                  // If password logic existed in real backend, we'd handle it here
+                  cohortId: formData.cohortId || undefined,
               };
+              await fetchWithAuth(`/api/admin?resource=students`, {
+                  method: 'PUT',
+                  body: JSON.stringify({ id: selectedStudentId, cohortId: formData.cohortId || null }),
+              });
               onUpdateStudent(updatedStudent);
           }
       }
@@ -568,6 +575,21 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
                                         className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
                                     />
                                 </div>
+                                {modalMode === 'edit' && cohorts && cohorts.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Поток</label>
+                                        <select
+                                            value={formData.cohortId}
+                                            onChange={(e) => setFormData({...formData, cohortId: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
+                                        >
+                                            <option value="">Без потока</option>
+                                            {cohorts.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                                 {modalMode === 'add' && (
                                     <div>
                                         <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Временный пароль</label>

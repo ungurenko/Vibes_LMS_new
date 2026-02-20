@@ -575,7 +575,7 @@ const AppContent: React.FC = () => {
             // Admin Views (lazy-loaded with Suspense)
             case 'admin-students': return (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} selectedCohortName={selectedCohortName} cohorts={cohorts} />
                 </Suspense>
             );
             case 'admin-content': return (
@@ -611,7 +611,7 @@ const AppContent: React.FC = () => {
 
             default: return mode === 'admin' ? (
                 <Suspense fallback={<ViewSkeleton />}>
-                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} />
+                    <AdminStudents students={students} onUpdateStudent={handleUpdateStudent} onAddStudent={handleAddStudent} onDeleteStudent={handleDeleteStudent} selectedCohortId={selectedCohortId} cohorts={cohorts} />
                 </Suspense>
             ) : <Suspense fallback={<ViewSkeleton />}><Home onNavigate={setActiveTab} userName={currentUser?.name} /></Suspense>;
         }

@@ -216,7 +216,7 @@ export async function handleStudents(
 
     // PUT - обновить студента
     if (req.method === 'PUT') {
-      const { id, status, notes, progress, newPassword } = req.body;
+      const { id, status, notes, progress, newPassword, cohortId } = req.body;
 
       if (!id) {
         return res.status(400).json(errorResponse('ID студента обязателен'));
@@ -241,6 +241,12 @@ export async function handleStudents(
       if (progress !== undefined) {
         updates.push(`progress_percent = $${paramIndex}`);
         params.push(progress);
+        paramIndex++;
+      }
+
+      if (cohortId !== undefined) {
+        updates.push(`cohort_id = $${paramIndex}`);
+        params.push(cohortId || null);
         paramIndex++;
       }
 
