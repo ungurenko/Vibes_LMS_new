@@ -202,6 +202,9 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
+                    {password.length > 0 && password.length < 8 && (
+                        <p className="text-xs text-red-500 mt-1.5 ml-1">Минимум 8 символов</p>
+                    )}
                 </div>
 
                 <div>
