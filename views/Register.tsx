@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Lock, Mail, User, AlertTriangle, Loader2, Camera, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Lock, Mail, User, AlertTriangle, Loader2, Camera, RefreshCw, Eye, EyeOff, Briefcase } from 'lucide-react';
 import { InviteLink } from '../types';
 
 interface RegisterProps {
@@ -18,6 +18,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
   const [agreed, setAgreed] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
 
+  const [niche, setNiche] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -56,7 +57,8 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                 password,
                 firstName: name.split(' ')[0],
                 lastName: name.split(' ').slice(1).join(' ') || null,
-                inviteCode
+                inviteCode,
+                niche: niche.trim() || undefined
             })
         });
 
@@ -288,6 +290,22 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Ваша ниша / сфера деятельности</label>
+                    <div className="relative">
+                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                        <input
+                            type="text"
+                            value={niche}
+                            onChange={(e) => setNiche(e.target.value)}
+                            maxLength={150}
+                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
+                            placeholder="Например: фитнес-тренер, дизайнер, владелец кофейни"
+                        />
+                    </div>
+                    <p className="mt-1.5 text-xs text-zinc-400">AI-ассистент будет учитывать вашу нишу и давать более точные советы</p>
                 </div>
 
                 <div className="flex items-start gap-3 mt-4">

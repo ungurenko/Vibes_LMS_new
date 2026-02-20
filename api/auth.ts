@@ -31,6 +31,7 @@ interface RegisterRequest {
   firstName: string;
   lastName?: string;
   inviteCode: string;
+  niche?: string;
 }
 
 interface UpdateProfileRequest {
@@ -177,7 +178,7 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
   const client = await getClient();
 
   try {
-    const { email, password, firstName, lastName, inviteCode } = req.body as RegisterRequest;
+    const { email, password, firstName, lastName, inviteCode, niche } = req.body as RegisterRequest;
 
     if (!email || !password || !firstName || !inviteCode) {
       return res.status(400).json(
@@ -232,10 +233,10 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     const userResult = await client.query(
       `INSERT INTO users (
         email, password_hash, first_name, last_name,
-        role, status, progress_percent, last_active_at, cohort_id
-      ) VALUES ($1, $2, $3, $4, 'student', 'active', 0, NOW(), $5)
+        role, status, progress_percent, last_active_at, cohort_id, niche
+      ) VALUES ($1, $2, $3, $4, 'student', 'active', 0, NOW(), $5, $6)
       RETURNING id, email, first_name, last_name, role`,
-      [email.toLowerCase(), passwordHash, firstName, lastName || null, invite.cohort_id || null]
+      [email.toLowerCase(), passwordHash, firstName, lastName || null, invite.cohort_id || null, niche || null]
     );
 
     const newUser = userResult.rows[0];
