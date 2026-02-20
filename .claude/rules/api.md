@@ -24,7 +24,7 @@ Requires admin role (except `navigation` GET which is public).
 
 | Resource | Handler Module | Purpose |
 |----------|---------------|---------|
-| `students` | `admin/students.ts` | Student management (list, update) |
+| `students` | `admin/students.ts` | Student CRUD + bulk ops (GET/POST/PUT/DELETE/PATCH) |
 | `student-activity` | `admin/activity.ts` | User activity history |
 | `stats` | `admin/stats.ts` | Platform statistics |
 | `dashboard-stats` | `admin/stats.ts` | Dashboard aggregate stats |
@@ -36,6 +36,7 @@ Requires admin role (except `navigation` GET which is public).
 | `navigation` | `admin/navigation.ts` | Navigation visibility |
 | `quick-questions` | `admin/quick-questions.ts` | Quick questions CRUD |
 | `ai-chats` | `admin/ai-chats.ts` | Student AI chats (list, export, stats) |
+| `notifications` | `admin/notifications.ts` | Send notifications to students (POST), list by user (GET) |
 
 ## Admin Content (`/api/admin-content?type=`)
 
@@ -58,6 +59,13 @@ Requires admin role.
 - `/api/content/roadmaps` — Roadmaps with user progress
 - `/api/content/quick-questions` — Quick questions
 - `/api/content/favorites` — User favorites (GET/POST/DELETE)
+
+## Notifications (`/api/notifications`)
+
+Student-facing endpoint (any authenticated user):
+- `GET /api/notifications` — My notifications + unreadCount
+- `PATCH /api/notifications?id=<uuid>` — Mark one as read
+- `PATCH /api/notifications?all=true` — Mark all as read
 
 ## Other Endpoints
 - `/api/lessons` — Lessons with progress (GET), mark complete (POST)

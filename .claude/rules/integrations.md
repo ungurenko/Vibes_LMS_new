@@ -41,6 +41,17 @@ Token: `OPENROUTER_API_KEY`
 
 Used in `api/tools.ts` for AI chat streaming. Models configured per tool type in `ai_system_instructions` table.
 
+## Resend (Email)
+
+Token: `RESEND_API_KEY` (optional — emails silently skipped if missing)
+Domain: `ungurenko.ru` (verified, DNS records in TimeWeb)
+From: `noreply@ungurenko.ru`
+
+Wrapper: `api/_lib/email.ts` — exports `sendWelcomeEmail`, `sendPasswordResetEmail`, `sendReminderEmail`, `sendAnnouncementEmail`.
+Templates: `api/_lib/email-templates.ts` — HTML with inline styles.
+
+All email sends are **non-blocking** (fire-and-forget with `.catch()`). Never let email failure block API response.
+
 ## Deployment Note
 
 Add env variables to Vercel Dashboard BEFORE deploying. Missing tokens cause 500 errors that require redeployment after adding them.
