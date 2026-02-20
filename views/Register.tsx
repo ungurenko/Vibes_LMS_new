@@ -23,6 +23,7 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
 
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [registrationData, setRegistrationData] = useState<{ token: string; user: any } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +68,9 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
             return;
         }
 
-        // Успех - передать токен и пользователя в App.tsx
-        onRegister(data.data);
+        // Успех - показать экран с важными ссылками
+        setRegistrationData(data.data);
+        setIsLoading(false);
     } catch (err) {
         setApiError('Ошибка сети. Попробуйте позже.');
         setIsLoading(false);
@@ -92,6 +94,61 @@ const Register: React.FC<RegisterProps> = ({ inviteCode, onRegister, onNavigateL
   };
 
   const isFormValid = name && email && password.length >= 8 && password === confirmPassword && agreed;
+
+  if (registrationData) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-emerald-500/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-500/10 rounded-full blur-[120px]" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md relative z-10"
+        >
+          <div className="text-center mb-8">
+            <img src="https://i.imgur.com/f3UfhpM.png" alt="VIBES Logo" className="h-24 w-auto object-contain mx-auto mb-4" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
+              <CheckCircle2 size={12} /> Регистрация завершена
+            </div>
+            <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Добро пожаловать!</h1>
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5 shadow-xl shadow-zinc-200/50 dark:shadow-none space-y-5">
+            <div className="bg-zinc-50 dark:bg-zinc-800 rounded-2xl p-4">
+              <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Ссылка для входа на платформу</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">Сохрани — по ней ты сможешь войти в любое время</p>
+              <a href="https://vibes-navy.vercel.app" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 font-medium text-sm hover:underline break-all">
+                vibes-navy.vercel.app
+                <ArrowRight size={14} />
+              </a>
+            </div>
+
+            <div className="bg-zinc-50 dark:bg-zinc-800 rounded-2xl p-4">
+              <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Чат потока в Telegram</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">Обязательно вступи — там объявления, поддержка и общение</p>
+              <a href="https://t.me/+nVX85W1e411lYjJi" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 font-medium text-sm hover:underline">
+                Вступить в чат
+                <ArrowRight size={14} />
+              </a>
+            </div>
+
+            <button
+              onClick={() => onRegister(registrationData)}
+              className="w-full py-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+            >
+              Начать обучение
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
