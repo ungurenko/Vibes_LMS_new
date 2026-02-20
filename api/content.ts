@@ -6,6 +6,7 @@
  * - GET /api/content/prompts
  * - GET /api/content/glossary
  * - GET /api/content/roadmaps
+ * - POST /api/content/track
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -31,8 +32,8 @@ export default async function handler(
   const pathPartsForMethod = urlForMethod.pathname.split('/').filter(Boolean);
   const contentTypeForMethod = pathPartsForMethod[pathPartsForMethod.length - 1];
 
-  // Разрешаем POST/DELETE только для favorites
-  if (req.method !== 'GET' && contentTypeForMethod !== 'favorites') {
+  // Разрешаем POST/DELETE только для favorites и track
+  if (req.method !== 'GET' && contentTypeForMethod !== 'favorites' && contentTypeForMethod !== 'track') {
     return res.status(405).json(errorResponse('Method not allowed'));
   }
 
@@ -71,6 +72,9 @@ export default async function handler(
       return getNews(req, res, tokenData);
     case 'upcoming-call':
       return getUpcomingCall(req, res, tokenData);
+    case 'track':
+      if (req.method !== 'POST') return res.status(405).json(errorResponse('Method not allowed'));
+      return trackEvent(req, res, tokenData);
     case 'content':
       return res.status(400).json(errorResponse('Content type required'));
     default:
@@ -624,6 +628,47 @@ async function getUpcomingCall(req: VercelRequest, res: VercelResponse, tokenDat
       userId: tokenData?.userId,
     });
     return res.status(500).json(errorResponse('Ошибка сервера'));
+  }
+}
+
+// ==================== TRACK EVENTS ====================
+
+const ALLOWED_EVENTS = new Set([
+  'page_view',
+  'prompt_copy',
+  'prompt_favorite',
+  'style_view',
+  'style_copy',
+  'tool_open',
+  'tool_message',
+  'quick_question_click',
+]);
+
+async function trackEvent(req: VercelRequest, res: VercelResponse, tokenData: any) {
+  try {
+    const { eventType, targetType, targetId, targetTitle, metadata } = req.body || {};
+
+    if (!eventType || !ALLOWED_EVENTS.has(eventType)) {
+      return res.status(400).json(errorResponse('Invalid eventType'));
+    }
+
+    await query(
+      `INSERT INTO analytics_events (user_id, event_type, target_type, target_id, target_title, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        tokenData.userId,
+        eventType,
+        targetType || null,
+        targetId || null,
+        targetTitle || null,
+        metadata ? JSON.stringify(metadata) : '{}',
+      ]
+    );
+
+    return res.status(200).json(successResponse({ ok: true }));
+  } catch (error: any) {
+    console.error('Track API error:', error.message, error.code);
+    return res.status(500).json(errorResponse('Internal server error'));
   }
 }
 

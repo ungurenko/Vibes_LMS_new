@@ -59,6 +59,7 @@ Requires admin role.
 - `/api/content/roadmaps` — Roadmaps with user progress
 - `/api/content/quick-questions` — Quick questions
 - `/api/content/favorites` — User favorites (GET/POST/DELETE)
+- `/api/content/track` — Analytics event tracking (POST)
 
 ## Notifications (`/api/notifications`)
 
@@ -71,7 +72,6 @@ Student-facing endpoint (any authenticated user):
 - `/api/lessons` — Lessons with progress (GET), mark complete (POST)
 - `/api/stages` — Stages with tasks (GET), complete task (POST/DELETE)
 - `/api/progress` — Roadmap step progress (GET/POST)
-- `/api/showcase` — Published projects
 - `/api/upload` — File upload to Vercel Blob (max 10MB)
 - `/api/chat` — **DEPRECATED**, use `/api/tools`
 

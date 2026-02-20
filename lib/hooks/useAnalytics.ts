@@ -17,7 +17,7 @@ function sendEvent(payload: TrackPayload) {
   const token = localStorage.getItem('vibes_token');
   if (!token) return;
 
-  fetch('/api/track', {
+  fetch('/api/content/track', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
