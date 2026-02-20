@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setI
                     <img 
                         src="https://i.imgur.com/f3UfhpM.png" 
                         alt="VIBES Logo" 
-                        className="h-24 w-auto object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-sm dark:brightness-0 dark:invert"
+                        className="h-24 w-auto object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-sm"
                     />
                     <div className="absolute -bottom-2 right-0 text-[9px] font-bold tracking-[0.2em] text-purple-500 uppercase opacity-0 group-hover:opacity-100 transition-opacity">
                         Academy
