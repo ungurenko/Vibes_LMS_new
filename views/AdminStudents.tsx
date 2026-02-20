@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Student, StudentProfile as StudentProfileType, Cohort } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Student, StudentProfile as StudentProfileType, Cohort, AdminStat } from '../types';
 import {
   Search,
   ArrowUpDown,
@@ -16,13 +16,20 @@ import {
   Key,
   Copy,
   Check,
-  RefreshCw
+  RefreshCw,
+  Users,
+  TrendingUp,
+  BarChart3,
+  AlertTriangle,
+  UserPlus,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/Shared';
 import { StudentProfile } from '../components/admin/students/StudentProfile';
-import { fetchWithAuthGet, fetchWithAuth } from '../lib/fetchWithAuth';
+import { fetchWithAuthGet, fetchWithAuth, fetchWithAuthPost, fetchWithAuthDelete, fetchWithAuthPatch } from '../lib/fetchWithAuth';
 import ScopeBanner from '../components/admin/ScopeBanner';
+import { useCachedFetch } from '../lib/hooks/useCachedFetch';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -63,6 +70,23 @@ const ProjectIcon: React.FC<{ url?: string; type: 'landing' | 'service' | 'githu
 };
 
 const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent, onAddStudent, onDeleteStudent, selectedCohortId, selectedCohortName, cohorts }) => {
+  // Stats cards
+  const statsUrl = `/api/admin?resource=stats${selectedCohortId ? `&cohortId=${selectedCohortId}` : ''}`;
+  const { data: statsCards } = useCachedFetch<AdminStat[]>(
+    statsUrl,
+    [],
+    { cacheKey: `admin-students-stats-${selectedCohortId || 'all'}`, cacheTTL: 60000, staleWhileRevalidate: true }
+  );
+
+  const statsIcons = [Users, TrendingUp, BarChart3, Layout, AlertTriangle];
+  const statsColors = [
+    'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
+    'bg-blue-50 dark:bg-blue-500/10 text-blue-600',
+    'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600',
+    'bg-amber-50 dark:bg-amber-500/10 text-amber-600',
+    'bg-red-50 dark:bg-red-500/10 text-red-600',
+  ];
+
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -103,6 +127,58 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
   });
 
   const [showPassword, setShowPassword] = useState(false);
+
+  // Bulk actions state
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isBulkNotifyModalOpen, setIsBulkNotifyModalOpen] = useState(false);
+  const [bulkNotifyMessage, setBulkNotifyMessage] = useState('');
+
+  // --- Bulk Action Handlers ---
+
+  const bulkAction = async (action: string, value?: string) => {
+    const ids = Array.from(selectedRowIds);
+    if (ids.length === 0) return;
+    setIsBulkLoading(true);
+    try {
+      const result = await fetchWithAuthPatch<{ affected: number; passwords?: { id: string; email: string; password: string }[] }>('/api/admin?resource=students', {
+        ids, action, value,
+      });
+      if (action === 'delete') {
+        ids.forEach(id => onDeleteStudent(id));
+      }
+      if (action === 'resetPasswords' && result.passwords) {
+        const text = result.passwords.map(p => `${p.email}: ${p.password}`).join('\n');
+        await navigator.clipboard.writeText(text);
+        alert(`Пароли сброшены (${result.affected}) и скопированы в буфер обмена`);
+      }
+      setSelectedRowIds(new Set());
+    } catch (error: any) {
+      alert(error.message || 'Ошибка массовой операции');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    const ids = selectedRowIds.size > 0 ? selectedRowIds : new Set(filteredStudents.map(s => s.id));
+    const selected = filteredStudents.filter(s => ids.has(s.id));
+    const BOM = '\uFEFF';
+    const header = 'Имя,Email,Статус,Прогресс,Текущий модуль,Последняя активность,Дата регистрации,Лендинг,Сервис,GitHub\n';
+    const rows = selected.map(s =>
+      [s.name, s.email, s.status, `${s.progress}%`, s.currentModule, s.lastActive, s.joinedDate,
+       s.projects.landing || '', s.projects.service || '', s.projects.github || '']
+        .map(v => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',')
+    ).join('\n');
+    const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `students_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // --- Logic ---
 
@@ -189,14 +265,19 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       setIsDeleteModalOpen(true);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
       if (studentToDelete) {
-          onDeleteStudent(studentToDelete);
-          setIsDeleteModalOpen(false);
-          setStudentToDelete(null);
-          // If viewing profile of deleted student, go back
-          if (viewMode === 'profile' && selectedStudentId === studentToDelete) {
-              closeProfile();
+          try {
+              await fetchWithAuthDelete(`/api/admin?resource=students&id=${studentToDelete}`);
+              onDeleteStudent(studentToDelete);
+              setIsDeleteModalOpen(false);
+              setStudentToDelete(null);
+              if (viewMode === 'profile' && selectedStudentId === studentToDelete) {
+                  closeProfile();
+              }
+          } catch (error) {
+              console.error('Delete student failed:', error);
+              alert('Ошибка удаления студента');
           }
       }
   };
@@ -207,21 +288,33 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
 
       if (modalMode === 'add') {
-          const student: Student = {
-              id: Date.now().toString(),
-              name: fullName,
-              email: formData.email,
-              avatar: `https://ui-avatars.com/api/?name=${fullName}&background=8b5cf6&color=fff`,
-              status: 'active',
-              progress: 0,
-              currentModule: 'Модуль 1',
-              lastActive: 'Только что',
-              joinedDate: new Date().toISOString(),
-              projects: {},
-              notes: `Аккаунт создан вручную. Пароль: ${formData.password}`
-          };
-          onAddStudent(student);
-          alert(`Студент добавлен! Передайте ему пароль: ${formData.password}`);
+          try {
+              const result = await fetchWithAuthPost<{ id: string; email: string; name: string; cohortId?: string }>('/api/admin?resource=students', {
+                  email: formData.email,
+                  firstName: formData.firstName,
+                  lastName: formData.lastName,
+                  password: formData.password,
+                  cohortId: formData.cohortId || undefined,
+              });
+              const student: Student = {
+                  id: result.id,
+                  name: result.name || fullName,
+                  email: result.email,
+                  avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=8b5cf6&color=fff`,
+                  status: 'active',
+                  progress: 0,
+                  currentModule: '',
+                  lastActive: 'Только что',
+                  joinedDate: new Date().toISOString(),
+                  projects: {},
+                  cohortId: result.cohortId,
+              };
+              onAddStudent(student);
+              alert(`Студент создан! Передайте пароль: ${formData.password}`);
+          } catch (error: any) {
+              alert(error.message || 'Ошибка создания студента');
+              return;
+          }
       } else {
           // Edit Mode
           const studentToUpdate = students.find(s => s.id === selectedStudentId);
@@ -325,6 +418,32 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
       >
         {/* Scope Banner */}
         <ScopeBanner type="filtered" cohortName={selectedCohortName} label={selectedCohortName ? `Студенты потока: ${selectedCohortName}` : undefined} />
+
+        {/* Stats Cards */}
+        {statsCards.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+            {statsCards.map((stat, i) => {
+              const Icon = statsIcons[i] || Users;
+              const colorClass = statsColors[i] || statsColors[0];
+              return (
+                <div key={stat.label} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/5 p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
+                    <Icon size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xl font-bold text-zinc-900 dark:text-white leading-tight">{stat.value}</div>
+                    <div className="text-xs text-zinc-500 truncate">{stat.label}</div>
+                    {stat.change && (
+                      <div className={`text-[10px] font-bold ${stat.isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {stat.change}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
@@ -482,6 +601,90 @@ const AdminStudents: React.FC<AdminStudentsProps> = ({ students, onUpdateStudent
           </div>
         </div>
       </motion.div>
+
+      {/* --- BULK ACTION TOOLBAR --- */}
+      <AnimatePresence>
+        {selectedRowIds.size > 0 && viewMode === 'list' && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl shadow-2xl shadow-black/20 px-5 py-3 flex items-center gap-3 flex-wrap max-w-[90vw]"
+          >
+            <span className="text-sm font-bold whitespace-nowrap">{selectedRowIds.size} выбрано</span>
+            <button onClick={() => setSelectedRowIds(new Set())} className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-white dark:hover:text-zinc-900 transition-colors">Снять</button>
+            <div className="w-px h-6 bg-zinc-700 dark:bg-zinc-300" />
+
+            {/* Change Cohort */}
+            {cohorts && cohorts.length > 0 && (
+              <select
+                onChange={(e) => { if (e.target.value) bulkAction('changeCohort', e.target.value); e.target.value = ''; }}
+                className="bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs rounded-lg px-2 py-1.5 border border-zinc-700 dark:border-zinc-300"
+                defaultValue=""
+                disabled={isBulkLoading}
+              >
+                <option value="" disabled>Сменить поток</option>
+                {cohorts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+
+            {/* Change Status */}
+            <select
+              onChange={(e) => { if (e.target.value) bulkAction('changeStatus', e.target.value); e.target.value = ''; }}
+              className="bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs rounded-lg px-2 py-1.5 border border-zinc-700 dark:border-zinc-300"
+              defaultValue=""
+              disabled={isBulkLoading}
+            >
+              <option value="" disabled>Статус</option>
+              <option value="active">Активен</option>
+              <option value="stalled">Застрял</option>
+              <option value="inactive">Неактивен</option>
+            </select>
+
+            {/* Reset Passwords */}
+            <button
+              onClick={() => bulkAction('resetPasswords')}
+              disabled={isBulkLoading}
+              className="text-xs px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors disabled:opacity-50"
+            >
+              <Key size={12} className="inline mr-1" />Пароли
+            </button>
+
+            {/* Export CSV */}
+            <button
+              onClick={exportToCSV}
+              className="text-xs px-3 py-1.5 rounded-lg bg-zinc-700 dark:bg-zinc-200 hover:bg-zinc-600 dark:hover:bg-zinc-300 font-bold transition-colors"
+            >
+              <Download size={12} className="inline mr-1" />CSV
+            </button>
+
+            {/* Bulk Delete */}
+            <button
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              disabled={isBulkLoading}
+              className="text-xs px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={12} className="inline mr-1" />Удалить
+            </button>
+
+            {isBulkLoading && (
+              <div className="w-4 h-4 border-2 border-zinc-500 border-t-white dark:border-t-zinc-900 rounded-full animate-spin" />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Delete Confirmation */}
+      <ConfirmModal
+        isOpen={isBulkDeleteModalOpen}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirm={async () => {
+          setIsBulkDeleteModalOpen(false);
+          await bulkAction('delete');
+        }}
+        message={`Удалить ${selectedRowIds.size} студентов? Это действие нельзя отменить.`}
+      />
 
       {/* --- PROFILE VIEW --- */}
       <AnimatePresence>

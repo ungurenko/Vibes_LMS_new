@@ -206,6 +206,8 @@ export interface StudentProfile extends Student {
       status: string;
     }[];
   }[];
+  weeklyProgress?: { week: string; count: number }[];
+  dailyActivity?: { day: string; count: number }[];
 }
 
 export interface AdminStat {

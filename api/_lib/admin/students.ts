@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { query } from '../db.js';
 import { successResponse, errorResponse, hashPassword } from '../auth.js';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../email.js';
 
 /**
  * Форматирует дату последней активности в читаемый вид
@@ -72,7 +73,25 @@ export async function handleStudents(
           )
         ]);
 
-        // 3. Получаем прогресс по урокам для визуализации
+        // 3. Прогресс по неделям (для графика)
+        const [weeklyProgressResult, dailyActivityResult] = await Promise.all([
+          query(
+            `SELECT date_trunc('week', completed_at)::date as week, COUNT(*)::int as count
+             FROM user_lesson_progress
+             WHERE user_id = $1 AND status = 'completed' AND completed_at IS NOT NULL
+             GROUP BY week ORDER BY week`,
+            [id]
+          ),
+          query(
+            `SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+             FROM activity_log
+             WHERE user_id = $1 AND created_at > NOW() - INTERVAL '30 days'
+             GROUP BY day ORDER BY day`,
+            [id]
+          ),
+        ]);
+
+        // 4. Получаем прогресс по урокам для визуализации
         const { rows: progressRows } = await query(
            `SELECT
               cm.id as module_id,
@@ -130,7 +149,15 @@ export async function handleStudents(
              projectsSubmitted: parseInt(projectsResult.rows[0].count),
              messagesSent: parseInt(chatResult.rows[0].count)
           },
-          curriculum
+          curriculum,
+          weeklyProgress: weeklyProgressResult.rows.map((r: any) => ({
+            week: r.week,
+            count: r.count,
+          })),
+          dailyActivity: dailyActivityResult.rows.map((r: any) => ({
+            day: r.day,
+            count: r.count,
+          })),
         };
 
         return res.status(200).json(successResponse(result));
@@ -275,9 +302,147 @@ export async function handleStudents(
       return res.status(200).json(successResponse({ updated: true }));
     }
 
+    // POST - создать студента
+    if (req.method === 'POST') {
+      const { email, firstName, lastName, password, cohortId } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json(errorResponse('Email и пароль обязательны'));
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json(errorResponse('Пароль должен быть минимум 8 символов'));
+      }
+
+      // Проверяем уникальность email
+      const { rows: existing } = await query(
+        'SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL',
+        [email.toLowerCase().trim()]
+      );
+
+      if (existing.length > 0) {
+        return res.status(409).json(errorResponse('Пользователь с таким email уже существует'));
+      }
+
+      const passwordHash = await hashPassword(password);
+      const name = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+
+      const { rows: newRows } = await query(
+        `INSERT INTO users (email, first_name, last_name, password_hash, role, status, progress_percent, cohort_id)
+         VALUES ($1, $2, $3, $4, 'student', 'active', 0, $5)
+         RETURNING id, email, first_name, last_name, cohort_id`,
+        [email.toLowerCase().trim(), firstName || null, lastName || null, passwordHash, cohortId || null]
+      );
+
+      const created = newRows[0];
+
+      // Отправляем welcome email (non-blocking)
+      sendWelcomeEmail(created.email, name, password).catch(err =>
+        console.error('Welcome email failed:', err.message)
+      );
+
+      return res.status(201).json(successResponse({
+        id: created.id,
+        email: created.email,
+        name,
+        cohortId: created.cohort_id,
+      }));
+    }
+
+    // DELETE - удалить студента (soft delete)
+    if (req.method === 'DELETE') {
+      const id = req.query.id as string;
+
+      if (!id) {
+        return res.status(400).json(errorResponse('ID студента обязателен'));
+      }
+
+      const { rowCount } = await query(
+        'UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND role = $2',
+        [id, 'student']
+      );
+
+      if (rowCount === 0) {
+        return res.status(404).json(errorResponse('Студент не найден'));
+      }
+
+      return res.status(200).json(successResponse({ deleted: true }));
+    }
+
+    // PATCH - массовые операции
+    if (req.method === 'PATCH') {
+      const { ids, action, value } = req.body;
+
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json(errorResponse('Массив ids обязателен'));
+      }
+
+      if (!action) {
+        return res.status(400).json(errorResponse('Действие (action) обязательно'));
+      }
+
+      switch (action) {
+        case 'changeCohort': {
+          const placeholders = ids.map((_: string, i: number) => `$${i + 2}`).join(',');
+          await query(
+            `UPDATE users SET cohort_id = $1 WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
+            [value || null, ...ids]
+          );
+          return res.status(200).json(successResponse({ affected: ids.length }));
+        }
+
+        case 'changeStatus': {
+          if (!['active', 'stalled', 'inactive'].includes(value)) {
+            return res.status(400).json(errorResponse('Неверный статус'));
+          }
+          const placeholders = ids.map((_: string, i: number) => `$${i + 2}`).join(',');
+          await query(
+            `UPDATE users SET status = $1 WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
+            [value, ...ids]
+          );
+          return res.status(200).json(successResponse({ affected: ids.length }));
+        }
+
+        case 'delete': {
+          const placeholders = ids.map((_: string, i: number) => `$${i + 1}`).join(',');
+          const { rowCount } = await query(
+            `UPDATE users SET deleted_at = NOW() WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
+            [...ids]
+          );
+          return res.status(200).json(successResponse({ affected: rowCount }));
+        }
+
+        case 'resetPasswords': {
+          const results: { id: string; email: string; password: string }[] = [];
+          for (const userId of ids) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let newPwd = '';
+            for (let i = 0; i < 10; i++) {
+              newPwd += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const hash = await hashPassword(newPwd);
+            const { rows } = await query(
+              'UPDATE users SET password_hash = $1 WHERE id = $2 AND deleted_at IS NULL RETURNING email',
+              [hash, userId]
+            );
+            if (rows.length > 0) {
+              results.push({ id: userId, email: rows[0].email, password: newPwd });
+              sendPasswordResetEmail(rows[0].email, rows[0].email, newPwd).catch(err =>
+                console.error('Password reset email failed:', err.message)
+              );
+            }
+          }
+          return res.status(200).json(successResponse({ affected: results.length, passwords: results }));
+        }
+
+        default:
+          return res.status(400).json(errorResponse(`Неизвестное действие: ${action}`));
+      }
+    }
+
     return res.status(405).json(errorResponse('Method not allowed'));
-  } catch (error) {
-    console.error('Admin students error:', error);
+  } catch (error: any) {
+    console.error('Admin students error:', error.message, error.code);
     return res.status(500).json(errorResponse('Ошибка сервера'));
   }
 }

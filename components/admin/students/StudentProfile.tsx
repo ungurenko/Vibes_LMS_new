@@ -3,12 +3,12 @@ import {
   StudentProfile as StudentProfileType, 
   ActivityLogEntry 
 } from '@/types';
-import { 
-  Mail, 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Mail,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   Save,
   MessageSquare,
@@ -19,10 +19,13 @@ import {
   ArrowLeft,
   Lock,
   PlayCircle,
-  FileText
+  FileText,
+  Bell,
+  Send,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchWithAuth, fetchWithAuthGet } from '@/lib/fetchWithAuth';
+import { fetchWithAuth, fetchWithAuthGet, fetchWithAuthPost } from '@/lib/fetchWithAuth';
 
 interface StudentProfileProps {
   student: StudentProfileType;
@@ -41,6 +44,11 @@ const Badge: React.FC<{ children: React.ReactNode; color: string }> = ({ childre
 export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [isPending, startTransition] = useTransition();
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyTitle, setNotifyTitle] = useState('');
+  const [notifyMessage, setNotifyMessage] = useState('');
+  const [isSendingNotify, setIsSendingNotify] = useState(false);
 
   // Optimistic Notes
   const [optimisticNotes, setOptimisticNotes] = useOptimistic(
@@ -82,6 +90,27 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
       }
   };
 
+  const handleSendNotification = async () => {
+    if (!notifyTitle.trim()) return;
+    setIsSendingNotify(true);
+    try {
+      await fetchWithAuthPost('/api/admin?resource=notifications', {
+        userIds: [student.id],
+        title: notifyTitle,
+        message: notifyMessage || undefined,
+        type: 'info',
+      });
+      setShowNotifyModal(false);
+      setNotifyTitle('');
+      setNotifyMessage('');
+      alert('Уведомление отправлено');
+    } catch (err) {
+      alert('Ошибка отправки уведомления');
+    } finally {
+      setIsSendingNotify(false);
+    }
+  };
+
   return (
     <div className="bg-slate-50 dark:bg-zinc-950 min-h-screen pb-20">
       {/* Header / Nav */}
@@ -119,9 +148,33 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
              >
                  {student.status === 'active' ? 'Приостановить' : 'Активировать'}
              </button>
-             <button className="p-2 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+             <div className="relative">
+               <button
+                 onClick={() => setShowMoreMenu(!showMoreMenu)}
+                 className="p-2 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+               >
                  <MoreHorizontal size={18} />
-             </button>
+               </button>
+               {showMoreMenu && (
+                 <>
+                   <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                   <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-white/10 shadow-xl py-1">
+                     <button
+                       onClick={() => { setShowMoreMenu(false); setShowNotifyModal(true); }}
+                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300"
+                     >
+                       <Bell size={15} /> Отправить уведомление
+                     </button>
+                     <button
+                       onClick={() => { setShowMoreMenu(false); window.open(`mailto:${student.email}`); }}
+                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300"
+                     >
+                       <Mail size={15} /> Написать email
+                     </button>
+                   </div>
+                 </>
+               )}
+             </div>
          </div>
       </div>
 
@@ -258,13 +311,28 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
                                </div>
                            </div>
 
+                           {/* Weekly Progress Chart */}
+                           {student.weeklyProgress && student.weeklyProgress.length > 0 && (
+                             <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5">
+                               <h3 className="font-bold text-zinc-900 dark:text-white mb-6">Прогресс по неделям</h3>
+                               <WeeklyProgressChart data={student.weeklyProgress} />
+                             </div>
+                           )}
+
+                           {/* Daily Activity Heatmap */}
+                           {student.dailyActivity && student.dailyActivity.length > 0 && (
+                             <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5">
+                               <h3 className="font-bold text-zinc-900 dark:text-white mb-6">Активность за 30 дней</h3>
+                               <DailyActivityChart data={student.dailyActivity} />
+                             </div>
+                           )}
+
                            {/* Recent Activity Short List */}
                            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-white/5">
                                <div className="flex items-center justify-between mb-6">
                                    <h3 className="font-bold text-zinc-900 dark:text-white">Последняя активность</h3>
                                    <button onClick={() => setActiveTab('activity')} className="text-sm text-purple-600 font-bold hover:underline">Смотреть все</button>
                                </div>
-                               {/* Use the Activity Component here later */}
                                <div className="text-zinc-500 text-sm">Перейдите на вкладку "Активность" для полной истории.</div>
                            </div>
                       </div>
@@ -325,8 +393,227 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student, onBack,
               {activeTab === 'activity' && (
                   <ActivityFeed userId={student.id} />
               )}
+
+              {activeTab === 'projects' && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {([
+                        { key: 'landing' as const, label: 'Лендинг', icon: Layout, color: 'purple' },
+                        { key: 'service' as const, label: 'Веб-сервис', icon: Globe, color: 'blue' },
+                        { key: 'github' as const, label: 'GitHub', icon: Github, color: 'zinc' },
+                      ]).map(({ key, label, icon: Icon, color }) => {
+                        const url = student.projects[key];
+                        return (
+                          <div key={key} className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden">
+                            {url ? (
+                              <>
+                                <div className="aspect-video bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
+                                  {key !== 'github' ? (
+                                    <img
+                                      src={`https://image.thum.io/get/width/600/${url}`}
+                                      alt={label}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Github size={48} className="text-zinc-300 dark:text-zinc-600" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-5">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Icon size={16} className={`text-${color}-500`} />
+                                    <h4 className="font-bold text-zinc-900 dark:text-white">{label}</h4>
+                                  </div>
+                                  <p className="text-xs text-zinc-500 truncate mb-4">{url}</p>
+                                  <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-${color}-50 dark:bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 text-sm font-bold hover:bg-${color}-100 dark:hover:bg-${color}-500/20 transition-colors`}
+                                  >
+                                    Открыть
+                                  </a>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="p-8 text-center">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                  <Icon size={28} className="text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                                <h4 className="font-bold text-zinc-900 dark:text-white mb-1">{label}</h4>
+                                <p className="text-sm text-zinc-400">Проект не добавлен</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+              )}
           </motion.div>
       </div>
+
+      {/* Send Notification Modal */}
+      <AnimatePresence>
+        {showNotifyModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm"
+              onClick={() => setShowNotifyModal(false)}
+            />
+            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-100 dark:border-white/10 overflow-hidden"
+              >
+                <div className="flex justify-between items-center p-6 border-b border-zinc-100 dark:border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white">
+                      Уведомление для {student.name}
+                    </h3>
+                  </div>
+                  <button onClick={() => setShowNotifyModal(false)} className="p-2 rounded-full bg-zinc-100 dark:bg-white/5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Заголовок</label>
+                    <input
+                      type="text"
+                      value={notifyTitle}
+                      onChange={(e) => setNotifyTitle(e.target.value)}
+                      placeholder="Тема уведомления"
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Сообщение (необязательно)</label>
+                    <textarea
+                      value={notifyMessage}
+                      onChange={(e) => setNotifyMessage(e.target.value)}
+                      placeholder="Текст уведомления..."
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="p-6 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-900 flex justify-end gap-3">
+                  <button onClick={() => setShowNotifyModal(false)} className="px-4 py-2 text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                    Отмена
+                  </button>
+                  <button
+                    onClick={handleSendNotification}
+                    disabled={!notifyTitle.trim() || isSendingNotify}
+                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSendingNotify ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Send size={15} />
+                    )}
+                    Отправить
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// SVG Chart: Weekly Progress (bar chart)
+const WeeklyProgressChart: React.FC<{ data: { week: string; count: number }[] }> = ({ data }) => {
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+  const barWidth = Math.min(40, Math.floor(500 / data.length) - 8);
+  const chartHeight = 120;
+  const chartWidth = data.length * (barWidth + 8);
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={Math.max(chartWidth, 200)} height={chartHeight + 30} className="w-full" viewBox={`0 0 ${Math.max(chartWidth, 200)} ${chartHeight + 30}`} preserveAspectRatio="xMinYMid meet">
+        {data.map((item, i) => {
+          const barHeight = (item.count / maxCount) * chartHeight;
+          const x = i * (barWidth + 8) + 4;
+          const y = chartHeight - barHeight;
+          const weekDate = new Date(item.week);
+          const label = `${weekDate.getDate()}.${weekDate.getMonth() + 1}`;
+          return (
+            <g key={i}>
+              <rect
+                x={x} y={y} width={barWidth} height={barHeight}
+                rx={4} className="fill-purple-500/80"
+              />
+              <text
+                x={x + barWidth / 2} y={chartHeight + 16}
+                textAnchor="middle" className="fill-zinc-400 text-[9px]"
+              >{label}</text>
+              <text
+                x={x + barWidth / 2} y={y - 4}
+                textAnchor="middle" className="fill-zinc-500 text-[10px] font-bold"
+              >{item.count}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+// SVG Chart: Daily Activity (bar chart, 30 days)
+const DailyActivityChart: React.FC<{ data: { day: string; count: number }[] }> = ({ data }) => {
+  // Build full 30-day range
+  const days: { day: string; count: number }[] = [];
+  const dataMap = new Map(data.map(d => [d.day.split('T')[0], d.count]));
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const key = date.toISOString().split('T')[0];
+    days.push({ day: key, count: dataMap.get(key) || 0 });
+  }
+  const maxCount = Math.max(...days.map(d => d.count), 1);
+  const barW = 12;
+  const gap = 3;
+  const chartHeight = 80;
+  const chartWidth = days.length * (barW + gap);
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={chartWidth} height={chartHeight + 20} className="w-full" viewBox={`0 0 ${chartWidth} ${chartHeight + 20}`} preserveAspectRatio="xMinYMid meet">
+        {days.map((item, i) => {
+          const barHeight = Math.max((item.count / maxCount) * chartHeight, item.count > 0 ? 4 : 1);
+          const x = i * (barW + gap);
+          const y = chartHeight - barHeight;
+          const date = new Date(item.day);
+          const showLabel = date.getDate() === 1 || i === 0 || i === days.length - 1;
+          return (
+            <g key={i}>
+              <rect
+                x={x} y={y} width={barW} height={barHeight}
+                rx={2}
+                className={item.count > 0 ? 'fill-blue-500/70' : 'fill-zinc-200 dark:fill-zinc-700'}
+              />
+              {showLabel && (
+                <text
+                  x={x + barW / 2} y={chartHeight + 14}
+                  textAnchor="middle" className="fill-zinc-400 text-[8px]"
+                >{date.getDate()}.{date.getMonth() + 1}</text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 };

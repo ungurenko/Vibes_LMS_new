@@ -38,6 +38,7 @@ import { handleCohorts } from './_lib/admin/cohorts.js';
 import { handleCallAccess } from './_lib/admin/call-access.js';
 import { handlePlatformUpdates } from './_lib/admin/platform-updates.js';
 import { handleAnalytics } from './_lib/admin/analytics.js';
+import { handleNotifications } from './_lib/admin/notifications.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -98,6 +99,8 @@ export default async function handler(
         return await handlePlatformUpdates(req, res, tokenData);
       case 'analytics':
         return await handleAnalytics(req, res, tokenData);
+      case 'notifications':
+        return await handleNotifications(req, res, tokenData);
       default:
         return res.status(400).json(errorResponse('Неверный resource'));
     }
