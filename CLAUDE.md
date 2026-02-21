@@ -31,7 +31,7 @@ React 19, Vite 6, Tailwind CSS v4 (`@tailwindcss/vite`), Framer Motion, Vercel s
 |------|---------|
 | `api/` | Vercel serverless endpoints (thin routers) |
 | `api/_lib/` | Backend modules — `_lib/` prefix prevents Vercel endpoint creation |
-| `api/_lib/admin/` | 11 handler modules for `/api/admin` |
+| `api/_lib/admin/` | 12 handler modules for `/api/admin` |
 | `api/_lib/admin-content/` | 4 handler modules for `/api/admin-content` |
 | `lib/` | Client utilities (`fetchWithAuth.ts`, `cache.ts`) |
 | `lib/hooks/` | Custom hooks (`useCachedFetch`, `useCopyFeedback`, `useAdminFetch`) |
@@ -53,12 +53,21 @@ React 19, Vite 6, Tailwind CSS v4 (`@tailwindcss/vite`), Framer Motion, Vercel s
 
 **Soft delete:** Tables use `deleted_at` column, always filter with `WHERE deleted_at IS NULL`.
 
+**Notifications:** `notifications` table → admin sends via `POST /api/admin?resource=notifications`, students read via `GET /api/notifications`. `NotificationBell.tsx` in header (student mode) polls every 60s.
+
+**Email (Resend):** `api/_lib/email.ts` wraps Resend SDK. Templates in `api/_lib/email-templates.ts`. Sends welcome email on student creation, reset email on password change. Non-blocking (fire-and-forget with `.catch()`). Domain: `ungurenko.ru`, from: `noreply@ungurenko.ru`.
+
+**Bulk operations:** `PATCH /api/admin?resource=students` — mass changeCohort/changeStatus/delete/resetPasswords. Floating toolbar in `AdminStudents.tsx` when rows selected. CSV export (client-side, BOM for Excel+Cyrillic).
+
 ### Key Files
-- `App.tsx` — Main router, state, React.lazy imports
+- `App.tsx` — Main router, state, React.lazy imports, NotificationBell
 - `types.ts` — TypeScript interfaces
 - `components/Shared.tsx` — Modal, Drawer, Input, Select, PageHeader
+- `components/NotificationBell.tsx` — Bell icon + Sheet panel for student notifications
 - `api/_lib/db.ts` — PostgreSQL pool (max 3, serverless optimized)
 - `api/_lib/auth.ts` — JWT verification, `getUserFromRequest`, `successResponse`/`errorResponse`
+- `api/_lib/email.ts` — Resend email wrapper (welcome, reset, reminder, announcement)
+- `api/_lib/admin/students.ts` — Full CRUD: GET/POST/PUT/DELETE/PATCH (bulk)
 
 ## Critical Constraints
 
@@ -76,6 +85,7 @@ Required in `.env.local` (and Vercel Dashboard for production):
 - `JWT_SECRET` — JWT signing secret (min 32 chars)
 - `OPENROUTER_API_KEY` — OpenRouter API (for AI Tools)
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob Storage
+- `RESEND_API_KEY` — Resend email service (optional, emails skipped if missing)
 
 ## TypeScript
 

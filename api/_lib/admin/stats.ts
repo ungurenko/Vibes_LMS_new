@@ -39,7 +39,10 @@ export async function handleStats(
          AND ($1::uuid IS NULL OR cohort_id = $1)) as upcoming_calls,
         (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
          AND created_at > NOW() - INTERVAL '7 days'
-         AND ($1::uuid IS NULL OR cohort_id = $1)) as new_students_week
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as new_students_week,
+        (SELECT COUNT(*) FROM users WHERE role = 'student' AND deleted_at IS NULL
+         AND status = 'active' AND last_active_at < NOW() - INTERVAL '7 days'
+         AND ($1::uuid IS NULL OR cohort_id = $1)) as stalled_students
     `, [cohortId || null]);
 
     const stats = rows[0];
@@ -69,6 +72,12 @@ export async function handleStats(
         value: formatNumber(stats.total_projects),
         change: '',
         isPositive: true,
+      },
+      {
+        label: 'Застряли',
+        value: formatNumber(stats.stalled_students),
+        change: 'нет активности 7+ дней',
+        isPositive: parseInt(stats.stalled_students) === 0,
       },
     ];
 

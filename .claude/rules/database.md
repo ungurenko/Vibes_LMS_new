@@ -24,6 +24,7 @@ Connection string: `DATABASE_URL` from `.env.local`.
 | Community | `showcase_projects`, `project_likes` |
 | AI Tools | `tool_chats`, `tool_messages`, `ai_system_instructions` |
 | Admin | `activity_log`, `platform_settings` |
+| Notifications | `notifications` |
 
 ## Patterns
 

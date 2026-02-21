@@ -26,6 +26,7 @@ const AdminAssistant = lazy(() => import('./views/AdminAssistant'));
 const AdminSettings = lazy(() => import('./views/AdminSettings'));
 const AdminCohorts = lazy(() => import('./views/AdminCohorts'));
 const AdminAnalytics = lazy(() => import('./views/AdminAnalytics'));
+import { NotificationBell } from './components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { TabId, InviteLink, Student, CourseModule, NavigationConfig, Cohort } from './types';
 import CohortSelector from './components/admin/CohortSelector';
@@ -646,9 +647,12 @@ const AppContent: React.FC = () => {
                             <span className="font-bold text-lg">ADMIN</span>
                         )}
                     </div>
-                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                        <Menu size={24} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        {mode === 'student' && <NotificationBell />}
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <Menu size={24} />
+                        </button>
+                    </div>
                 </header>
 
                 {(activeTab === 'dashboard' || activeTab.startsWith('admin-')) && (
@@ -657,6 +661,7 @@ const AppContent: React.FC = () => {
                             <CohortSelector cohorts={cohorts} selectedId={selectedCohortId} onChange={setSelectedCohortId} />
                         ) : <div />}
                         <div className="flex items-center gap-4">
+                            {mode === 'student' && <NotificationBell />}
                             <div className="flex flex-col items-end">
                                 <span className="text-sm font-bold text-zinc-900 dark:text-white">{currentUser?.name}</span>
                                 <button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 transition-colors">Выйти</button>
